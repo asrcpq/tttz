@@ -8,6 +8,8 @@ use std::io::{Write, stdout, stdin};
 use rand::{thread_rng, Rng};
 
 // block pos table
+// each two lines are 4 groups, each group is a block in certaion direction
+// each group has four pairs, each pair is a pos of a group
 const BPT: [i32; 224] = [
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,
@@ -28,6 +30,8 @@ const BPT: [i32; 224] = [
 const COLORMAP: [u8; 8] = [6, 4, 7, 3, 2, 5, 1, 0];
 
 // standard rotation pos
+// each line is for a type of block, 4 pairs of pos(left up) indicates 4 directions
+// each pos is the difference to first pair
 const SRP: [i32; 56] = [
 	0, 0, 2, -1, 0, 1, 1, -1,
 	0, 0, 1, 0, 0, 1, 0, 0,
@@ -39,6 +43,8 @@ const SRP: [i32; 56] = [
 ];
 
 // wall kick pos
+// line 1-4: 0->1 to 3->0, 5 attempts
+// line 5-8: 0->3 to 3->2
 const WKD: [i32; 80] = [
 	 0, 0, -1, 0, -1, 1, 0,-2, -1,-2,
 	 0, 0,  1, 0,  1,-1, 0, 2,  1, 2,
@@ -49,6 +55,7 @@ const WKD: [i32; 80] = [
 	 0, 0, -1, 0, -1, 1, 0,-2, -1,-2,
 	 0, 0, -1, 0, -1,-1, 0, 2, -1, 2,
 ];
+// I block's WKD
 const IWKD: [i32; 80] = [
 	0, 0, -2, 0,  1, 0, -2,-1,  1, 2,
 	0, 0, -1, 0,  2, 0, -1, 2,  2,-1,
@@ -311,7 +318,9 @@ impl Board {
 		false
 	}
 
-	fn blockp(&self, i: u16, j: u16, color: u8) {
+	fn blockp(&self, i: u16, mut j: u16, color: u8) {
+		if j < 20 { return }
+		j -= 20;
 		for pi in 0..self.print_size.0 {
 			for pj in 0..self.print_size.1 {
 				print!(
@@ -343,7 +352,7 @@ impl Board {
 	fn disp(&self) {
 		let mut iter = self.color.iter();
 		for i in 0..10 {
-			for j in 0..40 {
+			for j in 20..40 {
 				self.blockp(i, j, self.color[i as usize + j as usize * 10]);
 			}
 		}
