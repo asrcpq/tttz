@@ -254,7 +254,7 @@ impl Board {
 				continue
 			}
 			for j in 0..10 {
-				self.color[(i - movedown) * 10 + j] = 
+				self.color[(i + movedown) * 10 + j] = 
 					self.color[i * 10 + j];
 			}
 		}
@@ -298,7 +298,7 @@ impl Board {
 	fn calc_shadow(&mut self) -> bool {
 		// prevent infloop
 		self.shadow_block = self.tmp_block.clone();
-		for _ in 0..80 {
+		loop {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
 				if self.shadow_block.pos.1 == 1 {
