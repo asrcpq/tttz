@@ -190,10 +190,8 @@ impl Board {
 					} else {
 						WKD
 					};
-				let px = std_pos.0 + wkd[idx];
-				let py = std_pos.0 + wkd[idx + 1];
-				self.tmp_block.pos.0 = std_pos.0 + px;
-				self.tmp_block.pos.1 = std_pos.1 + py;
+				self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
+				self.tmp_block.pos.1 = std_pos.1 - wkd[idx + 1]; // upside down
 				if self.tmp_block.test(self) {
 					return true;
 				}
@@ -376,6 +374,9 @@ fn main() {
 			Event::Key(Key::Char('z')) => {b.rotate(-1);},
 			Event::Key(Key::Char('x')) => {b.rotate(1);},
 			Event::Key(Key::Char('d')) => {b.rotate(2);},
+			// Event::Key(Key::Char('z')) => {eprintln!("{}", b.rotate(-1));},
+			// Event::Key(Key::Char('x')) => {eprintln!("{}", b.rotate(1));},
+			// Event::Key(Key::Char('d')) => {eprintln!("{}", b.rotate(2));},
 			_ => {}
 		}
 		b.proc();

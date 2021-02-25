@@ -1,3 +1,9 @@
 TODO:
 
-* soft + spin, at least tspin not work
+* Next N(UI fix)
+
+* Save
+
+* AI
+
+* pvp online
