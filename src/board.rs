@@ -1,6 +1,6 @@
-use crate::Block;
-use rand::{thread_rng, Rng};
+use crate::block::Block;
 use crate::srs_data::*;
+use crate::random_generator::RandomGenerator;
 
 pub struct Board {
 	print_size: (u16, u16),
@@ -8,6 +8,7 @@ pub struct Board {
 	ontop: bool,
 	tmp_block: Block,
 	shadow_block: Block,
+	rg: RandomGenerator,
 }
 
 impl Board {
@@ -29,12 +30,14 @@ impl Board {
 	}
 
 	pub fn new() -> Board {
+		let mut rg: RandomGenerator = Default::default();
 		Board {
 			print_size: (2, 1),
 			ontop: true,
 			color: vec![7; 10 * 40],
-			tmp_block: Block::new(0),
+			tmp_block: Block::new(rg.get()),
 			shadow_block: Block::new(0),
+			rg,
 		}
 	}
 
@@ -164,7 +167,7 @@ impl Board {
 		}
 		self.checkline(lines_tocheck);
 		self.ontop = true;
-		self.tmp_block = Block::new(thread_rng().gen_range(0..7));
+		self.tmp_block = Block::new(self.rg.get());
 	}
 
 	pub fn press_down(&mut self) {

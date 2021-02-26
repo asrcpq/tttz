@@ -8,10 +8,10 @@ use termion::raw::IntoRawMode;
 use std::io::{Write, stdout, stdin};
 
 mod block;
-use block::Block;
 mod board;
-use board::Board;
 mod srs_data;
+mod random_generator;
+use board::Board;
 
 fn main() {
 	let stdin = stdin();
