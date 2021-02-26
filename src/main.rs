@@ -1,5 +1,6 @@
 extern crate termion;
 extern crate rand;
+extern crate lazy_static;
 
 use termion::event::{Key, Event, MouseEvent};
 use termion::input::{TermRead, MouseTerminal};
@@ -10,7 +11,9 @@ use rand::{thread_rng, Rng};
 // block pos table
 // each two lines are 4 groups, each group is a block in certaion direction
 // each group has four pairs, each pair is a pos of a group
-const BPT: [i32; 224] = [
+lazy_static::lazy_static! {
+
+pub static ref BPT: Vec<i32> = vec![
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,
 	0, 0, 0, 1, 1, 1, 2, 1, 0, 0, 1, 0, 0, 1, 0, 2,
@@ -27,12 +30,12 @@ const BPT: [i32; 224] = [
 	0, 0, 1, 0, 1, 1, 2, 1, 1, 0, 1, 1, 0, 1, 0, 2,
 ];
 
-const COLORMAP: [u8; 8] = [6, 4, 7, 3, 2, 5, 1, 0];
+pub static ref COLORMAP: Vec<u8> = vec![6, 4, 7, 3, 2, 5, 1, 0];
 
 // standard rotation pos
 // each line is for a type of block, 4 pairs of pos(left up) indicates 4 directions
 // each pos is the difference to first pair
-const SRP: [i32; 56] = [
+pub static ref SRP: Vec<i32> = vec![
 	0, 0, 2, -1, 0, 1, 1, -1,
 	0, 0, 1, 0, 0, 1, 0, 0,
 	0, 0, 1, 0, 0, 1, 0, 0,
@@ -45,7 +48,7 @@ const SRP: [i32; 56] = [
 // wall kick pos
 // line 1-4: 0->1 to 3->0, 5 attempts
 // line 5-8: 0->3 to 3->2
-const WKD: [i32; 80] = [
+pub static ref WKD: Vec<i32> = vec![
 	 0, 0, -1, 0, -1, 1, 0,-2, -1,-2,
 	 0, 0,  1, 0,  1,-1, 0, 2,  1, 2,
 	 0, 0,  1, 0,  1, 1, 0,-2,  1,-2,
@@ -56,7 +59,7 @@ const WKD: [i32; 80] = [
 	 0, 0, -1, 0, -1,-1, 0, 2, -1, 2,
 ];
 // I block's WKD
-const IWKD: [i32; 80] = [
+pub static ref IWKD: Vec<i32> = vec![
 	0, 0, -2, 0,  1, 0, -2,-1,  1, 2,
 	0, 0, -1, 0,  2, 0, -1, 2,  2,-1,
 	0, 0,  2, 0, -1, 0,  2, 1, -1,-2,
@@ -66,6 +69,16 @@ const IWKD: [i32; 80] = [
 	0, 0,  1, 0, -2, 0,  1,-2, -2, 1,
 	0, 0, -2, 0,  1, 0, -2,-1,  1, 2,
 ];
+// flip wall kick, tetr.io style
+// 0->2 to 3->1
+pub static ref FWKD: Vec<i32> = vec![
+	0, 0, 0, 1, 1, 1, -1, 1, 1, 0, -1, 0,
+	0, 0, 0, -1, -1, -1, 1, -1, -1, 0, 1, 0,
+	0, 0, 1, 0, 1, 2, 1, 1, 0, 2, 0, 1,
+	0, 0, -1, 0, -1, 2, -1, 1, 0, 2, 0, 1,
+];
+
+}
 
 // clone is used when revert rotation test
 #[derive(Clone)]
@@ -184,18 +197,28 @@ impl Board {
 	}
 
 	pub fn rotate(&mut self, dr: i8) -> bool {
+		if self.tmp_block.code == 3 {
+			return false
+		}
 		let revert_block = self.tmp_block.clone();
 		self.tmp_block.rotate(dr);
-		if !self.ontop && dr != 2 {
+		if !self.ontop {
 			let std_pos = self.tmp_block.pos;
-			for wkid in 0..5 {
+			let len = if dr == 2 {
+				6
+			} else {
+				5
+			};
+			for wkid in 0..len {
 				let right_offset = (dr == 1) as i8 * 40;
 				let idx = (revert_block.rotation * 10 + right_offset + wkid * 2) as usize;
-				let ref wkd = 
-					if revert_block.code == 0 {
-						IWKD
+				let wkd: &Vec<i32> = 
+					if dr == 2 {
+						&FWKD
+					} else if revert_block.code == 0 {
+						&IWKD
 					} else {
-						WKD
+						&WKD
 					};
 				self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 				self.tmp_block.pos.1 = std_pos.1 - wkd[idx + 1]; // upside down
@@ -306,7 +329,7 @@ impl Board {
 		loop {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
-				if self.shadow_block.pos.1 == 1 {
+				if self.shadow_block.pos.1 < 20 {
 					panic!("Game over is not implemented!");
 					return false
 				} else {
@@ -318,7 +341,7 @@ impl Board {
 		false
 	}
 
-	fn blockp(&self, i: u16, mut j: u16, color: u8) {
+	fn blockp2(&self, i: u16, mut j: u16, color: u8) {
 		if j < 20 { return }
 		j -= 20;
 		for pi in 0..self.print_size.0 {
@@ -333,6 +356,37 @@ impl Board {
 				);
 			}
 		}
+	}
+
+	fn blockp(&self, i: u16, mut j: u16, color: u8) {
+		if j < 20 { return }
+		j -= 20;
+		if color == 7 {
+			print!(
+				"[40m{} {} ",
+				termion::cursor::Goto(
+					1 + i * self.print_size.0 as u16,
+					1 + j * self.print_size.1 as u16,
+				),
+				termion::cursor::Goto(
+					1 + i * self.print_size.0 as u16 + 1,
+					1 + j * self.print_size.1 as u16,
+				),
+			);
+			return
+		}
+		print!(
+			"[4{}m{}[{}]",
+			COLORMAP[color as usize],
+			termion::cursor::Goto(
+				1 + i * self.print_size.0 as u16,
+				1 + j * self.print_size.1 as u16,
+			),
+			termion::cursor::Goto(
+				1 + i * self.print_size.0 as u16 + 1,
+				1 + j * self.print_size.1 as u16,
+			),
+		);
 	}
 
 	pub fn proc(&mut self) {
