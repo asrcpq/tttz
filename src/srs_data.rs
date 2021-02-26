@@ -3,6 +3,10 @@
 // each group has four pairs, each pair is a pos of a group
 lazy_static::lazy_static! {
 
+pub static ref ID_TO_CHAR: Vec<char> = vec![
+	'i', 'j', 'l', 'o', 's', 't', 'z',
+];
+
 pub static ref BPT: Vec<i32> = vec![
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,
 	0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 1, 0, 2, 0, 3,

@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 
 pub struct RandomGenerator {
 	rng: ThreadRng,
-	bag: VecDeque<u8>,
+	pub bag: VecDeque<u8>,
 }
 
 impl Default for RandomGenerator {

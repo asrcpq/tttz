@@ -261,6 +261,20 @@ impl Board {
 		}
 	}
 
+	fn disp_next(&self, n: u16) {
+		let offsetx = 1;
+		let offsety = 22;
+		for i in 0..n {
+			println!("{}{}", 
+				termion::cursor::Goto(
+					offsetx + i,
+					offsety,
+				),
+				ID_TO_CHAR[self.rg.bag[i as usize] as usize],
+			);
+		}
+	}
+
 	fn disp(&self) {
 		for i in 0..10 {
 			for j in 20..40 {
@@ -269,5 +283,7 @@ impl Board {
 		}
 		self.disp_block(&self.tmp_block);
 		self.disp_block(&self.shadow_block);
+		println!("{}", termion::style::Reset);
+		self.disp_next(6);
 	}
 }

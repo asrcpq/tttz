@@ -1,8 +1,6 @@
 TODO:
 
-* Next N(UI fix)
-
-* Save
+* Hold
 
 * AI
 
