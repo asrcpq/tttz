@@ -221,7 +221,7 @@ impl Board {
 						&WKD
 					};
 				self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
-				self.tmp_block.pos.1 = std_pos.1 - wkd[idx + 1]; // upside down
+				self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 				if self.tmp_block.test(self) {
 					return true;
 				}
