@@ -43,6 +43,34 @@ impl Board {
 		}
 	}
 
+	fn movedown1(&mut self) -> bool {
+		self.tmp_block.pos.1 += 1;
+		if !self.tmp_block.test(self) {
+			self.tmp_block.pos.1 -= 1;
+			self.hard_drop();
+			return false
+		}
+		true
+	}
+
+	pub fn slowdown(&mut self, dy: u16) {
+		let first_visible = 21 - BLOCK_HEIGHT[(
+			self.tmp_block.code * 4 +
+			self.tmp_block.rotation as u8
+		) as usize];
+		if self.tmp_block.pos.1 < first_visible {
+			for _ in self.tmp_block.pos.1..first_visible {
+				self.movedown1();
+			}
+		} else {
+			for _ in 0..dy {
+				if !self.movedown1() {
+					break
+				}
+			}
+		}
+	}
+
 	pub fn move1(&mut self, dx: i32) -> bool {
 		self.tmp_block.pos.0 -= dx;
 		if !self.tmp_block.test(self) {
@@ -230,7 +258,7 @@ impl Board {
 	}
 
 	#[allow(dead_code)]
-	fn blockp(&self, i: u16, mut j: u16, color: u8) {
+	fn blockp(&self, i: u16, mut j: u16, color: u8, style: u8) {
 		if j < 20 { return }
 		j -= 20;
 		if color == 7 {
@@ -247,17 +275,24 @@ impl Board {
 			);
 			return
 		}
+		let (ch1, ch2) = if style == 0 {
+			('[', ']')
+		} else {
+			(' ', ' ')
+		};
 		print!(
-			"[4{}m{}[{}]",
+			"[4{}m{}{}{}{}",
 			COLORMAP[color as usize],
 			termion::cursor::Goto(
 				1 + i * self.print_size.0 as u16,
 				1 + j * self.print_size.1 as u16,
 			),
+			ch1,
 			termion::cursor::Goto(
 				1 + i * self.print_size.0 as u16 + 1,
 				1 + j * self.print_size.1 as u16,
 			),
+			ch2,
 		);
 	}
 
@@ -266,12 +301,12 @@ impl Board {
 		self.disp();
 	}
 
-	fn disp_block(&self, block: &Block) {
+	fn disp_block(&self, block: &Block, style: u8) {
 		let tmp_pos = block.getpos();
 		for i in 0..4 {
 			let x = tmp_pos[i * 2];
 			let y = tmp_pos[i * 2 + 1];
-			self.blockp(x, y, block.code);
+			self.blockp(x, y, block.code, style);
 		}
 	}
 
@@ -299,11 +334,17 @@ impl Board {
 	fn disp(&self) {
 		for i in 0..10 {
 			for j in 20..40 {
-				self.blockp(i, j, self.color[i as usize + j as usize * 10]);
+				self.blockp(
+					i,
+					j,
+					self.color[i as usize + j as usize * 10],
+					0,
+				);
 			}
 		}
-		self.disp_block(&self.tmp_block);
-		self.disp_block(&self.shadow_block);
+		// show shadow_block first
+		self.disp_block(&self.shadow_block, 1);
+		self.disp_block(&self.tmp_block, 0);
 		println!("{}", termion::style::Reset);
 		self.disp_next(6);
 	}

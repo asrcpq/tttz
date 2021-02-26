@@ -32,6 +32,8 @@ fn main() {
 			Event::Key(Key::Char('L')) => {b.move2(-1);},
 			Event::Key(Key::Char('k')) => {b.press_up();},
 			Event::Key(Key::Char('j')) => {b.press_down();},
+			Event::Key(Key::Char('J')) => {b.slowdown(1);},
+			Event::Key(Key::Char('K')) => {b.slowdown(5);},
 			Event::Key(Key::Char('z')) => {b.rotate(-1);},
 			Event::Key(Key::Char('x')) => {b.rotate(1);},
 			Event::Key(Key::Char('d')) => {b.rotate(2);},
