@@ -5,8 +5,8 @@ use crate::srs_data::*;
 pub struct Board {
 	pub color: Vec<u8>,
 	ontop: bool,
-	tmp_block: Block,
-	shadow_block: Block,
+	pub tmp_block: Block,
+	pub shadow_block: Block,
 	rg: RandomGenerator,
 	hold: u8,
 }
@@ -53,7 +53,7 @@ impl Board {
 		true
 	}
 
-	pub fn slowdown(&mut self, dy: u16) {
+	pub fn slowdown(&mut self, dy: u8) {
 		let first_visible =
 			21 - BLOCK_HEIGHT[(self.tmp_block.code * 4 + self.tmp_block.rotation as u8) as usize];
 		if self.tmp_block.pos.1 < first_visible {

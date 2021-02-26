@@ -43,14 +43,14 @@ impl Block {
 		}
 	}
 
-	pub fn getpos(&self) -> [u16; 8] {
-		let mut ret = [0u16; 8];
+	pub fn getpos(&self) -> [u8; 8] {
+		let mut ret = [0u8; 8];
 		for block_id in 0..4 {
 			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;
 			let px = self.pos.0 + BPT[tmp as usize];
 			let py = self.pos.1 + BPT[tmp as usize + 1];
-			ret[block_id as usize * 2] = px as u16;
-			ret[block_id as usize * 2 + 1] = py as u16;
+			ret[block_id as usize * 2] = px as u8;
+			ret[block_id as usize * 2 + 1] = py as u8;
 		}
 		ret
 	}

@@ -34,19 +34,9 @@ impl Server {
 		loop {
 			let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
 			eprintln!("{}", std::str::from_utf8(&buf[..amt]).unwrap());
-			match self.clients.get_mut(&src) {
+			let mut client = match self.clients.remove(&src) {
 				Some(client) => {
-					if buf[0] == b'q' {
-						for dc_addr in client.dc_addrs.iter() {
-							self.socket.send_to(b"quit", dc_addr).unwrap();
-						}
-					}
-					client.handle_msg(&mut buf[..amt]);
-					for dc_addr in client.dc_addrs.iter() {
-						self.socket
-							.send_to(&client.board.color[..], dc_addr)
-							.unwrap();
-					}
+					client
 				}
 				None => {
 					if std::str::from_utf8(&buf[..amt])
@@ -57,9 +47,11 @@ impl Server {
 							.unwrap()
 							.parse::<i32>()
 							.unwrap();
+						println!("{:?}", self.id_addr);
 						match self.id_addr.get(&id) {
 							None => {
 								eprintln!("A dc client ask {}, but it does not exist", id);
+								self.socket.send_to(b"ko", src).unwrap();
 							}
 							Some(addr) => {
 								self.clients.get_mut(addr).unwrap().dc_addrs.push(src);
@@ -80,9 +72,39 @@ impl Server {
 					} else {
 						eprintln!("Unknown client: {:?}", src);
 					}
+					continue
 				}
+			};
+			if buf[0] == b'q' {
+				for dc_addr in client.dc_addrs.iter() {
+					self.socket.send_to(b"quit", dc_addr).unwrap();
+				}
+				self.id_addr.remove(&client.id).unwrap();
+			} else {
+				client.handle_msg(&mut buf[..amt]);
+				
+				for dc_addr in client.dc_addrs.iter() {
+					let msg = self.build_msg(&client);
+					self.socket
+						.send_to(&msg, dc_addr)
+						.unwrap();
+				}
+				self.clients.insert(src, client);
 			}
+			// Do not write anything here, note the continue in match branch
 		}
+	}
+
+	// This should be O(1), but currently rust cannot concat bytestring
+	fn build_msg(&self, client: &Client) -> [u8; 218] {
+		let mut target: [u8; 218] = [0; 218];
+		// only send visible part
+		target[0..200].clone_from_slice(&client.board.color[200..400]);
+		target[200..208].clone_from_slice(&client.board.shadow_block.getpos()[..]);
+		target[208] = client.board.shadow_block.code;
+		target[209..217].clone_from_slice(&client.board.tmp_block.getpos()[..]);
+		target[217] = client.board.tmp_block.code;
+		target
 	}
 }
 
