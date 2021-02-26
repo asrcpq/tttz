@@ -35,9 +35,7 @@ fn main() {
 			Event::Key(Key::Char('z')) => {b.rotate(-1);},
 			Event::Key(Key::Char('x')) => {b.rotate(1);},
 			Event::Key(Key::Char('d')) => {b.rotate(2);},
-			// Event::Key(Key::Char('z')) => {eprintln!("{}", b.rotate(-1));},
-			// Event::Key(Key::Char('x')) => {eprintln!("{}", b.rotate(1));},
-			// Event::Key(Key::Char('d')) => {eprintln!("{}", b.rotate(2));},
+			Event::Key(Key::Char(' ')) => {b.hold();},
 			_ => {}
 		}
 		b.proc();

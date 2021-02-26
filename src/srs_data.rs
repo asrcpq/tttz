@@ -4,7 +4,7 @@
 lazy_static::lazy_static! {
 
 pub static ref ID_TO_CHAR: Vec<char> = vec![
-	'i', 'j', 'l', 'o', 's', 't', 'z',
+	'i', 'j', 'l', 'o', 's', 't', 'z', ' ',
 ];
 
 pub static ref BPT: Vec<i32> = vec![

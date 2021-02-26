@@ -9,6 +9,7 @@ pub struct Board {
 	tmp_block: Block,
 	shadow_block: Block,
 	rg: RandomGenerator,
+	hold: u8,
 }
 
 impl Board {
@@ -38,6 +39,7 @@ impl Board {
 			tmp_block: Block::new(rg.get()),
 			shadow_block: Block::new(0),
 			rg,
+			hold: 7,
 		}
 	}
 
@@ -96,6 +98,18 @@ impl Board {
 			}
 			true
 		}
+	}
+
+	pub fn hold(&mut self) {
+		if self.hold == 7 {
+			self.hold = self.tmp_block.code;
+			self.tmp_block = Block::new(self.rg.get());
+		} else {
+			let tmp = self.hold;
+			self.hold = self.tmp_block.code;
+			self.tmp_block = Block::new(tmp);
+		}
+		self.ontop = true;
 	}
 
 	pub fn soft_drop(&mut self) -> bool {
@@ -263,12 +277,19 @@ impl Board {
 
 	fn disp_next(&self, n: u16) {
 		let offsetx = 1;
-		let offsety = 22;
+		let offsety = 21;
+		println!("{}hold: {}", 
+			termion::cursor::Goto(
+				offsetx,
+				offsety,
+			),
+			ID_TO_CHAR[self.hold as usize],
+		);
 		for i in 0..n {
 			println!("{}{}", 
 				termion::cursor::Goto(
 					offsetx + i,
-					offsety,
+					offsety + 1,
 				),
 				ID_TO_CHAR[self.rg.bag[i as usize] as usize],
 			);
