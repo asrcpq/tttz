@@ -1,10 +1,9 @@
 use crate::block::Block;
-use crate::srs_data::*;
 use crate::random_generator::RandomGenerator;
+use crate::srs_data::*;
 
 pub struct Board {
-	print_size: (u16, u16),
-	color: Vec<u8>,
+	pub color: Vec<u8>,
 	ontop: bool,
 	tmp_block: Block,
 	shadow_block: Block,
@@ -12,28 +11,10 @@ pub struct Board {
 	hold: u8,
 }
 
-impl Board {
-	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {
-		if pos.0 < 0 || pos.1 < 0 {
-			return false
-		}
-		if pos.0 >= 10 || pos.1 >= 40 {
-			return false
-		}
-		true
-	}
-
-	pub fn is_pos_vacant(&self, pos: (i32, i32)) -> bool {
-		if !self.is_pos_inside(pos) {
-			return false
-		}
-		self.color[pos.0 as usize + pos.1 as usize * 10] == 7
-	}
-
-	pub fn new() -> Board {
+impl Default for Board {
+	fn default() -> Board {
 		let mut rg: RandomGenerator = Default::default();
 		Board {
-			print_size: (2, 1),
 			ontop: true,
 			color: vec![7; 10 * 40],
 			tmp_block: Block::new(rg.get()),
@@ -42,22 +23,39 @@ impl Board {
 			hold: 7,
 		}
 	}
+}
+
+impl Board {
+	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {
+		if pos.0 < 0 || pos.1 < 0 {
+			return false;
+		}
+		if pos.0 >= 10 || pos.1 >= 40 {
+			return false;
+		}
+		true
+	}
+
+	pub fn is_pos_vacant(&self, pos: (i32, i32)) -> bool {
+		if !self.is_pos_inside(pos) {
+			return false;
+		}
+		self.color[pos.0 as usize + pos.1 as usize * 10] == 7
+	}
 
 	fn movedown1(&mut self) -> bool {
 		self.tmp_block.pos.1 += 1;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.1 -= 1;
 			self.hard_drop();
-			return false
+			return false;
 		}
 		true
 	}
 
 	pub fn slowdown(&mut self, dy: u16) {
-		let first_visible = 21 - BLOCK_HEIGHT[(
-			self.tmp_block.code * 4 +
-			self.tmp_block.rotation as u8
-		) as usize];
+		let first_visible =
+			21 - BLOCK_HEIGHT[(self.tmp_block.code * 4 + self.tmp_block.rotation as u8) as usize];
 		if self.tmp_block.pos.1 < first_visible {
 			for _ in self.tmp_block.pos.1..first_visible {
 				self.movedown1();
@@ -65,7 +63,7 @@ impl Board {
 		} else {
 			for _ in 0..dy {
 				if !self.movedown1() {
-					break
+					break;
 				}
 			}
 		}
@@ -75,7 +73,7 @@ impl Board {
 		self.tmp_block.pos.0 -= dx;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.0 += dx;
-			return false
+			return false;
 		}
 		true
 	}
@@ -86,28 +84,23 @@ impl Board {
 
 	pub fn rotate(&mut self, dr: i8) -> bool {
 		if self.tmp_block.code == 3 {
-			return false
+			return false;
 		}
 		let revert_block = self.tmp_block.clone();
 		self.tmp_block.rotate(dr);
 		if !self.ontop {
 			let std_pos = self.tmp_block.pos;
-			let len = if dr == 2 {
-				6
-			} else {
-				5
-			};
+			let len = if dr == 2 { 6 } else { 5 };
 			for wkid in 0..len {
 				let right_offset = (dr == 1) as i8 * 40;
 				let idx = (revert_block.rotation * 10 + right_offset + wkid * 2) as usize;
-				let wkd: &Vec<i32> = 
-					if dr == 2 {
-						&FWKD
-					} else if revert_block.code == 0 {
-						&IWKD
-					} else {
-						&WKD
-					};
+				let wkd: &Vec<i32> = if dr == 2 {
+					&FWKD
+				} else if revert_block.code == 0 {
+					&IWKD
+				} else {
+					&WKD
+				};
 				self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 				self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 				if self.tmp_block.test(self) {
@@ -163,7 +156,7 @@ impl Board {
 			}
 		}
 		if elims.is_empty() {
-			return
+			return;
 		}
 		let mut movedown = 0;
 		for i in (0..40).rev() {
@@ -171,19 +164,18 @@ impl Board {
 			for elim in elims.iter() {
 				if i == **elim {
 					flag = true;
-					break
+					break;
 				}
 			}
 			if flag {
 				movedown += 1;
-				continue
+				continue;
 			}
 			if movedown == 0 {
-				continue
+				continue;
 			}
 			for j in 0..10 {
-				self.color[(i + movedown) * 10 + j] = 
-					self.color[i * 10 + j];
+				self.color[(i + movedown) * 10 + j] = self.color[i * 10 + j];
 			}
 		}
 	}
@@ -223,7 +215,7 @@ impl Board {
 		self.hard_drop();
 	}
 
-	fn calc_shadow(&mut self) -> bool {
+	pub fn calc_shadow(&mut self) -> bool {
 		// prevent infloop
 		self.shadow_block = self.tmp_block.clone();
 		loop {
@@ -233,119 +225,9 @@ impl Board {
 					panic!("Game over is not implemented!");
 				} else {
 					self.shadow_block.pos.1 -= 1;
-					return true
+					return true;
 				}
 			}
 		}
-	}
-
-	#[allow(dead_code)]
-	fn blockp2(&self, i: u16, mut j: u16, color: u8) {
-		if j < 20 { return }
-		j -= 20;
-		for pi in 0..self.print_size.0 {
-			for pj in 0..self.print_size.1 {
-				print!(
-					"{}[4{}m ",
-					termion::cursor::Goto(
-						1 + i * self.print_size.0 as u16 + pi,
-						1 + j * self.print_size.1 as u16 + pj,
-					),
-					COLORMAP[color as usize],
-				);
-			}
-		}
-	}
-
-	#[allow(dead_code)]
-	fn blockp(&self, i: u16, mut j: u16, color: u8, style: u8) {
-		if j < 20 { return }
-		j -= 20;
-		if color == 7 {
-			print!(
-				"[40m{} {} ",
-				termion::cursor::Goto(
-					1 + i * self.print_size.0 as u16,
-					1 + j * self.print_size.1 as u16,
-				),
-				termion::cursor::Goto(
-					1 + i * self.print_size.0 as u16 + 1,
-					1 + j * self.print_size.1 as u16,
-				),
-			);
-			return
-		}
-		let (ch1, ch2) = if style == 0 {
-			('[', ']')
-		} else {
-			(' ', ' ')
-		};
-		print!(
-			"[4{}m{}{}{}{}",
-			COLORMAP[color as usize],
-			termion::cursor::Goto(
-				1 + i * self.print_size.0 as u16,
-				1 + j * self.print_size.1 as u16,
-			),
-			ch1,
-			termion::cursor::Goto(
-				1 + i * self.print_size.0 as u16 + 1,
-				1 + j * self.print_size.1 as u16,
-			),
-			ch2,
-		);
-	}
-
-	pub fn proc(&mut self) {
-		self.calc_shadow();
-		self.disp();
-	}
-
-	fn disp_block(&self, block: &Block, style: u8) {
-		let tmp_pos = block.getpos();
-		for i in 0..4 {
-			let x = tmp_pos[i * 2];
-			let y = tmp_pos[i * 2 + 1];
-			self.blockp(x, y, block.code, style);
-		}
-	}
-
-	fn disp_next(&self, n: u16) {
-		let offsetx = 1;
-		let offsety = 21;
-		println!("{}hold: {}", 
-			termion::cursor::Goto(
-				offsetx,
-				offsety,
-			),
-			ID_TO_CHAR[self.hold as usize],
-		);
-		for i in 0..n {
-			println!("{}{}", 
-				termion::cursor::Goto(
-					offsetx + i,
-					offsety + 1,
-				),
-				ID_TO_CHAR[self.rg.bag[i as usize] as usize],
-			);
-		}
-	}
-
-	fn disp(&self) {
-		for i in 0..10 {
-			for j in 20..40 {
-				self.blockp(
-					i,
-					j,
-					self.color[i as usize + j as usize * 10],
-					0,
-				);
-			}
-		}
-		// show shadow_block first
-		self.disp_block(&self.shadow_block, 1);
-		self.disp_block(&self.tmp_block, 0);
-		println!("{}", termion::style::Reset);
-		self.disp_next(6);
 	}
 }

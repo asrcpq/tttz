@@ -1,5 +1,5 @@
+use crate::board::Board;
 use crate::srs_data::*;
-use crate::Board;
 
 // clone is used when revert rotation test
 #[derive(Clone)]
@@ -46,7 +46,7 @@ impl Block {
 	pub fn getpos(&self) -> [u16; 8] {
 		let mut ret = [0u16; 8];
 		for block_id in 0..4 {
-			let tmp = self.code * 32 + self.rotation as u8 * 8  + block_id * 2;
+			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;
 			let px = self.pos.0 + BPT[tmp as usize];
 			let py = self.pos.1 + BPT[tmp as usize + 1];
 			ret[block_id as usize * 2] = px as u16;
@@ -57,11 +57,11 @@ impl Block {
 
 	pub fn test(&self, board: &Board) -> bool {
 		for block_id in 0..4 {
-			let tmp = self.code * 32 + self.rotation as u8 * 8  + block_id * 2;
+			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;
 			let px = self.pos.0 + BPT[tmp as usize];
 			let py = self.pos.1 + BPT[tmp as usize + 1];
 			if !board.is_pos_vacant((px, py)) {
-				return false
+				return false;
 			}
 		}
 		true

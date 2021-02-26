@@ -1,6 +1,6 @@
+use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use rand::rngs::ThreadRng;
 use std::collections::VecDeque;
 
 pub struct RandomGenerator {
@@ -15,7 +15,7 @@ impl Default for RandomGenerator {
 			bag: VecDeque::new(),
 		};
 		rg.generate_bag();
-		return rg;
+		rg
 	}
 }
 
