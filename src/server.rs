@@ -70,28 +70,41 @@ impl Server {
 				}
 				self.id_addr.remove(&client.id).unwrap();
 				continue
+			} else if msg.starts_with("show clients") {
+				let mut return_msg = String::new();
+				for key in self.id_addr.keys() {
+					return_msg = format!("{}{} ", return_msg, key);
+				}
+				return_msg.pop();
+				self.socket.send_to(&return_msg.as_bytes(), src).unwrap();
 			} else if msg.starts_with("view ") {
-				if let Some(addr) = self.id_addr.get(&(buf[5] as i32 - 48)) {
+				if let Some(addr) = self.id_addr.get(&(
+					std::str::from_utf8(&buf[5..amt])
+						.unwrap()
+						.parse::<i32>()
+						.unwrap()
+				)) {
 					let mut client_to_view = self.clients.remove(addr).unwrap();
 					client_to_view.dc_addrs.push(src);
 					self.clients.insert(*addr, client_to_view);
 				}
 			} else {
-				client.handle_msg(&mut buf[..amt]);
-				client.board.update_display();
-				let msg = bincode::serialize(&client.board.display).unwrap();
-				let mut new_dc_addrs: Vec<SocketAddr> = Vec::new();
-				for dc_addr in client.dc_addrs.drain(..) {
-					// since the sender is temporarily removed from hashmap
-					// it should not be removed from dc_addrs
-					if self.clients.contains_key(&dc_addr) || dc_addr == src {
-						self.socket
-							.send_to(&msg, dc_addr)
-							.unwrap();
-						new_dc_addrs.push(dc_addr);
+				if client.handle_msg(&mut buf[..amt]) {
+					client.board.update_display();
+					let msg = bincode::serialize(&client.board.display).unwrap();
+					let mut new_dc_addrs: Vec<SocketAddr> = Vec::new();
+					for dc_addr in client.dc_addrs.drain(..) {
+						// since the sender is temporarily removed from hashmap
+						// it should not be removed from dc_addrs
+						if self.clients.contains_key(&dc_addr) || dc_addr == src {
+							self.socket
+								.send_to(&msg, dc_addr)
+								.unwrap();
+							new_dc_addrs.push(dc_addr);
+						}
 					}
+					client.dc_addrs = new_dc_addrs;
 				}
-				client.dc_addrs = new_dc_addrs;
 			}
 			self.clients.insert(src, client);
 			// Do not write anything here, note the continue in match branch
@@ -116,7 +129,7 @@ impl Client {
 		}
 	}
 
-	pub fn handle_msg(&mut self, msg: &[u8]) {
+	pub fn handle_msg(&mut self, msg: &[u8]) -> bool {
 		let str_msg = std::str::from_utf8(msg).unwrap();
 		if str_msg.starts_with("key ") {
 			match msg[4] as char {
@@ -161,7 +174,9 @@ impl Client {
 				}
 			}
 			self.board.calc_shadow();
+			return true;
 		}
+		false
 	}
 }
 
