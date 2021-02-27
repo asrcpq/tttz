@@ -71,8 +71,8 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 		let y = display.tmp_pos[i * 2 + 1];
 		blockp(offsetx + x, offsety + y, display.tmp_code, 0);
 	}
-	println!("{}", termion::style::Reset);
-	disp_info(6, &display, offsetx, offsety);
+	print!("{}", termion::style::Reset);
+	disp_info(6, &display, offsetx * 2, offsety);
 }
 
 fn disp_atk(atk: u32) {
@@ -167,7 +167,7 @@ fn main() {
 		}
 		std::thread::sleep(std::time::Duration::from_millis(10));
 	}
-	println!(
+	print!(
 		"{}{}{}",
 		termion::style::Reset,
 		termion::clear::All,

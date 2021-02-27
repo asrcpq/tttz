@@ -209,17 +209,12 @@ impl Board {
 		0
 	}
 
-	// return false if game over
-	fn generate_garbage(&mut self, count: u32) -> bool {
+	fn generate_garbage(&mut self, count: u32) {
 		if count == 0 {
-			return true;
+			return;
 		}
-		for y in 0..count as usize {
-			for x in 0..10 {
-				if self.display.color[y * 10 + x] != 7 {
-					return false
-				}
-			}
+		if count > 40 {
+			count = 40;
 		}
 		for y in 0..(40 - count as usize) {
 			for x in 0..10 {
@@ -234,10 +229,9 @@ impl Board {
 			let slot = self.rg.rng.gen_range(0..10);
 			self.display.color[yy * 10 + slot] = 7;
 		}
-		true
 	}
 
-	pub fn hard_drop(&mut self) {
+	pub fn hard_drop(&mut self) -> bool {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color

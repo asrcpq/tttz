@@ -25,8 +25,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		heights[i as usize] = j as u8;
 	}
 
-	let mut best_hole = 99;
-	let mut best_height = 0; // bottom larger
+	let mut best_score: f32 = 0.0;
 	let mut best_rotation = 0;
 	let mut best_posx = 0;
 	for rot in 0..4 {
@@ -62,26 +61,16 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 					delta_heights[posx[block] as usize] = dh;
 				}
 			}
-			let delta_height = delta_heights.iter().sum();
-			if delta_height < best_hole {
-				println!("smaller hole, {} vs {} at {} and {}",
-					delta_height,
-					best_hole,
+			let hole: i32 = delta_heights.iter().fold(0, |sum, x| sum + x) - 4; // 4 blocks
+			let score = height as f32 - hole as f32 * 2.0; 
+			if score > best_score {
+				println!("{} overtake {} at dx: {}, rot: {}",
+					score,
+					best_score,
 					dx,
 					rot,
 				);
-				best_hole = delta_height;
-				best_height = height;
-				best_rotation = rot;
-				best_posx = dx;
-			} else if delta_height == best_hole && height > best_height {
-				println!("Same hole, larger height {} vs {} at {} and {}",
-					height,
-					best_height,
-					dx,
-					rot,
-				);
-				best_height = height;
+				best_score = score;
 				best_rotation = rot;
 				best_posx = dx;
 			}
@@ -154,18 +143,22 @@ fn main() {
 
 	let mut amt = 0;
 	loop {
-		// std::thread::sleep(std::time::Duration::from_millis(1000));
-		let line1 = stdin.lock().lines().next().unwrap().unwrap();
+		std::thread::sleep(std::time::Duration::from_millis(500));
+		// let line1 = stdin.lock().lines().next().unwrap().unwrap();
 
 		// read until last screen
+		let mut buf2 = [0; 1024];
 		loop {
-			match socket.recv(&mut buf) {
+			match socket.recv(&mut buf2) {
 				Ok(amt2) => {
 					if amt2 >= 16 {
+						for i in 0..amt2 {
+							buf[i] = buf2[i];
+						}
 						amt = amt2;
 					} else {
-						eprintln!("Unexpected recv");
-						break
+						eprintln!("Short msg");
+						continue
 					}
 				}
 				Err(_) => {

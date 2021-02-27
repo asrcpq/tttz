@@ -110,7 +110,8 @@ impl Server {
 								.unwrap();
 							client_target.board.pending_attack += client.board.attack_pool;
 							if client_target.board.pending_attack > 40 {
-								client_target.state = 1;
+								client_target.board.generate_garbage(40);
+								client_target.die();
 							}
 							self.socket.send_to(
 								format!("sigatk {}", client_target.board.pending_attack).as_bytes(),
@@ -226,8 +227,7 @@ impl Client {
 					}
 				}
 				if !self.board.calc_shadow() {
-					eprintln!("Game over: id {}", self.id);
-					self.state = 1;
+					self.die();
 					return false
 				}
 				return true;
@@ -248,6 +248,11 @@ impl Client {
 		}
 		eprintln!("Unknown msg: {}", str_msg);
 		false
+	}
+
+	fn die(&mut self) {
+		eprintln!("Game over: id {}", self.id);
+		self.state = 1;
 	}
 }
 
