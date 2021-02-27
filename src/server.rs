@@ -44,6 +44,68 @@ impl Server {
 		self.id_alloc += 1;
 	}
 
+	fn after_operation(&mut self, mut client: &mut Client, src: SocketAddr, matched_id: i32) {
+		client.board.update_display();
+		if client.board.display.pending_attack >= client.board.attack_pool {
+			client.board.display.pending_attack -= client.board.attack_pool;
+		} else {
+			client.board.attack_pool -= client.board.display.pending_attack;
+			if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
+				eprintln!("{} attack {} with {}",
+					matched_id,
+					client.attack_target,
+					client.board.attack_pool,
+				);
+
+				let mut client_target = self.clients
+					.remove(&client.attack_target)
+					.unwrap();
+				client_target.board.display.pending_attack +=
+					client.board.attack_pool;
+				if client_target.board.display.pending_attack > 40 {
+					client_target.board.generate_garbage(40);
+					client_target.die();
+				}
+				self.socket.send_to(
+					format!("sigatk {}", client_target
+						.board
+						.display
+						.pending_attack
+					).as_bytes(),
+					addr,
+				).unwrap();
+				self.clients.insert(client.attack_target, client_target);
+			} else {
+				eprintln!("Client {} is attacking nonexistent target {}",
+					client.id,
+					client.attack_target,
+				);
+				eprintln!("{:?}", self.id_addr);
+			}
+			client.board.attack_pool = 0;
+		}
+		let msg = bincode::serialize(&client.board.display).unwrap();
+		let mut new_dc_ids: Vec<i32> = Vec::new();
+		for dc_id in client.dc_ids.drain(..) {
+			// The gc of dc_addr happens here, so the check is necessary,
+			// since the sender is temporarily removed from hashmap
+			// we will perform an extra check for it
+			let dc_addr = if let Some(addr) = self.id_addr.get_by_left(&dc_id) {
+				addr
+			} else if matched_id == dc_id {
+				&src
+			} else {
+				eprintln!("A removed client: {} was viewing {}", dc_id, matched_id);
+				continue
+			};
+			self.socket
+				.send_to(&msg, dc_addr)
+				.unwrap();
+			new_dc_ids.push(dc_id);
+		}
+		client.dc_ids = new_dc_ids;
+	}
+
 	pub fn main_loop(&mut self) {
 		let mut buf = [0; 1024];
 		loop {
@@ -96,65 +158,7 @@ impl Server {
 				}
 			} else {
 				if client.handle_msg(&mut buf[..amt]) {
-					client.board.update_display();
-					if client.board.display.pending_attack >= client.board.attack_pool {
-						client.board.display.pending_attack -= client.board.attack_pool;
-					} else {
-						client.board.attack_pool -= client.board.display.pending_attack;
-						if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
-							eprintln!("{} attack {} with {}",
-								matched_id,
-								client.attack_target,
-								client.board.attack_pool,
-							);
-
-							let mut client_target = self.clients
-								.remove(&client.attack_target)
-								.unwrap();
-							client_target.board.display.pending_attack +=
-								client.board.attack_pool;
-							if client_target.board.display.pending_attack > 40 {
-								client_target.board.generate_garbage(40);
-								client_target.die();
-							}
-							self.socket.send_to(
-								format!("sigatk {}", client_target
-									.board
-									.display
-									.pending_attack
-								).as_bytes(),
-								addr,
-							).unwrap();
-							self.clients.insert(client.attack_target, client_target);
-						} else {
-							eprintln!("Client {} is attacking nonexistent target {}",
-								client.id,
-								client.attack_target,
-							);
-							eprintln!("{:?}", self.id_addr);
-						}
-						client.board.attack_pool = 0;
-					}
-					let msg = bincode::serialize(&client.board.display).unwrap();
-					let mut new_dc_ids: Vec<i32> = Vec::new();
-					for dc_id in client.dc_ids.drain(..) {
-						// The gc of dc_addr happens here, so the check is necessary,
-						// since the sender is temporarily removed from hashmap
-						// we will perform an extra check for it
-						let dc_addr = if let Some(addr) = self.id_addr.get_by_left(&dc_id) {
-							addr
-						} else if matched_id == dc_id {
-							&src
-						} else {
-							eprintln!("A removed client: {} was viewing {}", dc_id, matched_id);
-							continue
-						};
-						self.socket
-							.send_to(&msg, dc_addr)
-							.unwrap();
-						new_dc_ids.push(dc_id);
-					}
-					client.dc_ids = new_dc_ids;
+					self.after_operation(&mut client, src, matched_id);
 				}
 			}
 			self.clients.insert(matched_id, client);
