@@ -40,11 +40,10 @@ impl Board {
 		self.display.color[pos.0 as usize + pos.1 as usize * 10] == 7
 	}
 
-	fn movedown1(&mut self) -> bool {
+	fn movedown1_nohard(&mut self) -> bool {
 		self.tmp_block.pos.1 += 1;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.1 -= 1;
-			self.hard_drop();
 			return false;
 		}
 		true
@@ -55,11 +54,11 @@ impl Board {
 			21 - BLOCK_HEIGHT[(self.tmp_block.code * 4 + self.tmp_block.rotation as u8) as usize];
 		if self.tmp_block.pos.1 < first_visible {
 			for _ in self.tmp_block.pos.1..first_visible {
-				self.movedown1();
+				self.movedown1_nohard();
 			}
 		} else {
 			for _ in 0..dy {
-				if !self.movedown1() {
+				if !self.movedown1_nohard() {
 					break;
 				}
 			}
@@ -85,37 +84,29 @@ impl Board {
 		}
 		let revert_block = self.tmp_block.clone();
 		self.tmp_block.rotate(dr);
-		if !self.ontop {
-			let std_pos = self.tmp_block.pos;
-			let len = if dr == 2 { 6 } else { 5 };
-			for wkid in 0..len {
-				let right_offset = (dr == 1) as i8 * 40;
-				let idx = (revert_block.rotation * 10 + right_offset + wkid * 2) as usize;
-				let wkd: &Vec<i32> = if dr == 2 {
-					&FWKD
-				} else if revert_block.code == 0 {
-					&IWKD
-				} else {
-					&WKD
-				};
-				self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
-				self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
-				if self.tmp_block.test(self) {
-					return true;
+		let std_pos = self.tmp_block.pos;
+		let len = if dr == 2 { 6 } else { 5 };
+		for wkid in 0..len {
+			let right_offset = (dr == 1) as i8 * 40;
+			let idx = (revert_block.rotation * 10 + right_offset + wkid * 2) as usize;
+			let wkd: &Vec<i32> = if dr == 2 {
+				&FWKD
+			} else if revert_block.code == 0 {
+				&IWKD
+			} else {
+				&WKD
+			};
+			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
+			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
+			if self.tmp_block.test(self) {
+				if self.ontop {
+					self.tmp_block.pos.1 = 0;
 				}
+				return true;
 			}
-			self.tmp_block = revert_block;
-			false
-		} else {
-			if self.ontop {
-				self.tmp_block.pos.1 = 0;
-			}
-			if !self.tmp_block.test(self) {
-				self.tmp_block = revert_block;
-				return false;
-			}
-			true
 		}
+		self.tmp_block = revert_block;
+		false
 	}
 
 	pub fn hold(&mut self) {
