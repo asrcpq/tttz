@@ -76,7 +76,7 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 }
 
 fn disp_atk(atk: u32) {
-	print!("{} total atk: {}",
+	print!("{} pending atk: {}",
 		termion::cursor::Goto(1, 24),
 		atk,
 	)
@@ -92,8 +92,6 @@ fn main() {
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 	socket.set_nonblocking(true);
 
-	let mut total_atk: u32 = 0;
-
 	// goto raw mode after ok
 	let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 	write!(stdout, "{}{}", termion::clear::All, termion::cursor::Hide).unwrap();
@@ -106,8 +104,8 @@ fn main() {
 			if amt < 16 {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg.starts_with("sigatk ") {
-					total_atk += msg[7..amt].parse::<u32>().unwrap();
-					disp_atk(total_atk);
+					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
+					disp_atk(pending_atk);
 				}
 				stdout.flush().unwrap();
 				continue

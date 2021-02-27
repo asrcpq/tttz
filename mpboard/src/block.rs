@@ -27,18 +27,10 @@ impl Block {
 		self.pos.1 += SRP[idx + 1];
 	}
 
-	pub fn initial_pos(code: u8) -> i32 {
-		match code {
-			3 => 5,
-			0 => 3,
-			_ => 4,
-		}
-	}
-
 	pub fn new(code: u8) -> Block {
 		Block {
 			code,
-			pos: (Block::initial_pos(code), 0),
+			pos: (INITIAL_POS[code as usize], 0),
 			rotation: 0,
 		}
 	}

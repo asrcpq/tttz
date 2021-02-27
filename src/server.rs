@@ -70,6 +70,7 @@ impl Server {
 				}
 			};
 			let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+			eprintln!("{} from {}", msg, client.id);
 			if msg.starts_with("quit") {
 				self.id_addr.remove_by_left(&client.id).unwrap();
 				continue
@@ -103,14 +104,19 @@ impl Server {
 								client.attack_target,
 								client.board.attack_pool,
 							);
-							client.board.pending_attack += client.board.attack_pool;
-							if client.board.pending_attack > 40 {
-								client.state = 1;
+
+							let mut client_target = self.clients
+								.remove(&client.attack_target)
+								.unwrap();
+							client_target.board.pending_attack += client.board.attack_pool;
+							if client_target.board.pending_attack > 40 {
+								client_target.state = 1;
 							}
 							self.socket.send_to(
-								format!("sigatk {}", client.board.attack_pool).as_bytes(),
+								format!("sigatk {}", client_target.board.pending_attack).as_bytes(),
 								addr,
 							).unwrap();
+							self.clients.insert(client.attack_target, client_target);
 						} else {
 							eprintln!("Client {} is attacking nonexistent target {}",
 								client.id,

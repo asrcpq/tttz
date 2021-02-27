@@ -95,7 +95,7 @@ impl Board {
 		let len = if dr == 2 { 6 } else { 5 };
 		for wkid in 0..len {
 			let left_offset = (dr == -1) as i8 * 40;
-			let idx = (revert_block.rotation * 10 + left_offset + wkid * 2) as usize;
+			let idx = (revert_block.rotation * len * 2 + left_offset + wkid * 2) as usize;
 			let wkd: &Vec<i32> = if dr == 2 {
 				&FWKD
 			} else if revert_block.code == 0 {
@@ -105,10 +105,10 @@ impl Board {
 			};
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
+			if self.ontop {
+				self.tmp_block.pos.1 = 0;
+			}
 			if self.tmp_block.test(self) {
-				if self.ontop {
-					self.tmp_block.pos.1 = 0;
-				}
 				return true;
 			}
 		}

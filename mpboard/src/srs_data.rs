@@ -25,6 +25,10 @@ pub static ref BPT: Vec<i32> = vec![
 	0, 0, 1, 0, 1, 1, 2, 1, 1, 0, 1, 1, 0, 1, 0, 2,
 ];
 
+pub static ref INITIAL_POS: Vec<i32> = vec![
+	3, 4, 4, 5, 4, 4, 4
+];
+
 // each line has two pairs of points of tspin check
 pub static ref TSPIN_MINI_CHECK: Vec<i32> = vec![
 	0, 0, 2, 0,
@@ -41,6 +45,16 @@ pub static ref BLOCK_HEIGHT: Vec<i32> = vec![
 	2, 3, 2, 3,
 	2, 3, 2, 3,
 	2, 3, 2, 3,
+];
+
+pub static ref BLOCK_WIDTH: Vec<i32> = vec![
+	4, 1, 4, 1,
+	3, 2, 3, 2,
+	3, 2, 3, 2,
+	2, 2, 2, 2,
+	3, 2, 3, 2,
+	3, 2, 3, 2,
+	3, 2, 3, 2,
 ];
 
 pub static ref COLORMAP: Vec<u8> = vec![6, 4, 7, 3, 2, 5, 1, 0];
