@@ -13,11 +13,14 @@ name = "mypuzzle-client"
 path = "src/client.rs"
 
 [dependencies]
-lazy_static="*"
-termion="*"
-rand="*"
-bincode="*"
-mpboard={path = "./mpboard"}
+lazy_static = "*"
+termion = "*"
+rand = "*"
+bincode = "*"
+bimap = "*"
+
+[dependencies.mpboard]
+path = "./mpboard"
 
 [workspace]
 members = [

@@ -111,8 +111,26 @@ fn main() {
 					socket.send_to(b"quit", target_addr).unwrap();
 					break;
 				},
-				b'0'..=b'9' => {
-					socket.send_to(format!("view {}", byte as char).as_bytes(), target_addr).unwrap();
+				b'0' => {
+					socket.send_to(
+						format!("get clients").as_bytes(),
+						target_addr
+					).unwrap();
+					socket.set_nonblocking(false);
+					let amt = socket.recv(&mut buf).unwrap();
+					for each_str in String::from(std::str::from_utf8(&buf[..amt]).unwrap())
+						.split_whitespace() {
+						if let Ok(each_id) = each_str.parse::<i32>() {
+							if id != each_id {
+								socket.send_to(
+									format!("attack {}", id).as_bytes(),
+									target_addr
+								).unwrap();
+								break
+							}
+						}
+					}
+					socket.set_nonblocking(true);
 				},
 				_ => {
 					socket
