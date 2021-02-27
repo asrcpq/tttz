@@ -34,6 +34,7 @@ impl Server {
 		let mut client = Client::new(self.id_alloc);
 		client.dc_addrs.push(src);
 		self.clients.insert(src, client);
+		eprintln!("Assign id {}", self.id_alloc);
 		self.socket
 			.send_to(format!("ok {}", self.id_alloc).as_bytes(), src)
 			.unwrap();
@@ -62,22 +63,37 @@ impl Server {
 					continue
 				}
 			};
-			if buf[0] == b'q' {
+			let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+			if msg.starts_with("quit") {
 				for dc_addr in client.dc_addrs.iter() {
 					self.socket.send_to(b"quit", dc_addr).unwrap();
 				}
 				self.id_addr.remove(&client.id).unwrap();
+				continue
+			} else if msg.starts_with("view ") {
+				if let Some(addr) = self.id_addr.get(&(buf[5] as i32 - 48)) {
+					let mut client_to_view = self.clients.remove(addr).unwrap();
+					client_to_view.dc_addrs.push(src);
+					self.clients.insert(*addr, client_to_view);
+				}
 			} else {
 				client.handle_msg(&mut buf[..amt]);
 				client.board.update_display();
 				let msg = bincode::serialize(&client.board.display).unwrap();
-				for dc_addr in client.dc_addrs.iter() {
-					self.socket
-						.send_to(&msg, dc_addr)
-						.unwrap();
+				let mut new_dc_addrs: Vec<SocketAddr> = Vec::new();
+				for dc_addr in client.dc_addrs.drain(..) {
+					// since the sender is temporarily removed from hashmap
+					// it should not be removed from dc_addrs
+					if self.clients.contains_key(&dc_addr) || dc_addr == src {
+						self.socket
+							.send_to(&msg, dc_addr)
+							.unwrap();
+						new_dc_addrs.push(dc_addr);
+					}
 				}
-				self.clients.insert(src, client);
+				client.dc_addrs = new_dc_addrs;
 			}
+			self.clients.insert(src, client);
 			// Do not write anything here, note the continue in match branch
 		}
 	}
@@ -100,9 +116,10 @@ impl Client {
 		}
 	}
 
-	pub fn handle_msg(&mut self, buf: &mut [u8]) {
-		if std::str::from_utf8(buf).unwrap().starts_with("key ") {
-			match buf[4] as char {
+	pub fn handle_msg(&mut self, msg: &[u8]) {
+		let str_msg = std::str::from_utf8(msg).unwrap();
+		if str_msg.starts_with("key ") {
+			match msg[4] as char {
 				'h' => {
 					self.board.move1(1);
 				}

@@ -28,14 +28,15 @@ fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
 	);
 }
 
-fn disp_next(n: u8, hold: u8, data: &[u8], mut offsetx: u8, mut offsety: u8) {
+fn disp_next(n: u8, id: i32, hold: u8, data: &[u8], mut offsetx: u8, mut offsety: u8) {
 	offsetx += 1;
 	offsety += 21;
-	println!("{}hold: {}",
+	println!("{}id: {}, hold: {}",
 		termion::cursor::Goto(
 			offsetx as u16,
 			offsety as u16,
 		),
+		id,
 		ID_TO_CHAR[hold as usize],
 	);
 	for i in 0..n {
@@ -67,7 +68,7 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 		blockp(offsetx + x, offsety + y, display.tmp_code, 0);
 	}
 	println!("{}", termion::style::Reset);
-	disp_next(6, display.hold, &display.bag_preview, offsetx, offsety);
+	disp_next(6, display.id, display.hold, &display.bag_preview, offsetx, offsety);
 }
 
 fn main() {
@@ -92,7 +93,11 @@ fn main() {
 				break;
 			}
 			let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
-			disp(decoded, 0, 0);
+			if decoded.id == id {
+				disp(decoded, 0, 0);
+			} else {
+				disp(decoded, 15, 0);
+			}
 			stdout.flush().unwrap();
 		}
 		if let Some(Ok(byte)) = stdin.next() {
@@ -100,13 +105,16 @@ fn main() {
 				b'q' => {
 					socket.send_to(b"quit", target_addr).unwrap();
 					break;
-				}
-				byte => {
+				},
+				b'0'..=b'9' => {
+					socket.send_to(format!("view {}", byte as char).as_bytes(), target_addr).unwrap();
+				},
+				_ => {
 					socket
 						.send_to(format!("key {}", byte as char).as_bytes(), target_addr)
 						.unwrap();
-				}
-				_ => {}
+				},
+				_ => {},
 			}
 		}
 		std::thread::sleep(std::time::Duration::from_millis(10));
