@@ -133,6 +133,9 @@ impl Board {
 	}
 
 	pub fn checkline(&mut self, ln: Vec<usize>) {
+		if self.attack_pool != 0 {
+			eprintln!("Error! attack_pool not cleared.");
+		}
 		let mut elims = Vec::new();
 		for each_ln in ln.iter() {
 			let mut flag = true;

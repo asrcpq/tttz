@@ -97,6 +97,17 @@ impl Server {
 				// do not display for invalid message or game over
 				if client.handle_msg(&mut buf[..amt]) {
 					client.board.update_display();
+					if client.board.attack_pool > 0 {
+						if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
+							self.socket.send_to(
+								format!("sigatk {}", client.board.attack_pool).as_bytes(),
+								addr,
+							).unwrap();
+						} else {
+							eprintln!("Client {} is attacking nonexist target", client.id);
+						}
+						client.board.attack_pool = 0;
+					}
 					let msg = bincode::serialize(&client.board.display).unwrap();
 					let mut new_dc_ids: Vec<i32> = Vec::new();
 					for dc_id in client.dc_ids.drain(..) {
