@@ -132,10 +132,8 @@ impl Board {
 		true
 	}
 
-	pub fn checkline(&mut self, ln: Vec<usize>) {
-		if self.attack_pool != 0 {
-			eprintln!("Error! attack_pool not cleared.");
-		}
+	// return count of lines eliminated
+	pub fn checkline(&mut self, ln: Vec<usize>) -> u32 {
 		let mut elims = Vec::new();
 		for each_ln in ln.iter() {
 			let mut flag = true;
@@ -151,7 +149,7 @@ impl Board {
 		if elims.is_empty() {
 			self.display.combo = 0;
 			self.display.b2b = false;
-			return;
+			return 0;
 		}
 		let mut movedown = 0;
 		for i in (0..40).rev() {
@@ -173,16 +171,48 @@ impl Board {
 				self.display.color[(i + movedown) * 10 + j] = self.display.color[i * 10 + j];
 			}
 		}
-		self.attack_pool += ATK_NORMAL[21 * (movedown - 1) as usize + self.display.combo as usize];
-		self.display.combo += 1;
-		if self.display.combo > 20 {
-			self.display.combo = 20;
+		movedown as u32
+	}
+
+	// return 0: none, 1: mini, 2: regular
+	fn test_tspin(&mut self) -> u32 {
+		if self.tmp_block.code == 5 {
+			self.tmp_block.pos.0 -= 1;
+			if self.tmp_block.test(self) {
+				return 0;
+			}
+			self.tmp_block.pos.0 += 2;
+			if self.tmp_block.test(self) {
+				return 0;
+			}
+			self.tmp_block.pos.0 -= 1;
+			self.tmp_block.pos.1 -= 1;
+			if self.tmp_block.test(self) {
+				return 0;
+			}
+			self.tmp_block.pos.1 += 1;
+
+			let offset = self.tmp_block.rotation as usize * 4;
+			for i in 0..2 {
+				let check_x = self.tmp_block.pos.0 + TSPIN_MINI_CHECK[offset + i * 2];
+				let check_y = self.tmp_block.pos.1 + TSPIN_MINI_CHECK[offset + i * 2 + 1];
+				if self.display.color[(check_x + check_y * 10) as usize] != 7 {
+					return 1;
+				}
+			}
+			return 2;
 		}
+		0
 	}
 
 	pub fn hard_drop(&mut self) {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
+		// check tspin before setting color
+		let mut tspin = self.test_tspin();
+		if tspin > 0 {
+			eprintln!("{} just did a {}-tspin", self.display.id, tspin);
+		}
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
@@ -199,7 +229,30 @@ impl Board {
 
 			self.display.color[px + py * 10] = self.tmp_block.code;
 		}
-		self.checkline(lines_tocheck);
+		let line_count = self.checkline(lines_tocheck);
+
+		// put attack amount into pool
+		if line_count > 0 {
+			if self.attack_pool != 0 {
+				eprintln!("Error! attack_pool not cleared.");
+			}
+			let offset = 21 * (line_count - 1) as usize + self.display.combo as usize;
+			if tspin == 2 {
+				self.attack_pool = ATK_TSPIN_REGULAR[offset];
+			} else if tspin == 1 {
+				self.attack_pool = ATK_TSPIN_MINI[offset];
+			} else if tspin == 0 {
+				self.attack_pool = ATK_NORMAL[offset];
+			} else {
+				unreachable!();
+			}
+			self.display.combo += 1;
+			if self.display.combo > 20 {
+				self.display.combo = 20;
+			}
+		}
+
+		// new block
 		self.ontop = true;
 		self.tmp_block = Block::new(self.rg.get());
 	}

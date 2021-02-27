@@ -25,6 +25,14 @@ pub static ref BPT: Vec<i32> = vec![
 	0, 0, 1, 0, 1, 1, 2, 1, 1, 0, 1, 1, 0, 1, 0, 2,
 ];
 
+// each line has two pairs of points of tspin check
+pub static ref TSPIN_MINI_CHECK: Vec<i32> = vec![
+	0, 0, 2, 0,
+	1, 0, 1, 2,
+	0, 1, 2, 1,
+	0, 0, 0, 2,
+];
+
 pub static ref BLOCK_HEIGHT: Vec<i32> = vec![
 	1, 4, 1, 4,
 	2, 3, 2, 3,
