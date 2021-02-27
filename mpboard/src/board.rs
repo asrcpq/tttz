@@ -11,7 +11,6 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub display: Display,
 	pub attack_pool: u32,
-	pub pending_attack: u32,
 }
 
 impl Board {
@@ -24,7 +23,6 @@ impl Board {
 			rg,
 			display: Display::new(id),
 			attack_pool: 0,
-			pending_attack: 0,
 		};
 		board.calc_shadow();
 		board
@@ -209,7 +207,7 @@ impl Board {
 		0
 	}
 
-	fn generate_garbage(&mut self, count: u32) {
+	pub fn generate_garbage(&mut self, mut count: u32) {
 		if count == 0 {
 			return;
 		}
@@ -231,7 +229,7 @@ impl Board {
 		}
 	}
 
-	pub fn hard_drop(&mut self) -> bool {
+	pub fn hard_drop(&mut self) {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color
@@ -303,8 +301,8 @@ impl Board {
 			}
 		} else {
 			// plain drop: attack execution
-			self.generate_garbage(self.pending_attack);
-			self.pending_attack = 0;
+			self.generate_garbage(self.display.pending_attack);
+			self.display.pending_attack = 0;
 		}
 
 		// new block

@@ -14,6 +14,7 @@ pub struct Display {
 	pub bag_preview: [u8; 6],
 	pub combo: u32,
 	pub b2b: bool,
+	pub pending_attack: u32,
 }
 
 impl Display {
@@ -29,6 +30,7 @@ impl Display {
 			bag_preview: [0; 6],
 			combo: 0,
 			b2b: false,
+			pending_attack: 0,
 		}
 	}
 }

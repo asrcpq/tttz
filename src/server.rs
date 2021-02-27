@@ -108,13 +108,18 @@ impl Server {
 							let mut client_target = self.clients
 								.remove(&client.attack_target)
 								.unwrap();
-							client_target.board.pending_attack += client.board.attack_pool;
-							if client_target.board.pending_attack > 40 {
+							client_target.board.display.pending_attack +=
+								client.board.attack_pool;
+							if client_target.board.display.pending_attack > 40 {
 								client_target.board.generate_garbage(40);
 								client_target.die();
 							}
 							self.socket.send_to(
-								format!("sigatk {}", client_target.board.pending_attack).as_bytes(),
+								format!("sigatk {}", client_target
+									.board
+									.display
+									.pending_attack
+								).as_bytes(),
 								addr,
 							).unwrap();
 							self.clients.insert(client.attack_target, client_target);

@@ -31,12 +31,11 @@ fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
 fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 	offsetx += 1;
 	offsety += 21;
-	print!("{}{}id: {}, hold: {}",
+	print!("{}id: {}, hold: {}",
 		termion::cursor::Goto(
 			offsetx as u16,
 			offsety as u16,
 		),
-		termion::clear::CurrentLine,
 		display.id,
 		ID_TO_CHAR[display.hold as usize],
 	);
@@ -73,13 +72,31 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 	}
 	print!("{}", termion::style::Reset);
 	disp_info(6, &display, offsetx * 2, offsety);
+	disp_atk(display.pending_attack, offsetx * 2, offsety);
 }
 
-fn disp_atk(atk: u32) {
-	print!("{} pending atk: {}",
-		termion::cursor::Goto(1, 24),
-		atk,
-	)
+fn disp_atk(atk: u32, mut offsetx: u8, offsety: u8) {
+	offsetx += 24;
+	print!("{}", termion::style::Reset);
+	for i in 0..(20 - atk as u16) {
+		print!("{} ",
+			termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
+		);
+	}
+	print!("{}", if atk < 4 {
+		"[43m"
+	} else if atk < 10 {
+		"[41m"
+	} else if atk < 20 {
+		"[45m"
+	} else {
+		"[46m"
+	});
+	for i in (20 - atk as u16)..20 {
+		print!("{} ",
+			termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
+		);
+	}
 }
 
 fn main() {
@@ -105,7 +122,7 @@ fn main() {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
-					disp_atk(pending_atk);
+					disp_atk(pending_atk, 0, 0);
 				}
 				stdout.flush().unwrap();
 				continue
