@@ -173,11 +173,11 @@ impl Board {
 				self.display.color[(i + movedown) * 10 + j] = self.display.color[i * 10 + j];
 			}
 		}
+		self.attack_pool += ATK_NORMAL[21 * (movedown - 1) as usize + self.display.combo as usize];
 		self.display.combo += 1;
 		if self.display.combo > 20 {
 			self.display.combo = 20;
 		}
-		self.attack_pool += ATK_NORMAL[21 * (movedown - 1) as usize + self.display.combo as usize];
 	}
 
 	pub fn hard_drop(&mut self) {

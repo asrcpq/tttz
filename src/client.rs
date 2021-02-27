@@ -43,9 +43,8 @@ fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 	if display.combo > 0 {
 		print!(", combo: {}", display.combo);
 	} 
-	println!();
 	for i in 0..n {
-		println!("{}{}",
+		print!("{}{}",
 			termion::cursor::Goto(
 				(offsetx + i) as u16,
 				(offsety + 1) as u16,
@@ -76,6 +75,13 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 	disp_info(6, &display, offsetx, offsety);
 }
 
+fn disp_atk(atk: u32) {
+	print!("{} total atk: {}",
+		termion::cursor::Goto(1, 24),
+		atk,
+	)
+}
+
 fn main() {
 	let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
 	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
@@ -86,6 +92,8 @@ fn main() {
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 	socket.set_nonblocking(true);
 
+	let mut total_atk: u32 = 0;
+
 	// goto raw mode after ok
 	let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 	write!(stdout, "{}{}", termion::clear::All, termion::cursor::Hide).unwrap();
@@ -94,8 +102,15 @@ fn main() {
 
 	loop {
 		if let Ok(amt) = socket.recv(&mut buf) {
-			if amt < 16 && buf[0] == b'q' {
-				break;
+			// all long messages are board display
+			if amt < 16 {
+				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+				if msg.starts_with("sigatk ") {
+					total_atk += msg[7..amt].parse::<u32>().unwrap();
+					disp_atk(total_atk);
+				}
+				stdout.flush().unwrap();
+				continue
 			}
 			let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
 			if decoded.id == id {
@@ -112,24 +127,27 @@ fn main() {
 					break;
 				},
 				b'0' => {
+					// auto match
 					socket.send_to(
 						format!("get clients").as_bytes(),
 						target_addr
 					).unwrap();
 					socket.set_nonblocking(false);
 					let amt = socket.recv(&mut buf).unwrap();
+					// find latest client
+					let mut max_id = 0;
 					for each_str in String::from(std::str::from_utf8(&buf[..amt]).unwrap())
-						.split_whitespace() {
+						.split_whitespace().rev() {
 						if let Ok(each_id) = each_str.parse::<i32>() {
-							if id != each_id {
-								socket.send_to(
-									format!("attack {}", id).as_bytes(),
-									target_addr
-								).unwrap();
-								break
+							if id != each_id && id > max_id {
+								max_id = each_id;
 							}
 						}
 					}
+					socket.send_to(
+						format!("attack {}", max_id).as_bytes(),
+						target_addr
+					).unwrap();
 					socket.set_nonblocking(true);
 				},
 				_ => {

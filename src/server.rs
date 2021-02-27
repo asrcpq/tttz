@@ -48,7 +48,6 @@ impl Server {
 		let mut buf = [0; 1024];
 		loop {
 			let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
-			eprintln!("{}", std::str::from_utf8(&buf[..amt]).unwrap());
 			let matched_id = if let Some(id) = self.id_addr.get_by_right(&src) {
 				*id
 			} else {
@@ -74,7 +73,7 @@ impl Server {
 			if msg.starts_with("quit") {
 				self.id_addr.remove_by_left(&client.id).unwrap();
 				continue
-			} else if msg.starts_with("show clients") {
+			} else if msg.starts_with("get clients") {
 				let mut return_msg = String::new();
 				for (key, _) in &self.id_addr {
 					return_msg = format!("{}{} ", return_msg, key);
@@ -94,17 +93,25 @@ impl Server {
 					eprintln!("Client {} try to view nonexist {}", client.id, id);
 				}
 			} else {
-				// do not display for invalid message or game over
 				if client.handle_msg(&mut buf[..amt]) {
 					client.board.update_display();
 					if client.board.attack_pool > 0 {
 						if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
+							eprintln!("{} attack {} with {}",
+								matched_id,
+								client.attack_target,
+								client.board.attack_pool,
+							);
 							self.socket.send_to(
 								format!("sigatk {}", client.board.attack_pool).as_bytes(),
 								addr,
 							).unwrap();
 						} else {
-							eprintln!("Client {} is attacking nonexist target", client.id);
+							eprintln!("Client {} is attacking nonexistent target {}",
+								client.id,
+								client.attack_target,
+							);
+							eprintln!("{:?}", self.id_addr);
 						}
 						client.board.attack_pool = 0;
 					}
@@ -154,6 +161,7 @@ impl Client {
 		}
 	}
 
+	// return: whether to update and send display to this client
 	pub fn handle_msg(&mut self, msg: &[u8]) -> bool {
 		let str_msg = std::str::from_utf8(msg).unwrap();
 		if str_msg.starts_with("key ") {
@@ -212,7 +220,21 @@ impl Client {
 				}
 				return true;
 			}
+		} else if str_msg.starts_with("attack ") {
+			let id = match str_msg[7..].parse::<i32>() {
+				Ok(id) => {
+					eprintln!("Attacking {}", id);
+					id
+				},
+				Err(_) => {
+					eprintln!("Invalid attack msg: {}", str_msg);
+					return false;
+				},
+			};
+			self.attack_target = id;
+			return false
 		}
+		eprintln!("Unknown msg: {}", str_msg);
 		false
 	}
 }
