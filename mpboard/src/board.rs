@@ -17,7 +17,7 @@ pub struct Board {
 impl Board {
 	pub fn new(id: i32) -> Board {
 		let mut rg: RandomGenerator = Default::default();
-		Board {
+		let mut board = Board {
 			ontop: true,
 			tmp_block: Block::new(rg.get()),
 			shadow_block: Block::new(0),
@@ -25,7 +25,9 @@ impl Board {
 			display: Display::new(id),
 			attack_pool: 0,
 			pending_attack: 0,
-		}
+		};
+		board.calc_shadow();
+		board
 	}
 
 	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {

@@ -86,8 +86,9 @@ impl Server {
 					.parse::<i32>()
 					.unwrap();
 				if self.id_addr.contains_left(&id) {
+					eprintln!("Client {} viewing {}", client.id, id);
 					let mut client_to_view = self.clients.remove(&id).unwrap();
-					client_to_view.dc_ids.push(id);
+					client_to_view.dc_ids.push(matched_id);
 					self.clients.insert(id, client_to_view);
 				} else {
 					eprintln!("Client {} try to view nonexist {}", client.id, id);
@@ -103,6 +104,9 @@ impl Server {
 								client.board.attack_pool,
 							);
 							client.board.pending_attack += client.board.attack_pool;
+							if client.board.pending_attack > 40 {
+								client.state = 1;
+							}
 							self.socket.send_to(
 								format!("sigatk {}", client.board.attack_pool).as_bytes(),
 								addr,
@@ -127,6 +131,7 @@ impl Server {
 						} else if matched_id == dc_id {
 							&src
 						} else {
+							eprintln!("A removed client: {} was viewing {}", dc_id, matched_id);
 							continue
 						};
 						self.socket

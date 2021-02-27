@@ -126,7 +126,7 @@ fn main() {
 					socket.send_to(b"quit", target_addr).unwrap();
 					break;
 				},
-				b'9' => { // self attack
+				b'9' => { // self attack, for debug
 					socket.send_to(
 						format!("attack {}", id).as_bytes(),
 						target_addr
@@ -151,6 +151,10 @@ fn main() {
 					}
 					socket.send_to(
 						format!("attack {}", max_id).as_bytes(),
+						target_addr
+					).unwrap();
+					socket.send_to(
+						format!("view {}", max_id).as_bytes(),
 						target_addr
 					).unwrap();
 					socket.set_nonblocking(true);

@@ -12,6 +12,10 @@ path = "src/server.rs"
 name = "mypuzzle-client"
 path = "src/client.rs"
 
+[[bin]]
+name = "mypuzzle-ai_dummy"
+path = "src/ai/dummy.rs"
+
 [dependencies]
 lazy_static = "*"
 termion = "*"
