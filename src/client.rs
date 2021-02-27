@@ -1,6 +1,6 @@
+extern crate bincode;
 extern crate termion;
-use termion::event::{Event, Key};
-use termion::input::{MouseTerminal, TermRead};
+use termion::input::MouseTerminal;
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
 extern crate lazy_static;
@@ -9,7 +9,7 @@ use std::io::{Read, stdout, Write};
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 extern crate mpboard;
-use mpboard::block;
+use mpboard::display::Display;
 use mpboard::srs_data::*;
 
 fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
@@ -28,48 +28,46 @@ fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
 	);
 }
 
-fn disp_next(n: u8, data: &[u8]) {
-	let offsetx = 1;
-	let offsety = 21;
+fn disp_next(n: u8, hold: u8, data: &[u8], mut offsetx: u8, mut offsety: u8) {
+	offsetx += 1;
+	offsety += 21;
 	println!("{}hold: {}",
 		termion::cursor::Goto(
-			offsetx,
-			offsety,
+			offsetx as u16,
+			offsety as u16,
 		),
-		ID_TO_CHAR[data[0] as usize],
+		ID_TO_CHAR[hold as usize],
 	);
-	for i in 1..=n {
+	for i in 0..n {
 		println!("{}{}",
 			termion::cursor::Goto(
-				offsetx + i as u16,
-				offsety + 1,
+				(offsetx + i) as u16,
+				(offsety + 1) as u16,
 			),
 			ID_TO_CHAR[data[i as usize] as usize],
 		);
 	}
 }
 
-fn disp(buf: &[u8]) {
+fn disp(display: Display, offsetx: u8, offsety: u8) {
 	for i in 0..10 {
-		for j in 0..20 {
-			blockp(i, j + 20, buf[i as usize + j as usize * 10], 0);
+		for j in 20..40 {
+			blockp(offsetx + i, offsety + j, display.color[i as usize + j as usize * 10], 0);
 		}
 	}
-	let offset = 200;
 	// show shadow_block first
 	for i in 0..4 {
-		let x = buf[offset + i * 2];
-		let y = buf[offset + i * 2 + 1];
-		blockp(x, y, buf[offset + 8], 1);
+		let x = display.shadow_pos[i * 2];
+		let y = display.shadow_pos[i * 2 + 1];
+		blockp(offsetx + x, offsety + y, display.shadow_code, 1);
 	}
-	let offset = 209;
 	for i in 0..4 {
-		let x = buf[offset + i * 2];
-		let y = buf[offset + i * 2 + 1];
-		blockp(x, y, buf[offset + 8], 0);
+		let x = display.tmp_pos[i * 2];
+		let y = display.tmp_pos[i * 2 + 1];
+		blockp(offsetx + x, offsety + y, display.tmp_code, 0);
 	}
 	println!("{}", termion::style::Reset);
-	disp_next(6, &buf[218..225]);
+	disp_next(6, display.hold, &display.bag_preview, offsetx, offsety);
 }
 
 fn main() {
@@ -77,8 +75,9 @@ fn main() {
 	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
 	socket.send_to(b"new client", &target_addr).unwrap();
 	let mut buf = [0; 1024];
-	let (_, _) = socket.recv_from(&mut buf).unwrap();
+	let (amt, _) = socket.recv_from(&mut buf).unwrap();
 	assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
+	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 	socket.set_nonblocking(true);
 
 	// goto raw mode after ok
@@ -92,7 +91,8 @@ fn main() {
 			if amt < 16 && buf[0] == b'q' {
 				break;
 			}
-			disp(&buf[..amt]);
+			let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
+			disp(decoded, 0, 0);
 			stdout.flush().unwrap();
 		}
 		if let Some(Ok(byte)) = stdin.next() {

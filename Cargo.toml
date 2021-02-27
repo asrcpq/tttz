@@ -16,6 +16,7 @@ path = "src/client.rs"
 lazy_static="*"
 termion="*"
 rand="*"
+bincode="*"
 mpboard={path = "./mpboard"}
 
 [workspace]

@@ -7,3 +7,7 @@ edition = "2018"
 [dependencies]
 rand = "*"
 lazy_static = "*"
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]

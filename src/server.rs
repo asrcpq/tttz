@@ -1,4 +1,5 @@
 extern crate lazy_static;
+extern crate bincode;
 extern crate rand;
 extern crate termion;
 
@@ -25,8 +26,19 @@ impl Server {
 			in_game: false,
 			clients: HashMap::new(),
 			id_addr: HashMap::new(),
-			id_alloc: 0,
+			id_alloc: 1,
 		}
+	}
+
+	fn client_connect(&mut self, src: SocketAddr) {
+		let mut client = Client::new(self.id_alloc);
+		client.dc_addrs.push(src);
+		self.clients.insert(src, client);
+		self.socket
+			.send_to(format!("ok {}", self.id_alloc).as_bytes(), src)
+			.unwrap();
+		self.id_addr.insert(self.id_alloc, src);
+		self.id_alloc += 1;
 	}
 
 	pub fn main_loop(&mut self) {
@@ -43,14 +55,7 @@ impl Server {
 						.unwrap()
 						.starts_with("new client")
 					{
-						let mut client = Client::new(self.id_alloc);
-						client.dc_addrs.push(src);
-						self.clients.insert(src, client);
-						self.socket
-							.send_to(format!("ok {}", self.id_alloc).as_bytes(), src)
-							.unwrap();
-						self.id_addr.insert(self.id_alloc, src);
-						self.id_alloc += 1;
+						self.client_connect(src);
 					} else {
 						eprintln!("Unknown client: {:?}", src);
 					}
@@ -64,9 +69,9 @@ impl Server {
 				self.id_addr.remove(&client.id).unwrap();
 			} else {
 				client.handle_msg(&mut buf[..amt]);
-				
+				client.board.update_display();
+				let msg = bincode::serialize(&client.board.display).unwrap();
 				for dc_addr in client.dc_addrs.iter() {
-					let msg = self.build_msg(&client);
 					self.socket
 						.send_to(&msg, dc_addr)
 						.unwrap();
@@ -75,23 +80,6 @@ impl Server {
 			}
 			// Do not write anything here, note the continue in match branch
 		}
-	}
-
-	// This should be O(1), but currently rust cannot concat bytestring
-	fn build_msg(&self, client: &Client) -> [u8; 225] {
-		let mut target: [u8; 225] = [0; 225];
-		// only send visible part
-		target[0..200].clone_from_slice(&client.board.color[200..400]);
-		target[200..208].clone_from_slice(&client.board.shadow_block.getpos()[..]);
-		target[208] = client.board.shadow_block.code;
-		target[209..217].clone_from_slice(&client.board.tmp_block.getpos()[..]);
-		target[217] = client.board.tmp_block.code;
-		target[218] = client.board.hold;
-		// vecdeque cannot have slice
-		for i in 0..6 {
-			target[219 + i] = client.board.rg.bag[i];
-		}
-		target
 	}
 }
 
@@ -108,7 +96,7 @@ impl Client {
 			id,
 			dc_addrs: Vec::new(),
 			ready: false,
-			board: Default::default(),
+			board: Board::new(id),
 		}
 	}
 

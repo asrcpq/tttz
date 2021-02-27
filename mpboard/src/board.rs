@@ -1,31 +1,28 @@
 use crate::block::Block;
+use crate::display::Display;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
 
 pub struct Board {
-	pub color: Vec<u8>,
 	ontop: bool,
 	pub tmp_block: Block,
 	pub shadow_block: Block,
 	pub rg: RandomGenerator,
-	pub hold: u8,
-}
-
-impl Default for Board {
-	fn default() -> Board {
-		let mut rg: RandomGenerator = Default::default();
-		Board {
-			ontop: true,
-			color: vec![7; 10 * 40],
-			tmp_block: Block::new(rg.get()),
-			shadow_block: Block::new(0),
-			rg,
-			hold: 7,
-		}
-	}
+	pub display: Display,
 }
 
 impl Board {
+	pub fn new(id: i32) -> Board {
+		let mut rg: RandomGenerator = Default::default();
+		Board {
+			ontop: true,
+			tmp_block: Block::new(rg.get()),
+			shadow_block: Block::new(0),
+			rg,
+			display: Display::new(id),
+		}
+	}
+
 	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {
 		if pos.0 < 0 || pos.1 < 0 {
 			return false;
@@ -40,7 +37,7 @@ impl Board {
 		if !self.is_pos_inside(pos) {
 			return false;
 		}
-		self.color[pos.0 as usize + pos.1 as usize * 10] == 7
+		self.display.color[pos.0 as usize + pos.1 as usize * 10] == 7
 	}
 
 	fn movedown1(&mut self) -> bool {
@@ -122,12 +119,12 @@ impl Board {
 	}
 
 	pub fn hold(&mut self) {
-		if self.hold == 7 {
-			self.hold = self.tmp_block.code;
+		if self.display.hold == 7 {
+			self.display.hold = self.tmp_block.code;
 			self.tmp_block = Block::new(self.rg.get());
 		} else {
-			let tmp = self.hold;
-			self.hold = self.tmp_block.code;
+			let tmp = self.display.hold;
+			self.display.hold = self.tmp_block.code;
 			self.tmp_block = Block::new(tmp);
 		}
 		self.ontop = true;
@@ -147,7 +144,7 @@ impl Board {
 		for each_ln in ln.iter() {
 			let mut flag = true;
 			for i in each_ln * 10..(each_ln + 1) * 10 {
-				if self.color[i] == 7 {
+				if self.display.color[i] == 7 {
 					flag = false;
 				}
 			}
@@ -175,7 +172,7 @@ impl Board {
 				continue;
 			}
 			for j in 0..10 {
-				self.color[(i + movedown) * 10 + j] = self.color[i * 10 + j];
+				self.display.color[(i + movedown) * 10 + j] = self.display.color[i * 10 + j];
 			}
 		}
 	}
@@ -197,7 +194,7 @@ impl Board {
 				lines_tocheck.push(py);
 			}
 
-			self.color[px + py * 10] = self.tmp_block.code;
+			self.display.color[px + py * 10] = self.tmp_block.code;
 		}
 		self.checkline(lines_tocheck);
 		self.ontop = true;
@@ -228,6 +225,16 @@ impl Board {
 					return true;
 				}
 			}
+		}
+	}
+
+	pub fn update_display(&mut self) {
+		self.display.shadow_pos = self.shadow_block.getpos();
+		self.display.shadow_code = self.shadow_block.code;
+		self.display.tmp_pos = self.tmp_block.getpos();
+		self.display.tmp_code = self.tmp_block.code;
+		for i in 0..6 {
+			self.display.bag_preview[i] = self.rg.bag[i];
 		}
 	}
 }
