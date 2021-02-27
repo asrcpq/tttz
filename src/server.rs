@@ -97,7 +97,10 @@ impl Server {
 			} else {
 				if client.handle_msg(&mut buf[..amt]) {
 					client.board.update_display();
-					if client.board.attack_pool > 0 {
+					if client.board.display.pending_attack >= client.board.attack_pool {
+						client.board.display.pending_attack -= client.board.attack_pool;
+					} else {
+						client.board.attack_pool -= client.board.display.pending_attack;
 						if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
 							eprintln!("{} attack {} with {}",
 								matched_id,
