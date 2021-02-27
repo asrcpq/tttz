@@ -28,24 +28,29 @@ fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
 	);
 }
 
-fn disp_next(n: u8, id: i32, hold: u8, data: &[u8], mut offsetx: u8, mut offsety: u8) {
+fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 	offsetx += 1;
 	offsety += 21;
-	println!("{}id: {}, hold: {}",
+	print!("{}{}id: {}, hold: {}",
 		termion::cursor::Goto(
 			offsetx as u16,
 			offsety as u16,
 		),
-		id,
-		ID_TO_CHAR[hold as usize],
+		termion::clear::CurrentLine,
+		display.id,
+		ID_TO_CHAR[display.hold as usize],
 	);
+	if display.combo > 0 {
+		print!(", combo: {}", display.combo);
+	} 
+	println!();
 	for i in 0..n {
 		println!("{}{}",
 			termion::cursor::Goto(
 				(offsetx + i) as u16,
 				(offsety + 1) as u16,
 			),
-			ID_TO_CHAR[data[i as usize] as usize],
+			ID_TO_CHAR[display.bag_preview[i as usize] as usize],
 		);
 	}
 }
@@ -68,7 +73,7 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 		blockp(offsetx + x, offsety + y, display.tmp_code, 0);
 	}
 	println!("{}", termion::style::Reset);
-	disp_next(6, display.id, display.hold, &display.bag_preview, offsetx, offsety);
+	disp_info(6, &display, offsetx, offsety);
 }
 
 fn main() {
