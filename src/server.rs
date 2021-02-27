@@ -89,6 +89,7 @@ impl Server {
 					self.clients.insert(*addr, client_to_view);
 				}
 			} else {
+				// do not display for invalid message or game over
 				if client.handle_msg(&mut buf[..amt]) {
 					client.board.update_display();
 					let msg = bincode::serialize(&client.board.display).unwrap();
@@ -115,7 +116,7 @@ impl Server {
 struct Client {
 	id: i32,
 	dc_addrs: Vec<SocketAddr>,
-	ready: bool,
+	state: i32,
 	board: Board,
 }
 
@@ -124,7 +125,7 @@ impl Client {
 		Client {
 			id,
 			dc_addrs: Vec::new(),
-			ready: false,
+			state: 1,
 			board: Board::new(id),
 		}
 	}
@@ -132,49 +133,61 @@ impl Client {
 	pub fn handle_msg(&mut self, msg: &[u8]) -> bool {
 		let str_msg = std::str::from_utf8(msg).unwrap();
 		if str_msg.starts_with("key ") {
-			match msg[4] as char {
-				'h' => {
-					self.board.move1(1);
+			if self.state == 1 {
+				if msg[4] == b'r' {
+					self.board = Board::new(self.id);
+					self.state = 2;
+					return true
 				}
-				'H' => {
-					self.board.move2(1);
+			} else if self.state == 2 { // in game
+				match msg[4] as char {
+					'h' => {
+						self.board.move1(1);
+					}
+					'H' => {
+						self.board.move2(1);
+					}
+					'l' => {
+						self.board.move1(-1);
+					}
+					'L' => {
+						self.board.move2(-1);
+					}
+					'k' => {
+						self.board.press_up();
+					}
+					'j' => {
+						self.board.press_down();
+					}
+					'J' => {
+						self.board.slowdown(1);
+					}
+					'K' => {
+						self.board.slowdown(5);
+					}
+					'z' => {
+						self.board.rotate(-1);
+					}
+					'x' => {
+						self.board.rotate(1);
+					}
+					'd' => {
+						self.board.rotate(2);
+					}
+					' ' => {
+						self.board.hold();
+					}
+					ch => {
+						eprintln!("Unknown key {}", ch);
+					}
 				}
-				'l' => {
-					self.board.move1(-1);
+				if !self.board.calc_shadow() {
+					eprintln!("Game over: id {}", self.id);
+					self.state = 1;
+					return false
 				}
-				'L' => {
-					self.board.move2(-1);
-				}
-				'k' => {
-					self.board.press_up();
-				}
-				'j' => {
-					self.board.press_down();
-				}
-				'J' => {
-					self.board.slowdown(1);
-				}
-				'K' => {
-					self.board.slowdown(5);
-				}
-				'z' => {
-					self.board.rotate(-1);
-				}
-				'x' => {
-					self.board.rotate(1);
-				}
-				'd' => {
-					self.board.rotate(2);
-				}
-				' ' => {
-					self.board.hold();
-				}
-				ch => {
-					eprintln!("Unknown key {}", ch);
-				}
+				return true;
 			}
-			self.board.calc_shadow();
-			return true;
 		}
 		false
 	}

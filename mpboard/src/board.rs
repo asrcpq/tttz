@@ -209,8 +209,10 @@ impl Board {
 		loop {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
-				if self.shadow_block.pos.1 < 20 {
-					panic!("Game over is not implemented!");
+				if self.shadow_block.pos.1 + BLOCK_HEIGHT[
+					self.tmp_block.code as usize * 4 + self.tmp_block.rotation as usize
+				] <= 21 {
+					return false;
 				} else {
 					self.shadow_block.pos.1 -= 1;
 					return true;
