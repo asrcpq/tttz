@@ -87,8 +87,8 @@ impl Board {
 		let std_pos = self.tmp_block.pos;
 		let len = if dr == 2 { 6 } else { 5 };
 		for wkid in 0..len {
-			let right_offset = (dr == 1) as i8 * 40;
-			let idx = (revert_block.rotation * 10 + right_offset + wkid * 2) as usize;
+			let left_offset = (dr == -1) as i8 * 40;
+			let idx = (revert_block.rotation * 10 + left_offset + wkid * 2) as usize;
 			let wkd: &Vec<i32> = if dr == 2 {
 				&FWKD
 			} else if revert_block.code == 0 {
