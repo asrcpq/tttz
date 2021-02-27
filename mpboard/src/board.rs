@@ -2,6 +2,7 @@ use crate::block::Block;
 use crate::display::Display;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
+use rand::Rng;
 
 pub struct Board {
 	ontop: bool,
@@ -10,6 +11,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub display: Display,
 	pub attack_pool: u32,
+	pub pending_attack: u32,
 }
 
 impl Board {
@@ -22,6 +24,7 @@ impl Board {
 			rg,
 			display: Display::new(id),
 			attack_pool: 0,
+			pending_attack: 0,
 		}
 	}
 
@@ -148,7 +151,6 @@ impl Board {
 		}
 		if elims.is_empty() {
 			self.display.combo = 0;
-			self.display.b2b = false;
 			return 0;
 		}
 		let mut movedown = 0;
@@ -196,13 +198,41 @@ impl Board {
 			for i in 0..2 {
 				let check_x = self.tmp_block.pos.0 + TSPIN_MINI_CHECK[offset + i * 2];
 				let check_y = self.tmp_block.pos.1 + TSPIN_MINI_CHECK[offset + i * 2 + 1];
-				if self.display.color[(check_x + check_y * 10) as usize] != 7 {
+				if self.display.color[(check_x + check_y * 10) as usize] == 7 {
 					return 1;
 				}
 			}
 			return 2;
 		}
 		0
+	}
+
+	// return false if game over
+	fn generate_garbage(&mut self, count: u32) -> bool {
+		if count == 0 {
+			return true;
+		}
+		for y in 0..count as usize {
+			for x in 0..10 {
+				if self.display.color[y * 10 + x] != 7 {
+					return false
+				}
+			}
+		}
+		for y in 0..(40 - count as usize) {
+			for x in 0..10 {
+				self.display.color[y * 10 + x] = self.display.color[(y + count as usize) * 10 + x];
+			}
+		}
+		for y in 0..(count as usize) {
+			let yy = 39 - y;
+			for x in 0..10 {
+				self.display.color[yy * 10 + x] = 2;
+			}
+			let slot = self.rg.rng.gen_range(0..10);
+			self.display.color[yy * 10 + slot] = 7;
+		}
+		true
 	}
 
 	pub fn hard_drop(&mut self) {
@@ -237,19 +267,48 @@ impl Board {
 				eprintln!("Error! attack_pool not cleared.");
 			}
 			let offset = 21 * (line_count - 1) as usize + self.display.combo as usize;
-			if tspin == 2 {
-				self.attack_pool = ATK_TSPIN_REGULAR[offset];
-			} else if tspin == 1 {
-				self.attack_pool = ATK_TSPIN_MINI[offset];
-			} else if tspin == 0 {
-				self.attack_pool = ATK_NORMAL[offset];
+			if self.display.b2b {
+				if tspin == 2 {
+					self.attack_pool = ATK_B2B_TSPIN_REGULAR[offset];
+				} else if tspin == 1 {
+					self.attack_pool = ATK_B2B_TSPIN_MINI[offset];
+				} else if tspin == 0 {
+					if line_count == 4 {
+						self.attack_pool = ATK_B2B_QUAD[self.display.combo as usize];
+					} else {
+						self.attack_pool = ATK_NORMAL[offset];
+						self.display.b2b = false;
+					}
+				} else {
+					unreachable!();
+				}
 			} else {
-				unreachable!();
+				if tspin == 2 {
+					self.attack_pool = ATK_TSPIN_REGULAR[offset];
+					self.display.b2b = true;
+				} else if tspin == 1 {
+					self.attack_pool = ATK_TSPIN_MINI[offset];
+					self.display.b2b = true;
+				} else if tspin == 0 {
+					if line_count == 4 {
+						self.display.b2b = true;
+					}
+					self.attack_pool = ATK_NORMAL[offset];
+				} else {
+					unreachable!();
+				}
+			}
+			if tspin == 2 || line_count == 4 {
+				self.display.b2b == true;
 			}
 			self.display.combo += 1;
 			if self.display.combo > 20 {
 				self.display.combo = 20;
 			}
+		} else {
+			// plain drop: attack execution
+			self.generate_garbage(self.pending_attack);
+			self.pending_attack = 0;
 		}
 
 		// new block

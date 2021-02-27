@@ -102,6 +102,7 @@ impl Server {
 								client.attack_target,
 								client.board.attack_pool,
 							);
+							client.board.pending_attack += client.board.attack_pool;
 							self.socket.send_to(
 								format!("sigatk {}", client.board.attack_pool).as_bytes(),
 								addr,

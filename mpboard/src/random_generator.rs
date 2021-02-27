@@ -4,7 +4,7 @@ use rand::thread_rng;
 use std::collections::VecDeque;
 
 pub struct RandomGenerator {
-	rng: ThreadRng,
+	pub rng: ThreadRng, // directly called for garbage generation
 	pub bag: VecDeque<u8>,
 }
 
