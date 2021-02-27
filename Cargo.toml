@@ -9,12 +9,8 @@ name = "mypuzzle-server"
 path = "src/server.rs"
 
 [[bin]]
-name = "mypuzzle-cc"
-path = "src/control_client.rs"
-
-[[bin]]
-name = "mypuzzle-dc"
-path = "src/display_client.rs"
+name = "mypuzzle-client"
+path = "src/client.rs"
 
 [dependencies]
 lazy_static="*"

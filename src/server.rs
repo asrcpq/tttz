@@ -41,31 +41,13 @@ impl Server {
 				None => {
 					if std::str::from_utf8(&buf[..amt])
 						.unwrap()
-						.starts_with("new dc ")
+						.starts_with("new client")
 					{
-						let id = std::str::from_utf8(&buf[7..amt])
-							.unwrap()
-							.parse::<i32>()
-							.unwrap();
-						println!("{:?}", self.id_addr);
-						match self.id_addr.get(&id) {
-							None => {
-								eprintln!("A dc client ask {}, but it does not exist", id);
-								self.socket.send_to(b"ko", src).unwrap();
-							}
-							Some(addr) => {
-								self.clients.get_mut(addr).unwrap().dc_addrs.push(src);
-								self.socket.send_to(b"ok", src).unwrap();
-							}
-						}
-					} else if std::str::from_utf8(&buf[..amt])
-						.unwrap()
-						.starts_with("new cc")
-					{
-						self.clients.insert(src, Client::new(self.id_alloc));
-						// TODO: proper serialization
+						let mut client = Client::new(self.id_alloc);
+						client.dc_addrs.push(src);
+						self.clients.insert(src, client);
 						self.socket
-							.send_to(format!("{}", self.id_alloc).as_bytes(), src)
+							.send_to(format!("ok {}", self.id_alloc).as_bytes(), src)
 							.unwrap();
 						self.id_addr.insert(self.id_alloc, src);
 						self.id_alloc += 1;
@@ -96,14 +78,19 @@ impl Server {
 	}
 
 	// This should be O(1), but currently rust cannot concat bytestring
-	fn build_msg(&self, client: &Client) -> [u8; 218] {
-		let mut target: [u8; 218] = [0; 218];
+	fn build_msg(&self, client: &Client) -> [u8; 225] {
+		let mut target: [u8; 225] = [0; 225];
 		// only send visible part
 		target[0..200].clone_from_slice(&client.board.color[200..400]);
 		target[200..208].clone_from_slice(&client.board.shadow_block.getpos()[..]);
 		target[208] = client.board.shadow_block.code;
 		target[209..217].clone_from_slice(&client.board.tmp_block.getpos()[..]);
 		target[217] = client.board.tmp_block.code;
+		target[218] = client.board.hold;
+		// vecdeque cannot have slice
+		for i in 0..6 {
+			target[219 + i] = client.board.rg.bag[i];
+		}
 		target
 	}
 }
@@ -164,8 +151,8 @@ impl Client {
 				' ' => {
 					self.board.hold();
 				}
-				_ => {
-					panic!();
+				ch => {
+					eprintln!("Unknown key {}", ch);
 				}
 			}
 			self.board.calc_shadow();

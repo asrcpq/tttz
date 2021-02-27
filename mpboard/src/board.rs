@@ -7,8 +7,8 @@ pub struct Board {
 	ontop: bool,
 	pub tmp_block: Block,
 	pub shadow_block: Block,
-	rg: RandomGenerator,
-	hold: u8,
+	pub rg: RandomGenerator,
+	pub hold: u8,
 }
 
 impl Default for Board {
