@@ -76,25 +76,7 @@ impl Server {
 			}
 			client.board.attack_pool = 0;
 		}
-		let msg = bincode::serialize(&client.board.display).unwrap();
-		let mut new_dc_ids: Vec<i32> = Vec::new();
-		for dc_id in client.dc_ids.drain(..) {
-			// The gc of dc_addr happens here, so the check is necessary,
-			// since the sender is temporarily removed from hashmap
-			// we will perform an extra check for it
-			let dc_addr = if let Some(addr) = self.id_addr.get_by_left(&dc_id) {
-				addr
-			} else if matched_id == dc_id {
-				&src
-			} else {
-				eprintln!("A removed client: {} was viewing {}", dc_id, matched_id);
-				continue
-			};
-			self.socket
-				.send_to(&msg, dc_addr)
-				.unwrap();
-			new_dc_ids.push(dc_id);
-		}
+		let new_dc_ids = client.send_display(&self.socket, &self.id_addr);
 		client.dc_ids = new_dc_ids;
 	}
 
@@ -150,6 +132,7 @@ impl Server {
 				}
 			} else {
 				if client.handle_msg(&mut buf[..amt]) {
+					// display is included in after_operation
 					self.after_operation(&mut client, src, matched_id);
 				}
 			}
@@ -176,6 +159,23 @@ impl Client {
 			board: Board::new(id),
 			attack_target: 0,
 		}
+	}
+
+	pub fn send_display(&mut self, socket: &UdpSocket, id_addr: &BiMap<i32, SocketAddr>)
+		-> Vec<i32> {
+		let msg = bincode::serialize(&self.board.display).unwrap();
+		let mut new_dc_ids: Vec<i32> = Vec::new();
+		for dc_id in self.dc_ids.drain(..) {
+			let dc_addr = if let Some(addr) = id_addr.get_by_left(&dc_id) {
+				addr
+			} else {
+				eprintln!("A removed client: {} was viewing {}", dc_id, self.id);
+				continue
+			};
+			socket.send_to(&msg, dc_addr).unwrap();
+			new_dc_ids.push(dc_id);
+		}
+		new_dc_ids
 	}
 
 	// return: whether to update and send display to this client
