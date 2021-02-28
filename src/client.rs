@@ -64,8 +64,8 @@ fn disp(display: Display, offsetx: u8, offsety: u8) {
 		blockp(offsetx + x * 2, offsety + y, display.shadow_code, 1);
 	}
 	for i in 0..4 {
-		let x = display.tmp_pos[i];
-		let y = display.tmp_pos[i + 1];
+		let x = display.tmp_pos[i * 2];
+		let y = display.tmp_pos[i * 2 + 1];
 		blockp(offsetx + x * 2, offsety + y, display.tmp_code, 0);
 	}
 	print!("{}", termion::style::Reset);
