@@ -175,7 +175,7 @@ impl Server {
 				return_msg.pop();
 				self.socket.send_to(&return_msg.as_bytes(), src).unwrap();
 			} else if msg.starts_with("view ") {
-				let id = msg[5..].parse::<i32>().unwrap();
+				let id = msg[5..].parse::<i32>().unwrap_or(0);
 				let viewed_client = self.client_manager.tmp_pop_by_id(id);
 				match viewed_client {
 					Some(mut viewed_client) => {

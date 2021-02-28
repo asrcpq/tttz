@@ -8,10 +8,10 @@ use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
-const SLEEP_MILLIS: u64 = 70;
+const SLEEP_MILLIS: u64 = 200;
 
 fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
-	let mut heights = [0u8; 10];
+	let mut heights = [39u8; 10];
 
 	if display.hold == 7 {
 		socket
@@ -21,16 +21,31 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	}
 
 	// calc height
+	let mut highest_hole = 40;
+	let mut highest_hole_x = -1;
 	for i in 0..10 {
 		let mut j: i32 = 0;
-		while display.color[(i + j * 10) as usize] == 7 {
+		let mut state = 0;
+		loop {
+			if display.color[(i + j * 10) as usize] == 7 {
+				if state == 1 {
+					break
+				}
+			} else {
+				if state == 0 {
+					state = 1;
+					heights[i as usize] = j as u8 - 1;
+				}
+			}
 			j += 1;
-			if j >= 40 {
+			if j == 40 {
 				break
 			}
 		}
-		j -= 1;
-		heights[i as usize] = j as u8;
+		if j > highest_hole {
+			highest_hole = j;
+			highest_hole_x = i;
+		}
 	}
 
 	let mut best_score: f32 = 0.0;
@@ -51,6 +66,10 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 					let offset = option_code * 32 + rot * 8 + block * 2;
 					posx[block as usize] = BPT[offset as usize];
 					posy[block as usize] = BPT[(offset + 1) as usize];
+				}
+				let mut posy_sum = 0;
+				for i in 0..4 {
+					posy_sum += posy[i];
 				}
 				let mut height = 0;
 				'movedown_check: loop {
@@ -81,9 +100,16 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 						hole += 1;
 					}
 				}
-				let score = height as f32 - hole as f32 * 2.0; 
+				let cover = (dx <= highest_hole_x &&
+					dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > highest_hole_x)
+					as i32;
+				let score = height as f32 + posy_sum as f32 * 0.25 // mass center height
+					- hole as f32 - cover as f32 * 2.0;
 				if score > best_score {
-					println!("{} overtake {} at dx: {}, rot: {}",
+					println!("{} {} {} = {} overtake {} at dx: {}, rot: {}",
+						height,
+						hole,
+						cover,
 						score,
 						best_score,
 						dx,
@@ -166,7 +192,6 @@ fn main() {
 	let mut display: Option<Display> = None;
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
-		// stdin.lock().lines().next().unwrap().unwrap();
 
 		// read until last screen
 		loop {
