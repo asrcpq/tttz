@@ -39,20 +39,20 @@ fn main() {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
-					client_display.disp_atk(pending_atk, 1, 1);
+					client_display.disp_atk(pending_atk, 2, 2);
 				} else if msg == "start" {
 					state = 2;
 				} else if msg == "die" || msg == "win" {
 					state = 1;
 				}
-				client_display.disp_msg(&msg, 0, 0);
+				client_display.disp_msg(&msg, 2, 2);
 				continue
 			} else {
 				let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
 				if decoded.id == id {
-					client_display.disp(decoded, 1, 1);
+					client_display.disp(decoded, 0);
 				} else {
-					client_display.disp(decoded, 31, 1);
+					client_display.disp(decoded, 1);
 				}
 			}
 			stdout.flush();

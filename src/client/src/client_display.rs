@@ -6,18 +6,23 @@ extern crate mpboard;
 use mpboard::display::Display;
 use mpboard::srs_data::*;
 
-#[derive(Default)]
-pub struct ClientDisplay {}
+use std::collections::HashMap;
+
+pub struct ClientDisplay {
+	last_dirtypos: Vec<Vec<(u32, u32)>>,
+}
 
 impl ClientDisplay {
 	pub fn new() -> ClientDisplay {
 		// goto raw mode after ok
 		print!("{}{}", termion::clear::All, termion::cursor::Hide);
 		std::io::stdout().flush().unwrap();
-		Default::default()
+		ClientDisplay {
+			last_dirtypos: vec![vec![]; 2],
+		}
 	}
 	
-	fn blockp(&mut self, i: u8, mut j: u8, color: u8, style: u8) {
+	fn blockp(&self, i: u8, mut j: u8, color: u8, style: u8) {
 		if j < 20 {
 			return;
 		}
@@ -33,8 +38,8 @@ impl ClientDisplay {
 		);
 	}
 
-	pub fn disp_msg(&mut self, msg: &str, mut offsetx: u8, mut offsety: u8) {
-		offsety += 23;
+	pub fn disp_msg(&self, msg: &str, mut offsetx: u8, mut offsety: u8) {
+		offsety += 22;
 		print!(
 			"{}{}{}",
 			termion::style::Reset,
@@ -43,7 +48,7 @@ impl ClientDisplay {
 		);
 	}
 	
-	fn disp_info(&mut self, n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
+	fn disp_info(&self, display: &Display, mut offsetx: u8, mut offsety: u8) {
 		offsetx += 0;
 		offsety += 20;
 		print!("{}id: {}, hold: {}",
@@ -55,18 +60,77 @@ impl ClientDisplay {
 			ID_TO_CHAR[display.hold as usize],
 		);
 		print!(", combo: {}", display.combo);
-		for i in 0..n {
+		// old direct print next
+		// for i in 0..n {
+		// 	print!("{}{}",
+		// 		termion::cursor::Goto(
+		// 			(offsetx + i) as u16,
+		// 			(offsety + 1) as u16,
+		// 		),
+		// 		ID_TO_CHAR[display.bag_preview[i as usize] as usize],
+		// 	);
+		// }
+	}
+
+	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: u32) {
+		let mut print_info: HashMap<(u32, u32), i32> = HashMap::new();
+		for i in 0..4 {
+			let bpt_offset = 32 * code + i * 2;
+			let x1 = BPT[bpt_offset as usize] as u32 + x;
+			let double_y1 = BPT[bpt_offset as usize + 1] as u32 + double_y;
+			let y1 = double_y1 / 2;
+			let mut mod2 = double_y1 as i32 % 2 + 1;
+			if let Some(old_mod2) = print_info.remove(&(x1, y1)) {
+				mod2 |= old_mod2;
+			}
+			print_info.insert((x1, y1), mod2);
+		}
+		print!("[3{}m", COLORMAP[code as usize]);
+
+		for ((x, y), value) in &print_info {
+			// value should not be zero
+			let print_char = match value {
+				1 => "\u{2580}",
+				2 => "\u{2584}",
+				3 => "\u{2588}",
+				_ => unreachable!(),
+			};
 			print!("{}{}",
-				termion::cursor::Goto(
-					(offsetx + i) as u16,
-					(offsety + 1) as u16,
-				),
-				ID_TO_CHAR[display.bag_preview[i as usize] as usize],
+				termion::cursor::Goto(*x as u16, *y as u16),
+				print_char,
 			);
+			self.last_dirtypos[panel as usize].push((*x, *y))
+		}
+		print!("{}", termion::style::Reset);
+	}
+
+	fn disp_hold_next(&mut self, n: usize, display: &Display, panel: u32) {
+		let offsetx = if panel == 1 {
+			23 + 32
+		} else {
+			23 + 2
+		};
+		let offsety = 3;
+		let mut doubley = offsety * 2; 
+		for (x, y) in self.last_dirtypos[panel as usize].drain(..) {
+			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
+		}
+		if display.hold != 7 {
+			self.mini_blockp(offsetx as u32, doubley as u32, display.hold, panel);
+		}
+		for i in 0..n {
+			doubley += 4;
+			self.mini_blockp(offsetx as u32, doubley as u32, display.bag_preview[i], panel);
 		}
 	}
 	
-	pub fn disp(&mut self, display: Display, offsetx: u8, offsety: u8) {
+	pub fn disp(&mut self, display: Display, panel: u32) {
+		let offsetx = if panel == 1 {
+			32
+		} else {
+			2
+		};
+		let offsety = 2;
 		for i in 0..10 {
 			for j in 20..40 {
 				self.blockp(offsetx + i * 2, offsety + j, display.color[i as usize + j as usize * 10], 0);
@@ -84,12 +148,13 @@ impl ClientDisplay {
 			self.blockp(offsetx + x * 2, offsety + y, display.tmp_code, 0);
 		}
 		print!("{}", termion::style::Reset);
-		self.disp_info(6, &display, offsetx, offsety);
+		self.disp_info(&display, offsetx, offsety);
+		self.disp_hold_next(6, &display, panel);
 		self.disp_atk(display.pending_attack, offsetx, offsety);
 	}
 	
-	pub fn disp_atk(&mut self, atk: u32, mut offsetx: u8, offsety: u8) {
-		offsetx += 24;
+	pub fn disp_atk(&self, atk: u32, mut offsetx: u8, offsety: u8) {
+		offsetx += 20;
 		print!("{}", termion::style::Reset);
 		for i in 0..(20 - atk as u16) {
 			print!("{} ",

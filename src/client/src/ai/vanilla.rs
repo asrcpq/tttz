@@ -8,7 +8,7 @@ use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
-const SLEEP_MILLIS: u64 = 200;
+const SLEEP_MILLIS: u64 = 250;
 
 fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut heights = [39u8; 10];
@@ -202,9 +202,10 @@ fn main() {
 							Ok(decoded) => {
 								if decoded.id == id {
 									display = Some(decoded);
-								} else {
-									eprintln!("Get wrong message {}, I am {}", decoded.id, id);
 								}
+								// else {
+								// eprintln!("Get wrong message {}, I am {}", decoded.id, id);
+								// }
 							},
 							Err(_) => {
 								eprintln!("Deserialize error");
