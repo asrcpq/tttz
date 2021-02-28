@@ -9,6 +9,8 @@ use std::collections::HashMap;
 
 pub struct ClientDisplay {
 	last_dirtypos: Vec<Vec<(u32, u32)>>,
+	offset_x: Vec<u32>,
+	offset_y: Vec<u32>,
 }
 
 impl ClientDisplay {
@@ -18,6 +20,8 @@ impl ClientDisplay {
 		std::io::stdout().flush().unwrap();
 		ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
+			offset_x: vec![5, 40],
+			offset_y: vec![2, 2],
 		}
 	}
 
@@ -51,10 +55,9 @@ impl ClientDisplay {
 		offsetx += 0;
 		offsety += 20;
 		print!(
-			"{}id: {}, hold: {}",
+			"{}id: {}",
 			termion::cursor::Goto(offsetx as u16, offsety as u16,),
 			display.id,
-			ID_TO_CHAR[display.hold as usize],
 		);
 		print!(", combo: {}", display.combo);
 		// old direct print next
@@ -102,30 +105,56 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 	}
 
+	fn disp_box(&mut self, left: u16, right: u16, top: u16, bot: u16) {
+		for yy in [top, bot].iter() {
+			print!("{}", termion::cursor::Goto(left + 1, *yy));
+			for _ in left+1..right {
+				print!("\u{2500}");
+			}
+		}
+		for xx in [left, right].iter() {
+			for yy in top+1..bot {
+				print!("{}\u{2502}", termion::cursor::Goto(*xx, yy));
+			}
+		}
+		print!("{}\u{250c}{}\u{2514}{}\u{2510}{}\u{2518}",
+			termion::cursor::Goto(left, top),
+			termion::cursor::Goto(left, bot),
+			termion::cursor::Goto(right, top),
+			termion::cursor::Goto(right, bot),
+		);
+	}
+
 	fn disp_hold_next(&mut self, n: usize, display: &Display, panel: u32) {
-		let offsetx = if panel == 1 { 23 + 32 } else { 23 + 2 };
-		let offsety = 3;
+		let offsetx = 23 + self.offset_x[panel as usize] as u16;
+		let offsety = self.offset_y[panel as usize] as u16 + 1;
 		let mut doubley = offsety * 2;
 		for (x, y) in self.last_dirtypos[panel as usize].drain(..) {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
 		}
-		if display.hold != 7 {
-			self.mini_blockp(offsetx as u32, doubley as u32, display.hold, panel);
-		}
-		for i in 0..n {
-			doubley += 4;
+		self.disp_box(offsetx - 1, offsetx + 4, offsety - 1, offsety + 1);
+		for code in [display.hold].iter().chain(display.bag_preview[..n].iter()) {
+			if *code == 7 {
+				doubley += 5;
+				continue
+			}
+			let mut tmpx = offsetx;
+			if *code == 3 {
+				tmpx += 1;
+			}
 			self.mini_blockp(
-				offsetx as u32,
+				tmpx as u32,
 				doubley as u32,
-				display.bag_preview[i],
+				*code,
 				panel,
 			);
+			doubley += 5;
 		}
 	}
 
 	pub fn disp(&mut self, display: Display, panel: u32) {
-		let offsetx = if panel == 1 { 32 } else { 2 };
-		let offsety = 2;
+		let offsetx = self.offset_x[panel as usize] as u8;
+		let offsety = self.offset_y[panel as usize] as u8;
 		for i in 0..10 {
 			for j in 20..40 {
 				self.blockp(
@@ -154,11 +183,12 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 		self.disp_info(&display, offsetx, offsety);
 		self.disp_hold_next(6, &display, panel);
-		self.disp_atk(display.pending_attack, offsetx, offsety);
+		self.disp_atk(display.pending_attack, panel);
 	}
 
-	pub fn disp_atk(&self, atk: u32, mut offsetx: u8, offsety: u8) {
-		offsetx += 20;
+	pub fn disp_atk(&self, atk: u32, panel: u32) {
+		let offsetx = self.offset_x[panel as usize] + 20;
+		let offsety = self.offset_y[panel as usize];
 		print!("{}", termion::style::Reset);
 		for i in 0..(20 - atk as u16) {
 			print!(

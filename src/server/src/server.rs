@@ -18,8 +18,7 @@ impl Server {
 		}
 	}
 
-	fn post_operation(&mut self, mut client: &mut Client, src: SocketAddr) {
-		client.board.update_display();
+	fn post_operation(&mut self, mut client: &mut Client) {
 		if client.board.attack_pool > 0 {
 			if client.board.counter_attack() {
 				if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
@@ -50,13 +49,8 @@ impl Server {
 				}
 				client.board.attack_pool = 0;
 			}
-			self.socket
-				.send_to(
-					format!("sigatk {}", client.board.display.pending_attack).as_bytes(),
-					src,
-				)
-				.unwrap();
 		}
+		client.board.update_display();
 		client.send_display(&self.socket, &self.client_manager);
 	}
 
@@ -205,7 +199,7 @@ impl Server {
 				// update_display should always be evaluated in this cycle
 				if client.display_update {
 					// display is included in after_operation
-					self.post_operation(&mut client, src);
+					self.post_operation(&mut client);
 				}
 			}
 			self.client_manager.tmp_push_by_id(client.id, client);
