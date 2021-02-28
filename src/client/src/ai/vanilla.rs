@@ -128,6 +128,13 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 fn main() {
 	let stdin = io::stdin();
 
+	let args: Vec<String> = std::env::args().collect();
+	let mode = if args.len() == 1 {
+		"pair".to_string()
+	} else {
+		args[1].clone()
+	};
+
 	let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
 	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
 	socket.send_to(b"new client", &target_addr).unwrap();
@@ -137,7 +144,7 @@ fn main() {
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 
 	socket
-		.send_to(b"pair", target_addr)
+		.send_to(mode.as_bytes(), target_addr)
 		.unwrap();
 	socket.set_nonblocking(true);
 
@@ -168,7 +175,7 @@ fn main() {
 						let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 						if msg == "die" || msg == "win" {
 							socket
-								.send_to(b"pair", target_addr)
+								.send_to("mode".as_bytes(), target_addr)
 								.unwrap();
 							state = 3;
 						}

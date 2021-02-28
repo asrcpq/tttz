@@ -13,6 +13,9 @@ extern crate mpboard;
 use mpboard::display::Display;
 
 fn main() {
+	let mut text_mode = false; // starting with /, client type a message to server
+	let mut text: Vec<u8> = Vec::new();
+
 	let mut iter = std::env::args();
 	iter.next();
 	let addr = match iter.next() {
@@ -55,26 +58,38 @@ fn main() {
 			stdout.flush();
 		}
 		if let Some(Ok(byte)) = stdin.next() {
-			match byte {
-				b'q' => {
-					client_socket.send(b"quit").unwrap();
-					break;
-				},
-				b'r' => {
-					if state == 2 {
-						client_socket.send(b"suicide").unwrap();
-						state = 3;
-					} else {
-						client_socket.send(b"pair").unwrap();
-						state = 3;
+			if text_mode {
+				if byte == b'/' {
+					client_socket.send(&text).unwrap();
+					text = Vec::new();
+					text_mode = false;
+				}
+				text.push(byte);
+			} else {
+				match byte {
+					b'q' => {
+						client_socket.send(b"quit").unwrap();
+						break;
+					},
+					b'r' => {
+						if state == 2 {
+							client_socket.send(b"suicide").unwrap();
+							state = 3;
+						} else {
+							client_socket.send(b"pair").unwrap();
+							state = 3;
+						}
+					},
+					b'/' => {
+						text_mode = true;
 					}
-				},
-				_ => {
-					if state == 2 {
-						client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
-					}
-				},
-				_ => {},
+					_ => {
+						if state == 2 {
+							client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
+						}
+					},
+					_ => {},
+				}
 			}
 			stdout.flush();
 		}

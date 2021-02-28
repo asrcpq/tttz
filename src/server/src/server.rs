@@ -200,7 +200,7 @@ impl Server {
 					client.init_board();
 					client.state = 2;
 					self.socket.send_to(b"start", src).unwrap();
-				else if client.handle_msg(&msg) {
+				} else if client.handle_msg(&msg) {
 					self.die(&mut client, src);
 				}
 				// update_display should always be evaluated in this cycle
