@@ -249,6 +249,7 @@ impl Board {
 		self.display.pending_attack = 0;
 	}
 
+	// should only called when attack_pool > 0
 	// return true if attack is larger
 	pub fn counter_attack(&mut self) -> bool {
 		loop { // return if attack remains
@@ -365,7 +366,7 @@ impl Board {
 			if !self.shadow_block.test(self) {
 				if self.shadow_block.pos.1 + BLOCK_HEIGHT[
 					self.tmp_block.code as usize * 4 + self.tmp_block.rotation as usize
-				] <= 21 {
+				] < 21 {
 					return false;
 				} else {
 					self.shadow_block.pos.1 -= 1;

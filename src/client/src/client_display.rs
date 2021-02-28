@@ -32,6 +32,16 @@ impl ClientDisplay {
 			ch2,
 		);
 	}
+
+	pub fn disp_msg(&mut self, msg: &str, mut offsetx: u8, mut offsety: u8) {
+		offsety += 23;
+		print!(
+			"{}{}{}",
+			termion::style::Reset,
+			termion::cursor::Goto(offsetx as u16, offsety as u16),
+			msg
+		);
+	}
 	
 	fn disp_info(&mut self, n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 		offsetx += 0;
@@ -100,6 +110,7 @@ impl ClientDisplay {
 				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
 			);
 		}
+		print!("{}", termion::style::Reset);
 	}
 
 	pub fn deinit(&mut self) {

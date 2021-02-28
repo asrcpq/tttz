@@ -39,9 +39,10 @@ fn main() {
 					client_display.disp_atk(pending_atk, 1, 1);
 				} else if msg == "start" {
 					state = 2;
-				} else if msg == "die" {
+				} else if msg == "die" || msg == "win" {
 					state = 1;
 				}
+				client_display.disp_msg(&msg, 0, 0);
 				continue
 			} else {
 				let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();

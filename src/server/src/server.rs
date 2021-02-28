@@ -22,35 +22,45 @@ impl Server {
 
 	fn post_operation(&mut self, mut client: &mut Client, src: SocketAddr) {
 		client.board.update_display();
-		if client.board.counter_attack() {
-			if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
-				eprintln!("{} attack {} with {}",
-					client.id,
-					client.attack_target,
-					client.board.attack_pool,
-				);
+		if client.board.attack_pool > 0 {
+			if client.board.counter_attack() {
+				if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
+					eprintln!("{} attack {} with {}",
+						client.id,
+						client.attack_target,
+						client.board.attack_pool,
+					);
 
-				let mut client_target = self.client_manager
-					.tmp_pop_by_id(client.attack_target)
-					.unwrap();
-				client_target.board.push_garbage(client.board.attack_pool);
-				self.socket.send_to(
-					format!("sigatk {}", client_target
-						.board
-						.display
-						.pending_attack
-					).as_bytes(),
-					addr,
-				).unwrap();
-				self.client_manager
-					.tmp_push_by_id(client.attack_target, client_target);
-			} else {
-				eprintln!("Client {} is attacking nonexistent target {}",
-					client.id,
-					client.attack_target,
-				);
+					let mut client_target = self.client_manager
+						.tmp_pop_by_id(client.attack_target)
+						.unwrap();
+					client_target.board.push_garbage(client.board.attack_pool);
+					self.socket.send_to(
+						format!("sigatk {}", client_target
+							.board
+							.display
+							.pending_attack
+						).as_bytes(),
+						addr,
+					).unwrap();
+					self.client_manager
+						.tmp_push_by_id(client.attack_target, client_target);
+				} else {
+					eprintln!("Client {} is attacking nonexistent target {}",
+						client.id,
+						client.attack_target,
+					);
+				}
+				client.board.attack_pool = 0;
 			}
-			client.board.attack_pool = 0;
+			self.socket.send_to(
+				format!("sigatk {}", client
+					.board
+					.display
+					.pending_attack
+				).as_bytes(),
+				src,
+			).unwrap();
 		}
 		client.send_display(&self.socket, &self.client_manager);
 	}
@@ -127,7 +137,23 @@ impl Server {
 			}
 		}
 		self.pending_client = Some(client.id);
-	} 
+	}
+
+	pub fn die(&mut self, mut client: &mut Client, src: SocketAddr) {
+		client.state = 1;
+		self.socket.send_to(b"die", src).unwrap();
+
+		// calc win by attack target works only in pair match mode
+		if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
+			self.socket.send_to(b"win", addr).unwrap();
+			let mut opponent = self.client_manager
+				.tmp_pop_by_id(client.attack_target)
+				.unwrap();
+			opponent.state = 1;
+			let mut opponent = self.client_manager
+				.tmp_push_by_id(client.attack_target, opponent);
+		} // or the opponent has gone
+	}
 
 	pub fn main_loop(&mut self) {
 		loop {
@@ -140,7 +166,7 @@ impl Server {
 				assert!(self.client_manager.pop_by_id(client.id).is_none());
 				continue
 			} else if msg == "suicide" {
-				client.die();
+				self.die(&mut client, src);
 			} else if msg.starts_with("get clients") {
 				let mut return_msg = String::new();
 				for (key, _) in &self.client_manager.id_addr {
@@ -164,23 +190,19 @@ impl Server {
 			} else if msg == "pair" {
 				client.init_board();
 				client.state = 3;
-				self.pair_maker(&mut client);
+				if self.pending_client != Some(client.id) {
+					self.pair_maker(&mut client);
+				}
 			} else {
 				// msg that may cause board refresh
-				let mut post_op = false;
 				if client.handle_msg(&msg) {
-				// Operational message
-					post_op = true;
+					self.die(&mut client, src);
 				}
-				if post_op {
+				// update_display should always be evaluated in this cycle
+				if client.display_update {
 					// display is included in after_operation
 					self.post_operation(&mut client, src);
 				}
-			}
-			// died
-			if client.state == 4 {
-				self.socket.send_to(b"die", src).unwrap();
-				client.state = 1;
 			}
 			self.client_manager.tmp_push_by_id(client.id, client);
 			// Do not write anything here, note the continue in match branch

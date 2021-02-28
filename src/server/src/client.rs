@@ -14,10 +14,10 @@ pub struct Client {
 	// 1: waiting
 	// 2: in-game
 	// 3: pairing
-	// 4: dying(tmp)
 	pub state: i32,
 	pub board: Board,
 	pub attack_target: i32,
+	pub display_update: bool,
 }
 
 impl Client {
@@ -28,6 +28,7 @@ impl Client {
 			state: 1,
 			board: Board::new(id),
 			attack_target: 0,
+			display_update: true,
 		}
 	}
 
@@ -51,20 +52,13 @@ impl Client {
 		self.dc_ids = new_dc_ids;
 	}
 
-	// return: whether to update and send display to this client
-	pub fn handle_msg(&mut self, msg: &str) -> bool {
-		if self.state != 2 {
-			return false
-		}
-		let mut words = msg.split_whitespace().collect::<Vec<&str>>();
-		if words[0] == "key" {
-			if words.len() == 1 {
-				self.board.hold();
-				return true
-			}
+	// die = false
+	fn process_key(&mut self, words: Vec<&str>) -> bool {
+		if words.len() == 1 {
+			self.board.hold();
+		} else {
 			match words[1] {
 				"r" => {
-					self.state = 4;
 					return false
 				}
 				"h" => {
@@ -104,11 +98,25 @@ impl Client {
 					eprintln!("Unknown key {}", ch);
 				}
 			}
-			if !self.board.calc_shadow() {
-				self.die();
-				return false
+		}
+		if !self.board.calc_shadow() {
+			return false
+		}
+		true
+	}
+
+	// die = true
+	pub fn handle_msg(&mut self, msg: &str) -> bool {
+		if self.state != 2 {
+			self.display_update = false;
+			return false;
+		}
+		let mut words = msg.split_whitespace().collect::<Vec<&str>>();
+		if words[0] == "key" {
+			self.display_update = true;
+			if !self.process_key(words) {
+				return true;
 			}
-			return true;
 		} else if words[0] == "attack" {
 			let id = match words[1].parse::<i32>() {
 				Ok(id) => {
@@ -116,25 +124,23 @@ impl Client {
 						// on garbage sending, the attacked needs to be popped from clients
 						// which is impossible when the attacker is already popped
 						eprintln!("Self attacking is not allowed");
-						return false
+						self.display_update = false;
 					}
 					eprintln!("Attacking {}", id);
 					id
 				},
 				Err(_) => {
 					eprintln!("Invalid attack msg: {}", msg);
-					return false;
+					self.display_update = false;
+					return false
 				},
 			};
 			self.attack_target = id;
-			return false
+			self.display_update = false;
+		} else {
+			eprintln!("Unknown msg: {}", msg);
+			self.display_update = false;
 		}
-		eprintln!("Unknown msg: {}", msg);
-		false
-	}
-
-	pub fn die(&mut self) {
-		eprintln!("Game over: id {}", self.id);
-		self.state = 4;
+		return false;
 	}
 }

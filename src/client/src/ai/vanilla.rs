@@ -90,7 +90,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		};
 	for _ in 0..best_rotation {
 		socket
-			.send_to(format!("key x").as_bytes(), target_addr)
+			.send_to((b"key x"), target_addr)
 			.unwrap();
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
@@ -101,7 +101,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
 	socket
-		.send_to(format!("key k").as_bytes(), target_addr)
+		.send_to(b"key k", target_addr)
 		.unwrap();
 }
 
@@ -117,10 +117,11 @@ fn main() {
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 
 	socket
-		.send_to(format!("pair").as_bytes(), target_addr)
+		.send_to(b"pair", target_addr)
 		.unwrap();
 	socket.set_nonblocking(true);
 
+	let mut state = 3;
 	let mut display: Option<Display> = None;
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
@@ -144,7 +145,17 @@ fn main() {
 							},
 						}
 					} else {
-						eprintln!("Short msg");
+						let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+						if msg == "die" || msg == "win" {
+							socket
+								.send_to(b"pair", target_addr)
+								.unwrap();
+							state = 3;
+						}
+						if msg == "start" {
+							state = 2;
+						}
+						eprintln!("Short msg: {}", msg);
 					}
 				}
 				Err(_) => {
@@ -153,7 +164,9 @@ fn main() {
 			}
 		}
 		if let Some(decoded) = display {
-			main_think(decoded, &socket, target_addr);
+			if state == 2 {
+				main_think(decoded, &socket, target_addr);
+			}
 			display = None;
 		}
 	}
