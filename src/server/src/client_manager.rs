@@ -2,7 +2,7 @@ extern crate bimap;
 use bimap::BiMap;
 use std::net::SocketAddr;
 use std::collections::HashMap;
-use crate::Client;
+use crate::client::Client;
 
 pub struct ClientManager {
 	id_alloc: i32,
