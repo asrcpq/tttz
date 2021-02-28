@@ -63,8 +63,9 @@ fn main() {
 					client_socket.send(&text).unwrap();
 					text = Vec::new();
 					text_mode = false;
+				} else {
+					text.push(byte);
 				}
-				text.push(byte);
 			} else {
 				match byte {
 					b'q' => {

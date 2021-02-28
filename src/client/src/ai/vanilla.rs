@@ -8,7 +8,7 @@ use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
-const SLEEP_MILLIS: u64 = 50;
+const SLEEP_MILLIS: u64 = 70;
 
 fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut heights = [0u8; 10];
@@ -65,13 +65,22 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 				}
 
 				let mut delta_heights = [0; 4];
+				let mut block_count = [0; 4];
 				for block in 0..4 {
-					let dh = heights[dx as usize + posx[block] as usize] as i32 - posy[block] - height;
+					let dh = heights[dx as usize + posx[block] as usize] as i32
+						- posy[block]
+						- height;
+					block_count[posx[block] as usize] += 1;
 					if dh > delta_heights[posx[block] as usize] {
 						delta_heights[posx[block] as usize] = dh;
 					}
 				}
-				let hole: i32 = delta_heights.iter().fold(0, |sum, x| sum + x) - 4; // 4 blocks
+				let mut hole: i32 = 0;
+				for block in 0..4 {
+					if delta_heights[block] > block_count[block] {
+						hole += 1;
+					}
+				}
 				let score = height as f32 - hole as f32 * 2.0; 
 				if score > best_score {
 					println!("{} overtake {} at dx: {}, rot: {}",
@@ -128,13 +137,6 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 fn main() {
 	let stdin = io::stdin();
 
-	let args: Vec<String> = std::env::args().collect();
-	let mode = if args.len() == 1 {
-		"pair".to_string()
-	} else {
-		args[1].clone()
-	};
-
 	let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
 	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
 	socket.send_to(b"new client", &target_addr).unwrap();
@@ -142,6 +144,18 @@ fn main() {
 	let (amt, _) = socket.recv_from(&mut buf).unwrap();
 	assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
+
+	// decide mode after client connection
+	let args: Vec<String> = std::env::args().collect();
+	let mode = if args.len() == 1 {
+		"pair".to_string()
+	} else {
+		args[1].clone()
+	};
+	// free mode will immediately start, so pause first
+	if mode == "free" {
+		stdin.lock().lines().next().unwrap().unwrap();
+	}
 
 	socket
 		.send_to(mode.as_bytes(), target_addr)
@@ -152,7 +166,7 @@ fn main() {
 	let mut display: Option<Display> = None;
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
-		// let line1 = stdin.lock().lines().next().unwrap().unwrap();
+		// stdin.lock().lines().next().unwrap().unwrap();
 
 		// read until last screen
 		loop {
@@ -175,7 +189,7 @@ fn main() {
 						let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 						if msg == "die" || msg == "win" {
 							socket
-								.send_to("mode".as_bytes(), target_addr)
+								.send_to(b"pair", target_addr)
 								.unwrap();
 							state = 3;
 						}
