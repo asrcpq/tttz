@@ -153,6 +153,7 @@ impl ClientDisplay {
 	}
 
 	pub fn disp(&mut self, display: Display, panel: u32) {
+		print!("[30m");
 		let offsetx = self.offset_x[panel as usize] as u8;
 		let offsety = self.offset_y[panel as usize] as u8;
 		for i in 0..10 {
