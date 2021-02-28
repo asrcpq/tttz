@@ -14,9 +14,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut heights = [39u8; 10];
 
 	if display.hold == 7 {
-		socket
-			.send_to((b"key  "), target_addr)
-			.unwrap();
+		socket.send_to(b"key  ", target_addr).unwrap();
 		return;
 	}
 
@@ -29,17 +27,15 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		loop {
 			if display.color[(i + j * 10) as usize] == 7 {
 				if state == 1 {
-					break
+					break;
 				}
-			} else {
-				if state == 0 {
-					state = 1;
-					heights[i as usize] = j as u8 - 1;
-				}
+			} else if state == 0 {
+				state = 1;
+				heights[i as usize] = j as u8 - 1;
 			}
 			j += 1;
 			if j == 40 {
-				break
+				break;
 			}
 		}
 		if j > highest_hole {
@@ -57,7 +53,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 			let mut dx = 0;
 			loop {
 				if dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > 10 {
-					break
+					break;
 				}
 
 				let mut posx = [0; 4];
@@ -68,14 +64,15 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 					posy[block as usize] = BPT[(offset + 1) as usize];
 				}
 				let mut posy_sum = 0;
-				for i in 0..4 {
-					posy_sum += posy[i];
+				for each_posy in posy.iter() {
+					posy_sum += each_posy;
 				}
 				let mut height = 0;
 				'movedown_check: loop {
 					for block in 0..4 {
-						if posy[block] + height ==
-							(heights[dx as usize + posx[block] as usize]) as i32 {
+						if posy[block] + height
+							== (heights[dx as usize + posx[block] as usize]) as i32
+						{
 							height -= 1;
 							break 'movedown_check;
 						}
@@ -86,9 +83,8 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 				let mut delta_heights = [0; 4];
 				let mut block_count = [0; 4];
 				for block in 0..4 {
-					let dh = heights[dx as usize + posx[block] as usize] as i32
-						- posy[block]
-						- height;
+					let dh =
+						heights[dx as usize + posx[block] as usize] as i32 - posy[block] - height;
 					block_count[posx[block] as usize] += 1;
 					if dh > delta_heights[posx[block] as usize] {
 						delta_heights[posx[block] as usize] = dh;
@@ -100,20 +96,15 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 						hole += 1;
 					}
 				}
-				let cover = (dx <= highest_hole_x &&
-					dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > highest_hole_x)
+				let cover = (dx <= highest_hole_x
+					&& dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > highest_hole_x)
 					as i32;
 				let score = height as f32 + posy_sum as f32 * 0.25 // mass center height
 					- hole as f32 - cover as f32 * 2.0;
 				if score > best_score {
-					println!("{} {} {} = {} overtake {} at dx: {}, rot: {}",
-						height,
-						hole,
-						cover,
-						score,
-						best_score,
-						dx,
-						rot,
+					eprintln!(
+						"{} {} {} = {} overtake {} at dx: {}, rot: {}",
+						height, hole, cover, score, best_score, dx, rot,
 					);
 					best_score = score;
 					best_rotation = rot;
@@ -129,24 +120,20 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		display.tmp_code
 	} else {
 		// best solution is from the hold block
-		socket
-			.send_to((b"key  "), target_addr)
-			.unwrap();
+		socket.send_to(b"key  ", target_addr).unwrap();
 		display.hold
 	};
 	// perform action
-	let mut current_posx = INITIAL_POS[best_code as usize];
-	let mut rotated_pos0 = current_posx +
-		SRP[(best_code * 8 + best_rotation * 2) as usize];
-	let (keycode, times) = if rotated_pos0 > best_posx { //left
-			('h', rotated_pos0 - best_posx)
-		} else {
-			('l', best_posx - rotated_pos0)
-		};
+	let current_posx = INITIAL_POS[best_code as usize];
+	let rotated_pos0 = current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
+	let (keycode, times) = if rotated_pos0 > best_posx {
+		//left
+		('h', rotated_pos0 - best_posx)
+	} else {
+		('l', best_posx - rotated_pos0)
+	};
 	for _ in 0..best_rotation {
-		socket
-			.send_to((b"key x"), target_addr)
-			.unwrap();
+		socket.send_to(b"key x", target_addr).unwrap();
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
 	for _ in 0..times {
@@ -155,9 +142,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 			.unwrap();
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
-	socket
-		.send_to(b"key k", target_addr)
-		.unwrap();
+	socket.send_to(b"key k", target_addr).unwrap();
 }
 
 fn main() {
@@ -169,7 +154,10 @@ fn main() {
 	let mut buf = [0; 1024];
 	let (amt, _) = socket.recv_from(&mut buf).unwrap();
 	assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
-	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
+	let id: i32 = std::str::from_utf8(&buf[3..amt])
+		.unwrap()
+		.parse::<i32>()
+		.unwrap();
 
 	// decide mode after client connection
 	let args: Vec<String> = std::env::args().collect();
@@ -183,10 +171,8 @@ fn main() {
 		stdin.lock().lines().next().unwrap().unwrap();
 	}
 
-	socket
-		.send_to(mode.as_bytes(), target_addr)
-		.unwrap();
-	socket.set_nonblocking(true);
+	socket.send_to(mode.as_bytes(), target_addr).unwrap();
+	socket.set_nonblocking(true).unwrap();
 
 	let mut state = 3;
 	let mut display: Option<Display> = None;
@@ -194,40 +180,31 @@ fn main() {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 
 		// read until last screen
-		loop {
-			match socket.recv(&mut buf) {
-				Ok(amt) => {
-					if amt >= 16 {
-						match bincode::deserialize::<Display>(&buf[..amt]) {
-							Ok(decoded) => {
-								if decoded.id == id {
-									display = Some(decoded);
-								}
-								// else {
-								// eprintln!("Get wrong message {}, I am {}", decoded.id, id);
-								// }
-							},
-							Err(_) => {
-								eprintln!("Deserialize error");
-							},
+		while let Ok(amt) = socket.recv(&mut buf) {
+			if amt >= 16 {
+				match bincode::deserialize::<Display>(&buf[..amt]) {
+					Ok(decoded) => {
+						if decoded.id == id {
+							display = Some(decoded);
 						}
-					} else {
-						let msg = std::str::from_utf8(&buf[..amt]).unwrap();
-						if msg == "die" || msg == "win" {
-							socket
-								.send_to(b"pair", target_addr)
-								.unwrap();
-							state = 3;
-						}
-						if msg == "start" {
-							state = 2;
-						}
-						eprintln!("Short msg: {}", msg);
+						// else {
+						// eprintln!("Get wrong message {}, I am {}", decoded.id, id);
+						// }
+					}
+					Err(_) => {
+						eprintln!("Deserialize error");
 					}
 				}
-				Err(_) => {
-					break
+			} else {
+				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+				if msg == "die" || msg == "win" {
+					socket.send_to(b"pair", target_addr).unwrap();
+					state = 3;
 				}
+				if msg == "start" {
+					state = 2;
+				}
+				eprintln!("Short msg: {}", msg);
 			}
 		}
 		if let Some(decoded) = display {

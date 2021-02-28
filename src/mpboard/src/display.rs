@@ -1,5 +1,5 @@
 extern crate serde;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // interface between server and client
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

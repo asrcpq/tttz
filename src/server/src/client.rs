@@ -1,10 +1,9 @@
 extern crate mpboard;
-use mpboard::board::Board;
 use crate::client_manager::ClientManager;
+use mpboard::board::Board;
 
-use std::net::SocketAddr;
-use std::net::UdpSocket;
 use std::collections::HashSet;
+use std::net::UdpSocket;
 
 extern crate bincode;
 
@@ -44,7 +43,7 @@ impl Client {
 				addr
 			} else {
 				eprintln!("A removed client: {} was viewing {}", dc_id, self.id);
-				continue
+				continue;
 			};
 			socket.send_to(&msg, dc_addr).unwrap();
 			new_dc_ids.insert(dc_id);
@@ -53,14 +52,12 @@ impl Client {
 	}
 
 	// die = false
-	fn process_key(&mut self, words: Vec<&str>) -> bool {
+	fn process_key(&mut self, words: &[&str]) -> bool {
 		if words.len() == 1 {
 			self.board.hold();
 		} else {
 			match words[1] {
-				"r" => {
-					return false
-				}
+				"r" => return false,
 				"h" => {
 					self.board.move1(1);
 				}
@@ -100,18 +97,17 @@ impl Client {
 			}
 		}
 		if !self.board.calc_shadow() {
-			return false
+			return false;
 		}
 		true
 	}
 
 	// die = true
-	pub fn handle_msg(&mut self, msg: &str) -> bool {
+	pub fn handle_msg(&mut self, words: &[&str]) -> bool {
 		if self.state != 2 {
 			self.display_update = false;
 			return false;
 		}
-		let mut words = msg.split_whitespace().collect::<Vec<&str>>();
 		if words[0] == "key" {
 			self.display_update = true;
 			if !self.process_key(words) {
@@ -128,19 +124,19 @@ impl Client {
 					}
 					eprintln!("Attacking {}", id);
 					id
-				},
+				}
 				Err(_) => {
-					eprintln!("Invalid attack msg: {}", msg);
+					eprintln!("Invalid attack msg: attack {}", words[1]);
 					self.display_update = false;
-					return false
-				},
+					return false;
+				}
 			};
 			self.attack_target = id;
 			self.display_update = false;
 		} else {
-			eprintln!("Unknown msg: {}", msg);
+			eprintln!("Unknown msg: {:?}", words);
 			self.display_update = false;
 		}
-		return false;
+		false
 	}
 }

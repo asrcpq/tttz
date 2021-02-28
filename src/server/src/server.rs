@@ -6,7 +6,6 @@ use std::net::UdpSocket;
 pub struct Server {
 	socket: UdpSocket,
 	client_manager: ClientManager,
-	in_game: bool,
 	pending_client: Option<i32>,
 }
 
@@ -14,7 +13,6 @@ impl Server {
 	pub fn new(bind_addr: &str) -> Server {
 		Server {
 			socket: UdpSocket::bind(bind_addr).unwrap(),
-			in_game: false,
 			client_manager: Default::default(),
 			pending_client: None,
 		}
@@ -25,42 +23,39 @@ impl Server {
 		if client.board.attack_pool > 0 {
 			if client.board.counter_attack() {
 				if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
-					eprintln!("{} attack {} with {}",
-						client.id,
-						client.attack_target,
-						client.board.attack_pool,
+					eprintln!(
+						"{} attack {} with {}",
+						client.id, client.attack_target, client.board.attack_pool,
 					);
 
-					let mut client_target = self.client_manager
+					let mut client_target = self
+						.client_manager
 						.tmp_pop_by_id(client.attack_target)
 						.unwrap();
 					client_target.board.push_garbage(client.board.attack_pool);
-					self.socket.send_to(
-						format!("sigatk {}", client_target
-							.board
-							.display
-							.pending_attack
-						).as_bytes(),
-						addr,
-					).unwrap();
+					self.socket
+						.send_to(
+							format!("sigatk {}", client_target.board.display.pending_attack)
+								.as_bytes(),
+							addr,
+						)
+						.unwrap();
 					self.client_manager
 						.tmp_push_by_id(client.attack_target, client_target);
 				} else {
-					eprintln!("Client {} is attacking nonexistent target {}",
-						client.id,
-						client.attack_target,
+					eprintln!(
+						"Client {} is attacking nonexistent target {}",
+						client.id, client.attack_target,
 					);
 				}
 				client.board.attack_pool = 0;
 			}
-			self.socket.send_to(
-				format!("sigatk {}", client
-					.board
-					.display
-					.pending_attack
-				).as_bytes(),
-				src,
-			).unwrap();
+			self.socket
+				.send_to(
+					format!("sigatk {}", client.board.display.pending_attack).as_bytes(),
+					src,
+				)
+				.unwrap();
 		}
 		client.send_display(&self.socket, &self.client_manager);
 	}
@@ -74,10 +69,8 @@ impl Server {
 		} else {
 			0 // should never be matched in clients
 		};
-		let mut client = match self.client_manager.tmp_pop_by_id(matched_id) {
-			Some(client) => {
-				client
-			}
+		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
+			Some(client) => client,
 			None => {
 				if std::str::from_utf8(&buf[..amt])
 					.unwrap()
@@ -90,10 +83,14 @@ impl Server {
 				} else {
 					eprintln!("Unknown client: {:?}", src);
 				}
-				return None
+				return None;
 			}
 		};
-		Some((client, String::from(std::str::from_utf8(&buf[..amt]).unwrap()), src))
+		Some((
+			client,
+			String::from(std::str::from_utf8(&buf[..amt]).unwrap()),
+			src,
+		))
 	}
 
 	pub fn pair_maker(&mut self, mut client: &mut Client) {
@@ -105,11 +102,9 @@ impl Server {
 			match another_client {
 				None => {}
 				Some(mut pending_client) => {
-					eprintln!("{}:{} vs {}:{}",
-						target_id,
-						pending_client.state,
-						client.id,
-						client.state,
+					eprintln!(
+						"{}:{} vs {}:{}",
+						target_id, pending_client.state, client.id, client.state,
 					);
 					if pending_client.state == 3 {
 						self.pending_client = None;
@@ -129,7 +124,8 @@ impl Server {
 						pending_client.send_display(&self.socket, &self.client_manager);
 						client.board.update_display();
 						client.send_display(&self.socket, &self.client_manager);
-						self.client_manager.tmp_push_by_id(target_id, pending_client);
+						self.client_manager
+							.tmp_push_by_id(target_id, pending_client);
 
 						return;
 					}
@@ -146,11 +142,12 @@ impl Server {
 		// calc win by attack target works only in pair match mode
 		if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
 			self.socket.send_to(b"win", addr).unwrap();
-			let mut opponent = self.client_manager
+			let mut opponent = self
+				.client_manager
 				.tmp_pop_by_id(client.attack_target)
 				.unwrap();
 			opponent.state = 1;
-			let mut opponent = self.client_manager
+			self.client_manager
 				.tmp_push_by_id(client.attack_target, opponent);
 		} // or the opponent has gone
 	}
@@ -161,34 +158,35 @@ impl Server {
 				None => continue,
 				x => x.unwrap(),
 			};
-			eprintln!("{} from {}", msg, client.id);
-			if msg == "quit" {
+			// eprintln!("{} from {}", msg, client.id);
+			let words = msg.split_whitespace().collect::<Vec<&str>>();
+			if words[0] == "quit" {
 				self.die(&mut client, src);
 				assert!(self.client_manager.pop_by_id(client.id).is_none());
-				continue
-			} else if msg == "suicide" {
+				continue;
+			} else if words[0] == "suicide" {
 				self.die(&mut client, src);
-			} else if msg.starts_with("get clients") {
+			} else if words[0] == "get_clients" {
 				let mut return_msg = String::new();
 				for (key, _) in &self.client_manager.id_addr {
 					return_msg = format!("{}{} ", return_msg, key);
 				}
 				return_msg.pop();
 				self.socket.send_to(&return_msg.as_bytes(), src).unwrap();
-			} else if msg.starts_with("view ") {
-				let id = msg[5..].parse::<i32>().unwrap_or(0);
+			} else if words[0] == "view" {
+				let id = words[1].parse::<i32>().unwrap_or(0);
 				let viewed_client = self.client_manager.tmp_pop_by_id(id);
 				match viewed_client {
 					Some(mut viewed_client) => {
 						eprintln!("Client {} viewing {}", client.id, id);
 						viewed_client.dc_ids.insert(client.id);
 						self.client_manager.tmp_push_by_id(id, viewed_client);
-					},
+					}
 					None => {
 						eprintln!("Client {} try to view nonexist {}", client.id, id);
-					},
+					}
 				}
-			} else if msg == "pair" {
+			} else if words[0] == "pair" {
 				client.init_board();
 				client.state = 3;
 				if self.pending_client != Some(client.id) {
@@ -196,12 +194,12 @@ impl Server {
 				}
 			} else {
 				// msg that may cause board refresh
-				if msg == "free" {
+				if words[0] == "free" {
 					// free mode, attacking nothing
 					client.init_board();
 					client.state = 2;
 					self.socket.send_to(b"start", src).unwrap();
-				} else if client.handle_msg(&msg) {
+				} else if client.handle_msg(&words) {
 					self.die(&mut client, src);
 				}
 				// update_display should always be evaluated in this cycle

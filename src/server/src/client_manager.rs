@@ -1,8 +1,8 @@
 extern crate bimap;
-use bimap::BiMap;
-use std::net::SocketAddr;
-use std::collections::HashMap;
 use crate::client::Client;
+use bimap::BiMap;
+use std::collections::HashMap;
+use std::net::SocketAddr;
 
 pub struct ClientManager {
 	id_alloc: i32,
@@ -37,7 +37,7 @@ impl ClientManager {
 		eprintln!("Assign id {}", self.id_alloc);
 		self.id_addr.insert(self.id_alloc, src);
 		self.id_alloc += 1;
-		return self.id_alloc - 1;
+		self.id_alloc - 1
 	}
 
 	// ignore client nonexistence(but force addr map existence)

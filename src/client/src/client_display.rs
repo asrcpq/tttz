@@ -1,6 +1,5 @@
 extern crate termion;
-use termion::raw::IntoRawMode;
-use std::io::{Read, Write, StdoutLock};
+use std::io::Write;
 
 extern crate mpboard;
 use mpboard::display::Display;
@@ -21,13 +20,13 @@ impl ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
 		}
 	}
-	
-	fn blockp(&self, i: u8, mut j: u8, color: u8, style: u8) {
-		if j < 20 {
-			return;
-		}
-		j -= 20;
-		let (ch1, ch2) = if style == 0 && color != 7 { ('[', ']') } else { (' ', ' ') };
+
+	fn blockp(&self, i: u8, j: u8, color: u8, style: u8) {
+		let (ch1, ch2) = if style == 0 && color != 7 {
+			('[', ']')
+		} else {
+			(' ', ' ')
+		};
 		print!(
 			"[4{}m{}{}{}{}",
 			COLORMAP[color as usize],
@@ -38,7 +37,7 @@ impl ClientDisplay {
 		);
 	}
 
-	pub fn disp_msg(&self, msg: &str, mut offsetx: u8, mut offsety: u8) {
+	pub fn disp_msg(&self, msg: &str, offsetx: u8, mut offsety: u8) {
 		offsety += 22;
 		print!(
 			"{}{}{}",
@@ -47,15 +46,13 @@ impl ClientDisplay {
 			msg
 		);
 	}
-	
+
 	fn disp_info(&self, display: &Display, mut offsetx: u8, mut offsety: u8) {
 		offsetx += 0;
 		offsety += 20;
-		print!("{}id: {}, hold: {}",
-			termion::cursor::Goto(
-				offsetx as u16,
-				offsety as u16,
-			),
+		print!(
+			"{}id: {}, hold: {}",
+			termion::cursor::Goto(offsetx as u16, offsety as u16,),
 			display.id,
 			ID_TO_CHAR[display.hold as usize],
 		);
@@ -95,7 +92,8 @@ impl ClientDisplay {
 				3 => "\u{2588}",
 				_ => unreachable!(),
 			};
-			print!("{}{}",
+			print!(
+				"{}{}",
 				termion::cursor::Goto(*x as u16, *y as u16),
 				print_char,
 			);
@@ -105,13 +103,9 @@ impl ClientDisplay {
 	}
 
 	fn disp_hold_next(&mut self, n: usize, display: &Display, panel: u32) {
-		let offsetx = if panel == 1 {
-			23 + 32
-		} else {
-			23 + 2
-		};
+		let offsetx = if panel == 1 { 23 + 32 } else { 23 + 2 };
 		let offsety = 3;
-		let mut doubley = offsety * 2; 
+		let mut doubley = offsety * 2;
 		for (x, y) in self.last_dirtypos[panel as usize].drain(..) {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
 		}
@@ -120,58 +114,73 @@ impl ClientDisplay {
 		}
 		for i in 0..n {
 			doubley += 4;
-			self.mini_blockp(offsetx as u32, doubley as u32, display.bag_preview[i], panel);
+			self.mini_blockp(
+				offsetx as u32,
+				doubley as u32,
+				display.bag_preview[i],
+				panel,
+			);
 		}
 	}
-	
+
 	pub fn disp(&mut self, display: Display, panel: u32) {
-		let offsetx = if panel == 1 {
-			32
-		} else {
-			2
-		};
+		let offsetx = if panel == 1 { 32 } else { 2 };
 		let offsety = 2;
 		for i in 0..10 {
 			for j in 20..40 {
-				self.blockp(offsetx + i * 2, offsety + j, display.color[i as usize + j as usize * 10], 0);
+				self.blockp(
+					offsetx + i * 2,
+					offsety + j - 20,
+					display.color[i as usize + j as usize * 10],
+					0,
+				);
 			}
 		}
 		// show shadow_block first
 		for i in 0..4 {
 			let x = display.shadow_pos[i * 2];
 			let y = display.shadow_pos[i * 2 + 1];
-			self.blockp(offsetx + x * 2, offsety + y, display.shadow_code, 1);
+			if y >= 20 {
+				self.blockp(offsetx + x * 2, offsety + y - 20, display.shadow_code, 1);
+			}
 		}
 		for i in 0..4 {
 			let x = display.tmp_pos[i * 2];
 			let y = display.tmp_pos[i * 2 + 1];
-			self.blockp(offsetx + x * 2, offsety + y, display.tmp_code, 0);
+			if y >= 20 {
+				self.blockp(offsetx + x * 2, offsety + y - 20, display.tmp_code, 0);
+			}
 		}
 		print!("{}", termion::style::Reset);
 		self.disp_info(&display, offsetx, offsety);
 		self.disp_hold_next(6, &display, panel);
 		self.disp_atk(display.pending_attack, offsetx, offsety);
 	}
-	
+
 	pub fn disp_atk(&self, atk: u32, mut offsetx: u8, offsety: u8) {
 		offsetx += 20;
 		print!("{}", termion::style::Reset);
 		for i in 0..(20 - atk as u16) {
-			print!("{} ",
+			print!(
+				"{} ",
 				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
 			);
 		}
-		print!("{}", if atk < 4 {
-			"[43m"
-		} else if atk < 10 {
-			"[41m"
-		} else if atk < 20 {
-			"[45m"
-		} else {
-			"[46m"
-		});
+		print!(
+			"{}",
+			if atk < 4 {
+				"[43m"
+			} else if atk < 10 {
+				"[41m"
+			} else if atk < 20 {
+				"[45m"
+			} else {
+				"[46m"
+			}
+		);
 		for i in (20 - atk as u16)..20 {
-			print!("{} ",
+			print!(
+				"{} ",
 				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
 			);
 		}

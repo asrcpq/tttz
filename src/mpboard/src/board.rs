@@ -214,7 +214,8 @@ impl Board {
 	pub fn push_garbage(&mut self, atk: u32) {
 		self.display.pending_attack += atk;
 		self.garbages.push_back(atk);
-		if self.display.pending_attack > 40 { // fatal, immediate flush
+		if self.display.pending_attack > 40 {
+			// fatal, immediate flush
 			self.generate_garbage();
 			// TODO: 1. call shadow calc and display sending!
 			// 2. shadow calc death after display sending
@@ -252,15 +253,16 @@ impl Board {
 	// should only called when attack_pool > 0
 	// return true if attack is larger
 	pub fn counter_attack(&mut self) -> bool {
-		loop { // return if attack remains
-			if self.garbages.len() == 0 {
-				break self.attack_pool > 0
+		loop {
+			// return if attack remains
+			if self.garbages.is_empty() {
+				break self.attack_pool > 0;
 			}
 			if self.garbages[0] >= self.attack_pool {
 				self.garbages[0] -= self.attack_pool;
 				self.display.pending_attack -= self.attack_pool;
 				self.attack_pool = 0;
-				break false
+				break false;
 			}
 			self.attack_pool -= self.garbages.pop_front().unwrap();
 		}
@@ -270,7 +272,7 @@ impl Board {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color
-		let mut tspin = self.test_tspin();
+		let tspin = self.test_tspin();
 		if tspin > 0 {
 			eprintln!("{} just did a {}-tspin", self.display.id, tspin);
 		}
@@ -313,24 +315,22 @@ impl Board {
 				} else {
 					unreachable!();
 				}
-			} else {
-				if tspin == 2 {
-					self.attack_pool = ATK_TSPIN_REGULAR[offset];
+			} else if tspin == 2 {
+				self.attack_pool = ATK_TSPIN_REGULAR[offset];
+				self.display.b2b = true;
+			} else if tspin == 1 {
+				self.attack_pool = ATK_TSPIN_MINI[offset];
+				self.display.b2b = true;
+			} else if tspin == 0 {
+				if line_count == 4 {
 					self.display.b2b = true;
-				} else if tspin == 1 {
-					self.attack_pool = ATK_TSPIN_MINI[offset];
-					self.display.b2b = true;
-				} else if tspin == 0 {
-					if line_count == 4 {
-						self.display.b2b = true;
-					}
-					self.attack_pool = ATK_NORMAL[offset];
-				} else {
-					unreachable!();
 				}
+				self.attack_pool = ATK_NORMAL[offset];
+			} else {
+				unreachable!();
 			}
 			if tspin == 2 || line_count == 4 {
-				self.display.b2b == true;
+				self.display.b2b = true;
 			}
 			self.display.combo += 1;
 			if self.display.combo > 20 {
@@ -364,9 +364,11 @@ impl Board {
 		loop {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
-				if self.shadow_block.pos.1 + BLOCK_HEIGHT[
-					self.tmp_block.code as usize * 4 + self.tmp_block.rotation as usize
-				] < 21 {
+				if self.shadow_block.pos.1
+					+ BLOCK_HEIGHT
+						[self.tmp_block.code as usize * 4 + self.tmp_block.rotation as usize]
+					< 21
+				{
 					return false;
 				} else {
 					self.shadow_block.pos.1 -= 1;
