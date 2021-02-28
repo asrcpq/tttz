@@ -139,12 +139,6 @@ fn main() {
 					socket.send_to(b"quit", target_addr).unwrap();
 					break;
 				},
-				b'9' => { // self attack, for debug
-					socket.send_to(
-						format!("attack {}", id).as_bytes(),
-						target_addr
-					).unwrap();
-				}
 				b'0' => { // auto match
 					socket.send_to(
 						format!("get clients").as_bytes(),

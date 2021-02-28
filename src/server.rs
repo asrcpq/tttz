@@ -182,11 +182,14 @@ impl Client {
 	pub fn handle_msg(&mut self, msg: &[u8]) -> bool {
 		let str_msg = std::str::from_utf8(msg).unwrap();
 		if str_msg.starts_with("key ") {
-			if self.state == 1 {
-				if msg[4] == b'r' {
+			if msg[4] == b'r' {
+				if self.state == 1 {
 					self.board = Board::new(self.id);
 					self.state = 2;
 					return true
+				} else if self.state == 2 {
+					self.state = 1;
+					return false
 				}
 			} else if self.state == 2 { // in game
 				match msg[4] as char {
@@ -239,6 +242,12 @@ impl Client {
 		} else if str_msg.starts_with("attack ") {
 			let id = match str_msg[7..].parse::<i32>() {
 				Ok(id) => {
+					if id == self.id {
+						// on garbage sending, the attacked needs to be popped from clients
+						// which is impossible when the attacker is already popped
+						eprintln!("Self attacking is not allowed");
+						return false
+					}
 					eprintln!("Attacking {}", id);
 					id
 				},
