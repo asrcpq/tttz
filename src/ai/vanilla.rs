@@ -9,6 +9,8 @@ use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
+const SLEEP_MILLIS: u64 = 200;
+
 fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut heights = [0u8; 10];
 
@@ -91,11 +93,13 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		socket
 			.send_to(format!("key x").as_bytes(), target_addr)
 			.unwrap();
+		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
 	for _ in 0..times {
 		socket
 			.send_to(format!("key {}", keycode).as_bytes(), target_addr)
 			.unwrap();
+		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
 	socket
 		.send_to(format!("key k").as_bytes(), target_addr)
@@ -143,7 +147,7 @@ fn main() {
 
 	let mut amt = 0;
 	loop {
-		std::thread::sleep(std::time::Duration::from_millis(500));
+		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 		// let line1 = stdin.lock().lines().next().unwrap().unwrap();
 
 		// read until last screen

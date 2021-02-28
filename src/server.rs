@@ -46,10 +46,7 @@ impl Server {
 
 	fn after_operation(&mut self, mut client: &mut Client, src: SocketAddr, matched_id: i32) {
 		client.board.update_display();
-		if client.board.display.pending_attack >= client.board.attack_pool {
-			client.board.display.pending_attack -= client.board.attack_pool;
-		} else {
-			client.board.attack_pool -= client.board.display.pending_attack;
+		if client.board.counter_attack() {
 			if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
 				eprintln!("{} attack {} with {}",
 					matched_id,
@@ -60,12 +57,7 @@ impl Server {
 				let mut client_target = self.clients
 					.remove(&client.attack_target)
 					.unwrap();
-				client_target.board.display.pending_attack +=
-					client.board.attack_pool;
-				if client_target.board.display.pending_attack > 40 {
-					client_target.board.generate_garbage(40);
-					client_target.die();
-				}
+				client_target.board.push_garbage(client.board.attack_pool);
 				self.socket.send_to(
 					format!("sigatk {}", client_target
 						.board

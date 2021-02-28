@@ -21,16 +21,16 @@ fn blockp(i: u8, mut j: u8, color: u8, style: u8) {
 	print!(
 		"[4{}m{}{}{}{}",
 		COLORMAP[color as usize],
-		termion::cursor::Goto(1 + i as u16 * 2, 1 + j as u16),
+		termion::cursor::Goto(i as u16, j as u16),
 		ch1,
-		termion::cursor::Goto(1 + i as u16 * 2 + 1, 1 + j as u16),
+		termion::cursor::Goto(i as u16 + 1, j as u16),
 		ch2,
 	);
 }
 
 fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
-	offsetx += 1;
-	offsety += 21;
+	offsetx += 0;
+	offsety += 20;
 	print!("{}id: {}, hold: {}",
 		termion::cursor::Goto(
 			offsetx as u16,
@@ -39,9 +39,7 @@ fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 		display.id,
 		ID_TO_CHAR[display.hold as usize],
 	);
-	if display.combo > 0 {
-		print!(", combo: {}", display.combo);
-	} 
+	print!(", combo: {}", display.combo);
 	for i in 0..n {
 		print!("{}{}",
 			termion::cursor::Goto(
@@ -56,23 +54,23 @@ fn disp_info(n: u8, display: &Display, mut offsetx: u8, mut offsety: u8) {
 fn disp(display: Display, offsetx: u8, offsety: u8) {
 	for i in 0..10 {
 		for j in 20..40 {
-			blockp(offsetx + i, offsety + j, display.color[i as usize + j as usize * 10], 0);
+			blockp(offsetx + i * 2, offsety + j, display.color[i as usize + j as usize * 10], 0);
 		}
 	}
 	// show shadow_block first
 	for i in 0..4 {
 		let x = display.shadow_pos[i * 2];
 		let y = display.shadow_pos[i * 2 + 1];
-		blockp(offsetx + x, offsety + y, display.shadow_code, 1);
+		blockp(offsetx + x * 2, offsety + y, display.shadow_code, 1);
 	}
 	for i in 0..4 {
-		let x = display.tmp_pos[i * 2];
-		let y = display.tmp_pos[i * 2 + 1];
-		blockp(offsetx + x, offsety + y, display.tmp_code, 0);
+		let x = display.tmp_pos[i];
+		let y = display.tmp_pos[i + 1];
+		blockp(offsetx + x * 2, offsety + y, display.tmp_code, 0);
 	}
 	print!("{}", termion::style::Reset);
-	disp_info(6, &display, offsetx * 2, offsety);
-	disp_atk(display.pending_attack, offsetx * 2, offsety);
+	disp_info(6, &display, offsetx, offsety);
+	disp_atk(display.pending_attack, offsetx, offsety);
 }
 
 fn disp_atk(atk: u32, mut offsetx: u8, offsety: u8) {
@@ -122,16 +120,16 @@ fn main() {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
-					disp_atk(pending_atk, 0, 0);
+					disp_atk(pending_atk, 1, 1);
 				}
 				stdout.flush().unwrap();
 				continue
 			}
 			let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
 			if decoded.id == id {
-				disp(decoded, 0, 0);
+				disp(decoded, 1, 1);
 			} else {
-				disp(decoded, 15, 0);
+				disp(decoded, 31, 1);
 			}
 			stdout.flush().unwrap();
 		}

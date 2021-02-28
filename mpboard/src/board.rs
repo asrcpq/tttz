@@ -3,6 +3,7 @@ use crate::display::Display;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
 use rand::Rng;
+use std::collections::VecDeque;
 
 pub struct Board {
 	ontop: bool,
@@ -11,6 +12,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub display: Display,
 	pub attack_pool: u32,
+	pub garbages: VecDeque<u32>,
 }
 
 impl Board {
@@ -23,6 +25,7 @@ impl Board {
 			rg,
 			display: Display::new(id),
 			attack_pool: 0,
+			garbages: VecDeque::new(),
 		};
 		board.calc_shadow();
 		board
@@ -207,25 +210,58 @@ impl Board {
 		0
 	}
 
-	pub fn generate_garbage(&mut self, mut count: u32) {
-		if count == 0 {
-			return;
+	// push a new attack into pending garbage queue
+	pub fn push_garbage(&mut self, atk: u32) {
+		self.display.pending_attack += atk;
+		self.garbages.push_back(atk);
+		if self.display.pending_attack > 40 { // fatal, immediate flush
+			self.generate_garbage();
+			// TODO: 1. call shadow calc and display sending!
+			// 2. shadow calc death after display sending
 		}
-		if count > 40 {
-			count = 40;
-		}
-		for y in 0..(40 - count as usize) {
-			for x in 0..10 {
-				self.display.color[y * 10 + x] = self.display.color[(y + count as usize) * 10 + x];
-			}
-		}
-		for y in 0..(count as usize) {
-			let yy = 39 - y;
-			for x in 0..10 {
-				self.display.color[yy * 10 + x] = 2;
-			}
+	}
+
+	// pull all pending garbages and write to board color
+	pub fn generate_garbage(&mut self) {
+		for mut count in self.garbages.drain(..) {
 			let slot = self.rg.rng.gen_range(0..10);
-			self.display.color[yy * 10 + slot] = 7;
+			if count == 0 {
+				eprintln!("Bug: zero in garbage");
+				continue;
+			}
+			if count > 40 {
+				count = 40;
+			}
+			for y in 0..(40 - count as usize) {
+				for x in 0..10 {
+					self.display.color[y * 10 + x] =
+						self.display.color[(y + count as usize) * 10 + x];
+				}
+			}
+			for y in 0..(count as usize) {
+				let yy = 39 - y;
+				for x in 0..10 {
+					self.display.color[yy * 10 + x] = 2;
+				}
+				self.display.color[yy * 10 + slot] = 7;
+			}
+		}
+		self.display.pending_attack = 0;
+	}
+
+	// return true if attack is larger
+	pub fn counter_attack(&mut self) -> bool {
+		loop { // return if attack remains
+			if self.garbages.len() == 0 {
+				break self.attack_pool > 0
+			}
+			if self.garbages[0] >= self.attack_pool {
+				self.garbages[0] -= self.attack_pool;
+				self.display.pending_attack -= self.attack_pool;
+				self.attack_pool = 0;
+				break false
+			}
+			self.attack_pool -= self.garbages.pop_front().unwrap();
 		}
 	}
 
@@ -301,7 +337,7 @@ impl Board {
 			}
 		} else {
 			// plain drop: attack execution
-			self.generate_garbage(self.display.pending_attack);
+			self.generate_garbage();
 			self.display.pending_attack = 0;
 		}
 
