@@ -2,23 +2,21 @@ extern crate lazy_static;
 extern crate bincode;
 extern crate rand;
 extern crate termion;
-extern crate bimap;
-use bimap::BiMap;
 
 extern crate mpboard;
 use mpboard::board;
 
 use board::Board;
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 
+mod client_manager;
+use client_manager::ClientManager;
+
 struct Server {
 	socket: UdpSocket,
+	client_manager: ClientManager,
 	in_game: bool,
-	clients: HashMap<i32, Client>,
-	id_addr: BiMap<i32, SocketAddr>,
-	id_alloc: i32,
 }
 
 impl Server {
@@ -26,36 +24,22 @@ impl Server {
 		Server {
 			socket: UdpSocket::bind(bind_addr).unwrap(),
 			in_game: false,
-			clients: HashMap::new(),
-			id_addr: BiMap::new(),
-			id_alloc: 1,
+			client_manager: Default::default(),
 		}
-	}
-
-	fn client_connect(&mut self, src: SocketAddr) {
-		let mut client = Client::new(self.id_alloc);
-		client.dc_ids.push(self.id_alloc);
-		self.clients.insert(self.id_alloc, client);
-		eprintln!("Assign id {}", self.id_alloc);
-		self.socket
-			.send_to(format!("ok {}", self.id_alloc).as_bytes(), src)
-			.unwrap();
-		self.id_addr.insert(self.id_alloc, src);
-		self.id_alloc += 1;
 	}
 
 	fn after_operation(&mut self, mut client: &mut Client, src: SocketAddr, matched_id: i32) {
 		client.board.update_display();
 		if client.board.counter_attack() {
-			if let Some(addr) = self.id_addr.get_by_left(&client.attack_target) {
+			if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
 				eprintln!("{} attack {} with {}",
 					matched_id,
 					client.attack_target,
 					client.board.attack_pool,
 				);
 
-				let mut client_target = self.clients
-					.remove(&client.attack_target)
+				let mut client_target = self.client_manager
+					.tmp_pop_by_id(client.attack_target)
 					.unwrap();
 				client_target.board.push_garbage(client.board.attack_pool);
 				self.socket.send_to(
@@ -66,17 +50,17 @@ impl Server {
 					).as_bytes(),
 					addr,
 				).unwrap();
-				self.clients.insert(client.attack_target, client_target);
+				self.client_manager
+					.tmp_push_by_id(client.attack_target, client_target);
 			} else {
 				eprintln!("Client {} is attacking nonexistent target {}",
 					client.id,
 					client.attack_target,
 				);
-				eprintln!("{:?}", self.id_addr);
 			}
 			client.board.attack_pool = 0;
 		}
-		let new_dc_ids = client.send_display(&self.socket, &self.id_addr);
+		let new_dc_ids = client.send_display(&self.socket, &self.client_manager);
 		client.dc_ids = new_dc_ids;
 	}
 
@@ -84,12 +68,12 @@ impl Server {
 		let mut buf = [0; 1024];
 		loop {
 			let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
-			let matched_id = if let Some(id) = self.id_addr.get_by_right(&src) {
-				*id
+			let matched_id = if let Some(id) = self.client_manager.get_id_by_addr(src) {
+				id
 			} else {
 				0 // should never be matched in clients
 			};
-			let mut client = match self.clients.remove(&matched_id) {
+			let mut client = match self.client_manager.tmp_pop_by_id(matched_id) {
 				Some(client) => {
 					client
 				}
@@ -98,7 +82,10 @@ impl Server {
 						.unwrap()
 						.starts_with("new client")
 					{
-						self.client_connect(src);
+						let new_id = self.client_manager.new_client_by_addr(src);
+						self.socket
+							.send_to(format!("ok {}", new_id).as_bytes(), src)
+							.unwrap();
 					} else {
 						eprintln!("Unknown client: {:?}", src);
 					}
@@ -108,11 +95,11 @@ impl Server {
 			let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 			eprintln!("{} from {}", msg, client.id);
 			if msg.starts_with("quit") {
-				self.id_addr.remove_by_left(&client.id).unwrap();
+				assert!(self.client_manager.pop_by_id(client.id).is_none());
 				continue
 			} else if msg.starts_with("get clients") {
 				let mut return_msg = String::new();
-				for (key, _) in &self.id_addr {
+				for (key, _) in &self.client_manager.id_addr {
 					return_msg = format!("{}{} ", return_msg, key);
 				}
 				return_msg.pop();
@@ -122,11 +109,11 @@ impl Server {
 					.unwrap()
 					.parse::<i32>()
 					.unwrap();
-				if self.id_addr.contains_left(&id) {
+				if self.client_manager.id_addr.contains_left(&id) {
 					eprintln!("Client {} viewing {}", client.id, id);
-					let mut client_to_view = self.clients.remove(&id).unwrap();
+					let mut client_to_view = self.client_manager.tmp_pop_by_id(id).unwrap();
 					client_to_view.dc_ids.push(matched_id);
-					self.clients.insert(id, client_to_view);
+					self.client_manager.tmp_push_by_id(id, client_to_view);
 				} else {
 					eprintln!("Client {} try to view nonexist {}", client.id, id);
 				}
@@ -136,7 +123,7 @@ impl Server {
 					self.after_operation(&mut client, src, matched_id);
 				}
 			}
-			self.clients.insert(matched_id, client);
+			self.client_manager.tmp_push_by_id(matched_id, client);
 			// Do not write anything here, note the continue in match branch
 		}
 	}
@@ -161,12 +148,12 @@ impl Client {
 		}
 	}
 
-	pub fn send_display(&mut self, socket: &UdpSocket, id_addr: &BiMap<i32, SocketAddr>)
+	pub fn send_display(&mut self, socket: &UdpSocket, client_manager: &ClientManager)
 		-> Vec<i32> {
 		let msg = bincode::serialize(&self.board.display).unwrap();
 		let mut new_dc_ids: Vec<i32> = Vec::new();
 		for dc_id in self.dc_ids.drain(..) {
-			let dc_addr = if let Some(addr) = id_addr.get_by_left(&dc_id) {
+			let dc_addr = if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
 				addr
 			} else {
 				eprintln!("A removed client: {} was viewing {}", dc_id, self.id);
