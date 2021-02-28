@@ -69,7 +69,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "mypuzzle"
+name = "mypuzzle-client"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "mpboard",
+ "termion",
+]
+
+[[package]]
+name = "mypuzzle-server"
 version = "0.1.0"
 dependencies = [
  "bimap",

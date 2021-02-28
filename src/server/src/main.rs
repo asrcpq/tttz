@@ -131,6 +131,7 @@ impl Server {
 
 struct Client {
 	id: i32,
+	addr: SocketAddr,
 	dc_ids: Vec<i32>,
 	state: i32,
 	board: Board,
@@ -138,9 +139,10 @@ struct Client {
 }
 
 impl Client {
-	pub fn new(id: i32) -> Client {
+	pub fn new(id: i32, addr: SocketAddr,) -> Client {
 		Client {
 			id,
+			addr,
 			dc_ids: Vec::new(),
 			state: 1,
 			board: Board::new(id),

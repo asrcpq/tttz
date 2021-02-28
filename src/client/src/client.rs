@@ -3,8 +3,6 @@ extern crate termion;
 use termion::input::MouseTerminal;
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-extern crate lazy_static;
-extern crate rand;
 use std::io::{Read, stdout, Write};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::net::UdpSocket;

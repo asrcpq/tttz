@@ -1,7 +1,6 @@
 // stupid ai, put block to make least holes and lowest height
 
 extern crate bincode;
-extern crate rand;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 extern crate mpboard;

@@ -1,32 +1,6 @@
-[package]
-name = "mypuzzle"
-version = "0.1.0"
-authors = ["asrcpq <asrcpq@outlook.com>"]
-edition = "2018"
-
-[[bin]]
-name = "mypuzzle-server"
-path = "src/server.rs"
-
-[[bin]]
-name = "mypuzzle-client"
-path = "src/client.rs"
-
-[[bin]]
-name = "mypuzzle-ai_vanilla"
-path = "src/ai/vanilla.rs"
-
-[dependencies]
-lazy_static = "*"
-termion = "*"
-rand = "*"
-bincode = "*"
-bimap = "*"
-
-[dependencies.mpboard]
-path = "./mpboard"
-
 [workspace]
 members = [
-	"mpboard",
+	"src/mpboard",
+	"src/server",
+	"src/client",
 ]
