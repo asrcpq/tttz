@@ -116,52 +116,35 @@ fn main() {
 	assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
 	let id: i32 = std::str::from_utf8(&buf[3..amt]).unwrap().parse::<i32>().unwrap();
 
-	// auto match
-	socket.send_to(
-		format!("get clients").as_bytes(),
-		target_addr
-	).unwrap();
-	let amt = socket.recv(&mut buf).unwrap();
-	// find latest client
-	let mut max_id = 0;
-	for each_str in String::from(std::str::from_utf8(&buf[..amt]).unwrap())
-		.split_whitespace().rev() {
-		if let Ok(each_id) = each_str.parse::<i32>() {
-			if id != each_id && id > max_id {
-				max_id = each_id;
-			}
-		}
-	}
-	socket.send_to(
-		format!("attack {}", max_id).as_bytes(),
-		target_addr
-	).unwrap();
-
-	// start after read something
-	let line1 = stdin.lock().lines().next().unwrap().unwrap();
 	socket
-		.send_to(format!("key r").as_bytes(), target_addr)
+		.send_to(format!("pair").as_bytes(), target_addr)
 		.unwrap();
 	socket.set_nonblocking(true);
 
-	let mut amt = 0;
+	let mut display: Option<Display> = None;
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 		// let line1 = stdin.lock().lines().next().unwrap().unwrap();
 
 		// read until last screen
-		let mut buf2 = [0; 1024];
 		loop {
-			match socket.recv(&mut buf2) {
-				Ok(amt2) => {
-					if amt2 >= 16 {
-						for i in 0..amt2 {
-							buf[i] = buf2[i];
+			match socket.recv(&mut buf) {
+				Ok(amt) => {
+					if amt >= 16 {
+						match bincode::deserialize::<Display>(&buf[..amt]) {
+							Ok(decoded) => {
+								if decoded.id == id {
+									display = Some(decoded);
+								} else {
+									eprintln!("Get wrong message {}, I am {}", decoded.id, id);
+								}
+							},
+							Err(_) => {
+								eprintln!("Deserialize error");
+							},
 						}
-						amt = amt2;
 					} else {
 						eprintln!("Short msg");
-						continue
 					}
 				}
 				Err(_) => {
@@ -169,18 +152,9 @@ fn main() {
 				}
 			}
 		}
-
-		match bincode::deserialize::<Display>(&buf[..amt]) {
-			Ok(decoded) => {
-				if decoded.id == id {
-					main_think(decoded, &socket, target_addr);
-				} else {
-					eprintln!("Get wrong message {}, I am {}", decoded.id, id);
-				}
-			},
-			Err(_) => {
-				eprintln!("Deserialize error");
-			},
+		if let Some(decoded) = display {
+			main_think(decoded, &socket, target_addr);
+			display = None;
 		}
 	}
 }

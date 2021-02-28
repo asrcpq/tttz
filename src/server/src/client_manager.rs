@@ -31,8 +31,8 @@ impl ClientManager {
 	}
 
 	pub fn new_client_by_addr(&mut self, src: SocketAddr) -> i32 {
-		let mut client = Client::new(self.id_alloc, src);
-		client.dc_ids.push(self.id_alloc);
+		let mut client = Client::new(self.id_alloc);
+		client.dc_ids.insert(self.id_alloc);
 		self.clients.insert(self.id_alloc, client);
 		eprintln!("Assign id {}", self.id_alloc);
 		self.id_addr.insert(self.id_alloc, src);

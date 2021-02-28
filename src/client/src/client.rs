@@ -27,6 +27,7 @@ fn main() {
 	let mut stdin = async_stdin().bytes();
 	let mut client_display = ClientDisplay::new();
 
+	let mut state = 1;
 	let mut buf = [0; 1024];
 	loop {
 		if let Ok(amt) = client_socket.recv(&mut buf) {
@@ -36,6 +37,10 @@ fn main() {
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
 					client_display.disp_atk(pending_atk, 1, 1);
+				} else if msg == "start" {
+					state = 2;
+				} else if msg == "die" {
+					state = 1;
 				}
 				continue
 			} else {
@@ -54,26 +59,19 @@ fn main() {
 					client_socket.send(b"quit").unwrap();
 					break;
 				},
-				b'0' => { // auto match
-					client_socket.send(format!("get clients").as_bytes()).unwrap();
-					client_socket.set_nonblocking(false);
-					let amt = client_socket.recv(&mut buf).unwrap();
-					// find latest client
-					let mut max_id = 0;
-					for each_str in String::from(std::str::from_utf8(&buf[..amt]).unwrap())
-						.split_whitespace().rev() {
-						if let Ok(each_id) = each_str.parse::<i32>() {
-							if id != each_id && id > max_id {
-								max_id = each_id;
-							}
-						}
+				b'r' => {
+					if state == 2 {
+						client_socket.send(b"suicide").unwrap();
+						state = 3;
+					} else {
+						client_socket.send(b"pair").unwrap();
+						state = 3;
 					}
-					client_socket.send(format!("attack {}", max_id).as_bytes()).unwrap();
-					client_socket.send(format!("view {}", max_id).as_bytes()).unwrap();
-					client_socket.set_nonblocking(true);
 				},
 				_ => {
-					client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
+					if state == 2 {
+						client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
+					}
 				},
 				_ => {},
 			}
