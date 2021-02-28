@@ -8,10 +8,17 @@ use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
-const SLEEP_MILLIS: u64 = 200;
+const SLEEP_MILLIS: u64 = 50;
 
 fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut heights = [0u8; 10];
+
+	if display.hold == 7 {
+		socket
+			.send_to((b"key  "), target_addr)
+			.unwrap();
+		return;
+	}
 
 	// calc height
 	for i in 0..10 {
@@ -29,60 +36,73 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut best_score: f32 = 0.0;
 	let mut best_rotation = 0;
 	let mut best_posx = 0;
-	for rot in 0..4 {
-		let mut dx = 0;
-		loop {
-			if dx + BLOCK_WIDTH[display.tmp_code as usize * 4 + rot as usize] > 10 {
-				break
-			}
+	let mut best_id = 0;
+	for (id, option_code) in [display.tmp_code, display.hold].iter().enumerate() {
+		for rot in 0..4 {
+			let mut dx = 0;
+			loop {
+				if dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > 10 {
+					break
+				}
 
-			let mut posx = [0; 4];
-			let mut posy = [0; 4];
-			for block in 0..4 {
-				let offset = display.tmp_code * 32 + rot * 8 + block * 2;
-				posx[block as usize] = BPT[offset as usize];
-				posy[block as usize] = BPT[(offset + 1) as usize];
-			}
-			let mut height = 0;
-			'movedown_check: loop {
+				let mut posx = [0; 4];
+				let mut posy = [0; 4];
 				for block in 0..4 {
-					if posy[block] + height ==
-						(heights[dx as usize + posx[block] as usize]) as i32 {
-						height -= 1;
-						break 'movedown_check;
+					let offset = option_code * 32 + rot * 8 + block * 2;
+					posx[block as usize] = BPT[offset as usize];
+					posy[block as usize] = BPT[(offset + 1) as usize];
+				}
+				let mut height = 0;
+				'movedown_check: loop {
+					for block in 0..4 {
+						if posy[block] + height ==
+							(heights[dx as usize + posx[block] as usize]) as i32 {
+							height -= 1;
+							break 'movedown_check;
+						}
+					}
+					height += 1;
+				}
+
+				let mut delta_heights = [0; 4];
+				for block in 0..4 {
+					let dh = heights[dx as usize + posx[block] as usize] as i32 - posy[block] - height;
+					if dh > delta_heights[posx[block] as usize] {
+						delta_heights[posx[block] as usize] = dh;
 					}
 				}
-				height += 1;
-			}
-
-			let mut delta_heights = [0; 4];
-			for block in 0..4 {
-				let dh = heights[dx as usize + posx[block] as usize] as i32 - posy[block] - height;
-				if dh > delta_heights[posx[block] as usize] {
-					delta_heights[posx[block] as usize] = dh;
+				let hole: i32 = delta_heights.iter().fold(0, |sum, x| sum + x) - 4; // 4 blocks
+				let score = height as f32 - hole as f32 * 2.0; 
+				if score > best_score {
+					println!("{} overtake {} at dx: {}, rot: {}",
+						score,
+						best_score,
+						dx,
+						rot,
+					);
+					best_score = score;
+					best_rotation = rot;
+					best_posx = dx;
+					best_id = id;
 				}
+				dx += 1;
 			}
-			let hole: i32 = delta_heights.iter().fold(0, |sum, x| sum + x) - 4; // 4 blocks
-			let score = height as f32 - hole as f32 * 2.0; 
-			if score > best_score {
-				println!("{} overtake {} at dx: {}, rot: {}",
-					score,
-					best_score,
-					dx,
-					rot,
-				);
-				best_score = score;
-				best_rotation = rot;
-				best_posx = dx;
-			}
-			dx += 1;
 		}
 	}
 
+	let best_code = if best_id == 0 {
+		display.tmp_code
+	} else {
+		// best solution is from the hold block
+		socket
+			.send_to((b"key  "), target_addr)
+			.unwrap();
+		display.hold
+	};
 	// perform action
-	let mut current_posx = INITIAL_POS[display.tmp_code as usize];
+	let mut current_posx = INITIAL_POS[best_code as usize];
 	let mut rotated_pos0 = current_posx +
-		SRP[(display.tmp_code * 8 + best_rotation * 2) as usize];
+		SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if rotated_pos0 > best_posx { //left
 			('h', rotated_pos0 - best_posx)
 		} else {

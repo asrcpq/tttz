@@ -195,7 +195,12 @@ impl Server {
 				}
 			} else {
 				// msg that may cause board refresh
-				if client.handle_msg(&msg) {
+				if msg == "free" {
+					// free mode, attacking nothing
+					client.init_board();
+					client.state = 2;
+					self.socket.send_to(b"start", src).unwrap();
+				else if client.handle_msg(&msg) {
 					self.die(&mut client, src);
 				}
 				// update_display should always be evaluated in this cycle
