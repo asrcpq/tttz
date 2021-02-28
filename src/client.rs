@@ -6,7 +6,7 @@ use termion::raw::IntoRawMode;
 extern crate lazy_static;
 extern crate rand;
 use std::io::{Read, stdout, Write};
-use std::net::SocketAddr;
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::net::UdpSocket;
 extern crate mpboard;
 use mpboard::display::Display;
@@ -98,8 +98,19 @@ fn disp_atk(atk: u32, mut offsetx: u8, offsety: u8) {
 }
 
 fn main() {
-	let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
+	let mut iter = std::env::args();
+	iter.next();
+	let addr = match iter.next() {
+		Some(string) => string,
+		None => "127.0.0.1:23124".to_string(),
+	};
+
+	let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+	let target_addr: SocketAddr = addr.to_socket_addrs()
+		.unwrap()
+		.next()
+		.unwrap();
+	eprintln!("{:?}", target_addr);
 	socket.send_to(b"new client", &target_addr).unwrap();
 	let mut buf = [0; 1024];
 	let (amt, _) = socket.recv_from(&mut buf).unwrap();
