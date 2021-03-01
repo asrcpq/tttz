@@ -2,7 +2,7 @@ use std::net::UdpSocket;
 use std::net::{SocketAddr, ToSocketAddrs};
 
 pub struct ClientSocket {
-	socket: UdpSocket,
+	pub socket: UdpSocket,
 	addr: SocketAddr,
 }
 

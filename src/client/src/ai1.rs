@@ -204,7 +204,7 @@ fn main() {
 					client_socket.send(b"pair").unwrap();
 					state = 3;
 				}
-				if msg == "start" {
+				if msg.starts_with("startvs ") {
 					state = 2;
 				}
 				eprintln!("Short msg: {}", msg);

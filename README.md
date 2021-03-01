@@ -4,6 +4,17 @@
 
 * a VT100 compatible terminal
 
+## Quickstart
+
+* prepare rust compiler
+
+* clone and cd into this
+
+* run `bash quick_play_ai.sh`,
+which will open a server, an user client and an ai client.
+
+* type "pair", press enter
+
 ## Rules
 
 * No gravity(blocks can move down), infinite hold swap

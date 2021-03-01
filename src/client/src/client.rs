@@ -15,13 +15,28 @@ use client_socket::ClientSocket;
 extern crate mpboard;
 use mpboard::display::Display;
 
-fn game_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -> i32 {
+struct GameState {
+	state: i32,
+}
+
+impl Default for GameState {
+	fn default() -> GameState {
+		GameState {
+			state: 1,
+		}
+	}
+}
+
+fn game_mode(
+	client_socket: &ClientSocket,
+	client_display: &mut ClientDisplay,
+	game_state: &mut GameState,
+) -> i32 {
 	client_display.activate();
+	client_socket.socket.set_nonblocking(true).unwrap();
 	let stdout = stdout();
 	let mut stdout = stdout.lock().into_raw_mode().unwrap();
 	let mut stdin = async_stdin().bytes();
-
-	let mut state = 1;
 	let mut buf = [0; 1024];
 	loop {
 		if let Ok(amt) = client_socket.recv(&mut buf) {
@@ -32,10 +47,8 @@ fn game_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
 					client_display.disp_atk_pub(pending_atk, 0);
-				} else if msg == "start" {
-					state = 2;
 				} else if msg == "die" || msg == "win" {
-					state = 1;
+					game_state.state = 1;
 				}
 				client_display.disp_msg(&msg);
 				continue;
@@ -52,12 +65,12 @@ fn game_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -
 					break;
 				}
 				b'r' => {
-					if state == 2 {
+					if game_state.state == 2 {
 						client_socket.send(b"suicide").unwrap();
-						state = 3;
+						game_state.state = 3;
 					} else {
 						client_socket.send(b"pair").unwrap();
-						state = 3;
+						game_state.state = 3;
 					}
 				}
 				b'/' => {
@@ -65,7 +78,7 @@ fn game_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -
 					return 0;
 				}
 				_ => {
-					if state == 2 {
+					if game_state.state == 2 {
 						client_socket
 							.send(
 								format!("key {}", byte as char).as_bytes(),
@@ -80,7 +93,11 @@ fn game_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -
 	return 2;
 }
 
-fn proc_line(line: String, client_socket: &ClientSocket, client_display: &mut ClientDisplay) {
+fn proc_line(
+	line: String,
+	client_socket: &ClientSocket,
+	client_display: &mut ClientDisplay,
+) {
 	let split: Vec<&str> = line.split_whitespace().collect();
 	if split[0] == "msg" {
 		client_socket.send(&line.bytes().collect::<Vec<u8>>()[4..]).unwrap();
@@ -97,11 +114,19 @@ fn proc_line(line: String, client_socket: &ClientSocket, client_display: &mut Cl
 			Err(_) => return,
 		};
 		client_display.setpanel(panel, id);
+	} else {
+		client_socket.send(line.as_bytes()).unwrap();
 	}
 }
 
-fn text_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -> i32 {
+fn text_mode(
+	client_socket: &ClientSocket,
+	client_display: &mut ClientDisplay,
+	game_state: &mut GameState,
+	id: i32
+) -> i32 {
 	let mut rl = Editor::<()>::new();
+	client_socket.socket.set_nonblocking(false).unwrap();
 	loop {
 		let readline = rl.readline("> ");
 		match readline {
@@ -116,12 +141,32 @@ fn text_mode(client_socket: &ClientSocket, client_display: &mut ClientDisplay) -
 				return 2;
 			}
 		}
+		let mut buf = [0; 1024];
+		while let Ok(amt) = client_socket.recv(&mut buf) {
+			let msg = String::from(
+				std::str::from_utf8(&buf[..amt]
+			).unwrap());
+			let split = msg
+				.split_whitespace()
+				.collect::<Vec<&str>>();
+			if split[0] == "startvs" {
+				let opid = split[1].parse::<i32>().unwrap();
+				client_display.setpanel(0, id);
+				client_display.setpanel(1, opid);
+				game_state.state = 2;
+				return 1;
+			}
+			if amt < 16 {
+				println!("{}", msg);
+			}
+		}
 	}
 }
 
 fn main() {
 	let mut mode = 0; // 0: text, 1: game
 	let mut iter = std::env::args();
+	let mut game_state: GameState = Default::default();
 	iter.next();
 	let addr = match iter.next() {
 		Some(string) => string,
@@ -131,8 +176,17 @@ fn main() {
 	let mut client_display = ClientDisplay::new(id);
 	loop {
 		mode = match mode {
-			0 => text_mode(&client_socket, &mut client_display),
-			1 => game_mode(&client_socket, &mut client_display),
+			0 => text_mode(
+				&client_socket,
+				&mut client_display,
+				&mut game_state,
+				id,
+			),
+			1 => game_mode(
+				&client_socket,
+				&mut client_display,
+				&mut game_state,
+			),
 			2 => break,
 			_ => unreachable!(),
 		};
