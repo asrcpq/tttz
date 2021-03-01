@@ -18,9 +18,9 @@
 
 ## Gameplay
 
-* h: move left
+* h/l: move left/right
 
-* l: move right
+* H/L: move left/right until fail
 
 * k: hard drop
 

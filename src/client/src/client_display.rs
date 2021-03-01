@@ -219,7 +219,7 @@ impl ClientDisplay {
 			}
 		}
 		// show shadow_block first
-		print!("[37m");
+		print!("[0m");
 		for i in 0..4 {
 			let x = display.shadow_pos[i * 2] as u16;
 			let y = display.shadow_pos[i * 2 + 1] as u16;
