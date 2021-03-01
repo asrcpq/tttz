@@ -9,7 +9,11 @@ use std::io::{self, BufRead};
 mod client_socket;
 use client_socket::ClientSocket;
 
-fn main_think(display: Display, client_socket: &ClientSocket, sleep_millis: u64) {
+fn main_think(
+	display: Display,
+	client_socket: &ClientSocket,
+	sleep_millis: u64,
+) {
 	let mut heights = [39u8; 10];
 
 	if display.hold == 7 {

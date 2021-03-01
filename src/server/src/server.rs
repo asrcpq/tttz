@@ -125,8 +125,18 @@ impl Server {
 							.client_manager
 							.get_addr_by_id(target_id)
 							.unwrap();
-						self.socket.send_to(format!("startvs {}", target_id).as_bytes(), addr1).unwrap();
-						self.socket.send_to(format!("startvs {}", client.id).as_bytes(), addr2).unwrap();
+						self.socket
+							.send_to(
+								format!("startvs {}", target_id).as_bytes(),
+								addr1,
+							)
+							.unwrap();
+						self.socket
+							.send_to(
+								format!("startvs {}", client.id).as_bytes(),
+								addr2,
+							)
+							.unwrap();
 
 						pending_client.board.update_display();
 						pending_client
