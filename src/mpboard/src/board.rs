@@ -268,6 +268,9 @@ impl Board {
 			}
 			if self.garbages[0] >= self.attack_pool {
 				self.garbages[0] -= self.attack_pool;
+				if self.garbages[0] == 0 {
+					self.garbages.pop_front();
+				}
 				self.display.pending_attack -= self.attack_pool;
 				self.attack_pool = 0;
 				break false;
