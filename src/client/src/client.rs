@@ -49,7 +49,8 @@ fn main() {
 				client_display.disp_msg(&msg);
 				continue;
 			} else {
-				let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
+				let decoded: Display =
+					bincode::deserialize(&buf[..amt]).unwrap();
 				if decoded.id == id {
 					client_display.disp(decoded, 0);
 				} else {
@@ -88,7 +89,9 @@ fn main() {
 					_ => {
 						if state == 2 {
 							client_socket
-								.send(format!("key {}", byte as char).as_bytes())
+								.send(
+									format!("key {}", byte as char).as_bytes(),
+								)
 								.unwrap();
 						}
 					}

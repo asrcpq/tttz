@@ -9,7 +9,8 @@ pub struct ClientSocket {
 impl ClientSocket {
 	pub fn new(addr: &str) -> (ClientSocket, i32) {
 		let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-		let target_addr: SocketAddr = addr.to_socket_addrs().unwrap().next().unwrap();
+		let target_addr: SocketAddr =
+			addr.to_socket_addrs().unwrap().next().unwrap();
 		eprintln!("{:?}", target_addr);
 		socket.send_to(b"new client", &target_addr).unwrap();
 		let mut buf = [0; 1024];

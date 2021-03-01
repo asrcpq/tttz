@@ -21,7 +21,9 @@ impl Server {
 	fn post_operation(&mut self, mut client: &mut Client) {
 		// note the size effect of counter_attack
 		if client.board.attack_pool > 0 && client.board.counter_attack() {
-			if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
+			if let Some(addr) =
+				self.client_manager.get_addr_by_id(client.attack_target)
+			{
 				eprintln!(
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
@@ -34,7 +36,11 @@ impl Server {
 				client_target.board.push_garbage(client.board.attack_pool);
 				self.socket
 					.send_to(
-						format!("sigatk {}", client_target.board.display.pending_attack).as_bytes(),
+						format!(
+							"sigatk {}",
+							client_target.board.display.pending_attack
+						)
+						.as_bytes(),
 						addr,
 					)
 					.unwrap();
@@ -56,11 +62,12 @@ impl Server {
 		// get or create client
 		let mut buf = [0; 1024];
 		let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
-		let matched_id = if let Some(id) = self.client_manager.get_id_by_addr(src) {
-			id
-		} else {
-			0 // should never be matched in clients
-		};
+		let matched_id =
+			if let Some(id) = self.client_manager.get_id_by_addr(src) {
+				id
+			} else {
+				0 // should never be matched in clients
+			};
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
@@ -96,7 +103,10 @@ impl Server {
 				Some(mut pending_client) => {
 					eprintln!(
 						"{}:{} vs {}:{}",
-						target_id, pending_client.state, client.id, client.state,
+						target_id,
+						pending_client.state,
+						client.id,
+						client.state,
 					);
 					if pending_client.state == 3 {
 						self.pending_client = None;
@@ -107,13 +117,20 @@ impl Server {
 						client.dc_ids.insert(target_id);
 						pending_client.dc_ids.insert(client.id);
 
-						let addr1 = self.client_manager.get_addr_by_id(client.id).unwrap();
-						let addr2 = self.client_manager.get_addr_by_id(target_id).unwrap();
+						let addr1 = self
+							.client_manager
+							.get_addr_by_id(client.id)
+							.unwrap();
+						let addr2 = self
+							.client_manager
+							.get_addr_by_id(target_id)
+							.unwrap();
 						self.socket.send_to(b"start", addr1).unwrap();
 						self.socket.send_to(b"start", addr2).unwrap();
 
 						pending_client.board.update_display();
-						pending_client.send_display(&self.socket, &self.client_manager);
+						pending_client
+							.send_display(&self.socket, &self.client_manager);
 						client.board.update_display();
 						client.send_display(&self.socket, &self.client_manager);
 						self.client_manager
@@ -132,7 +149,9 @@ impl Server {
 		self.socket.send_to(b"die", src).unwrap();
 
 		// calc win by attack target works only in pair match mode
-		if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
+		if let Some(addr) =
+			self.client_manager.get_addr_by_id(client.attack_target)
+		{
 			self.socket.send_to(b"win", addr).unwrap();
 			let mut opponent = self
 				.client_manager
@@ -175,7 +194,10 @@ impl Server {
 						self.client_manager.tmp_push_by_id(id, viewed_client);
 					}
 					None => {
-						eprintln!("Client {} try to view nonexist {}", client.id, id);
+						eprintln!(
+							"Client {} try to view nonexist {}",
+							client.id, id
+						);
 					}
 				}
 			} else if words[0] == "pair" {

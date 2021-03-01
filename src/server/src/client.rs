@@ -35,16 +35,24 @@ impl Client {
 		self.board = Board::new(self.id);
 	}
 
-	pub fn send_display(&mut self, socket: &UdpSocket, client_manager: &ClientManager) {
+	pub fn send_display(
+		&mut self,
+		socket: &UdpSocket,
+		client_manager: &ClientManager,
+	) {
 		let msg = bincode::serialize(&self.board.display).unwrap();
 		let mut new_dc_ids: HashSet<i32> = HashSet::new();
 		for dc_id in self.dc_ids.drain() {
-			let dc_addr = if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
-				addr
-			} else {
-				eprintln!("A removed client: {} was viewing {}", dc_id, self.id);
-				continue;
-			};
+			let dc_addr =
+				if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
+					addr
+				} else {
+					eprintln!(
+						"A removed client: {} was viewing {}",
+						dc_id, self.id
+					);
+					continue;
+				};
 			socket.send_to(&msg, dc_addr).unwrap();
 			new_dc_ids.insert(dc_id);
 		}

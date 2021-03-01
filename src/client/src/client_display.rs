@@ -64,13 +64,15 @@ impl ClientDisplay {
 	}
 
 	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
-		let (ch1, ch2) = if style == 0 && color != 7 {
+		let (ch1, ch2) = if style == 0 && color != 7 || style == 1 {
 			('[', ']')
 		} else {
 			(' ', ' ')
 		};
+		let fgbg = 4 - style; // 0 bg 1 fg
 		print!(
-			"[4{}m{}{}{}{}",
+			"[{}{}m{}{}{}{}",
+			fgbg,
 			COLORMAP[color as usize],
 			termion::cursor::Goto(i, j),
 			ch1,
@@ -114,7 +116,10 @@ impl ClientDisplay {
 					infostring[x] as char,
 				);
 			} else {
-				print!("{} ", termion::cursor::Goto(offsetx + x as u16, offsety,),);
+				print!(
+					"{} ",
+					termion::cursor::Goto(offsetx + x as u16, offsety,),
+				);
 			}
 		}
 	}
@@ -181,7 +186,8 @@ impl ClientDisplay {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
 		}
 		self.disp_box(offsetx - 1, offsetx + 4, offsety - 1, offsety + 1);
-		for code in [display.hold].iter().chain(display.bag_preview[..n].iter()) {
+		for code in [display.hold].iter().chain(display.bag_preview[..n].iter())
+		{
 			if *code == 7 {
 				doubley += 5;
 				continue;
@@ -213,18 +219,30 @@ impl ClientDisplay {
 			}
 		}
 		// show shadow_block first
+		print!("[37m");
 		for i in 0..4 {
 			let x = display.shadow_pos[i * 2] as u16;
 			let y = display.shadow_pos[i * 2 + 1] as u16;
 			if y >= 20 {
-				self.blockp(offsetx + x * 2, offsety + y - 20, display.shadow_code, 1);
+				self.blockp(
+					offsetx + x * 2,
+					offsety + y - 20,
+					display.tmp_code,
+					1,
+				);
 			}
 		}
+		print!("[30m");
 		for i in 0..4 {
 			let x = display.tmp_pos[i * 2] as u16;
 			let y = display.tmp_pos[i * 2 + 1] as u16;
 			if y >= 20 {
-				self.blockp(offsetx + x * 2, offsety + y - 20, display.tmp_code, 0);
+				self.blockp(
+					offsetx + x * 2,
+					offsety + y - 20,
+					display.tmp_code,
+					0,
+				);
 			}
 		}
 		print!("{}", termion::style::Reset);

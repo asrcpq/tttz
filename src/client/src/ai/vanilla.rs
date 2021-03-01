@@ -48,11 +48,14 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	let mut best_rotation = 0;
 	let mut best_posx = 0;
 	let mut best_id = 0;
-	for (id, option_code) in [display.tmp_code, display.hold].iter().enumerate() {
+	for (id, option_code) in [display.tmp_code, display.hold].iter().enumerate()
+	{
 		for rot in 0..4 {
 			let mut dx = 0;
 			loop {
-				if dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > 10 {
+				if dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize]
+					> 10
+				{
 					break;
 				}
 
@@ -71,7 +74,8 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 				'movedown_check: loop {
 					for block in 0..4 {
 						if posy[block] + height
-							== (heights[dx as usize + posx[block] as usize]) as i32
+							== (heights[dx as usize + posx[block] as usize])
+								as i32
 						{
 							height -= 1;
 							break 'movedown_check;
@@ -83,8 +87,8 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 				let mut delta_heights = [0; 4];
 				let mut block_count = [0; 4];
 				for block in 0..4 {
-					let dh =
-						heights[dx as usize + posx[block] as usize] as i32 - posy[block] - height;
+					let dh = heights[dx as usize + posx[block] as usize] as i32
+						- posy[block] - height;
 					block_count[posx[block] as usize] += 1;
 					if dh > delta_heights[posx[block] as usize] {
 						delta_heights[posx[block] as usize] = dh;
@@ -97,8 +101,9 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 					}
 				}
 				let cover = (dx <= highest_hole_x
-					&& dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize] > highest_hole_x)
-					as i32;
+					&& dx
+						+ BLOCK_WIDTH[*option_code as usize * 4 + rot as usize]
+						> highest_hole_x) as i32;
 				let score = height as f32 + posy_sum as f32 * 0.25 // mass center height
 					- hole as f32 - cover as f32 * 2.0;
 				if score > best_score {
@@ -125,7 +130,8 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 	};
 	// perform action
 	let current_posx = INITIAL_POS[best_code as usize];
-	let rotated_pos0 = current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
+	let rotated_pos0 =
+		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if rotated_pos0 > best_posx {
 		//left
 		('h', rotated_pos0 - best_posx)

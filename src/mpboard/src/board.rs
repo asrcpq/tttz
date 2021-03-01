@@ -58,8 +58,9 @@ impl Board {
 	}
 
 	pub fn slowdown(&mut self, dy: u8) {
-		let first_visible =
-			21 - BLOCK_HEIGHT[(self.tmp_block.code * 4 + self.tmp_block.rotation as u8) as usize];
+		let first_visible = 21
+			- BLOCK_HEIGHT[(self.tmp_block.code * 4
+				+ self.tmp_block.rotation as u8) as usize];
 		if self.tmp_block.pos.1 < first_visible {
 			for _ in self.tmp_block.pos.1..first_visible {
 				self.movedown1_nohard();
@@ -96,7 +97,8 @@ impl Board {
 		let len = if dr == 2 { 6 } else { 5 };
 		for wkid in 0..len {
 			let left_offset = (dr == -1) as i8 * 40;
-			let idx = (revert_block.rotation * len * 2 + left_offset + wkid * 2) as usize;
+			let idx = (revert_block.rotation * len * 2 + left_offset + wkid * 2)
+				as usize;
 			let wkd: &Vec<i32> = if dr == 2 {
 				&FWKD
 			} else if revert_block.code == 0 {
@@ -173,7 +175,8 @@ impl Board {
 				continue;
 			}
 			for j in 0..10 {
-				self.display.color[(i + movedown) * 10 + j] = self.display.color[i * 10 + j];
+				self.display.color[(i + movedown) * 10 + j] =
+					self.display.color[i * 10 + j];
 			}
 		}
 		movedown as u32
@@ -199,8 +202,10 @@ impl Board {
 
 			let offset = self.tmp_block.rotation as usize * 4;
 			for i in 0..2 {
-				let check_x = self.tmp_block.pos.0 + TSPIN_MINI_CHECK[offset + i * 2];
-				let check_y = self.tmp_block.pos.1 + TSPIN_MINI_CHECK[offset + i * 2 + 1];
+				let check_x =
+					self.tmp_block.pos.0 + TSPIN_MINI_CHECK[offset + i * 2];
+				let check_y =
+					self.tmp_block.pos.1 + TSPIN_MINI_CHECK[offset + i * 2 + 1];
 				if self.display.color[(check_x + check_y * 10) as usize] == 7 {
 					return 1;
 				}
@@ -301,7 +306,8 @@ impl Board {
 			if self.attack_pool != 0 {
 				eprintln!("Error! attack_pool not cleared.");
 			}
-			let offset = 21 * (line_count - 1) as usize + self.display.combo as usize;
+			let offset =
+				21 * (line_count - 1) as usize + self.display.combo as usize;
 			if self.display.b2b {
 				if tspin == 2 {
 					self.attack_pool = ATK_B2B_TSPIN_REGULAR[offset];
@@ -309,7 +315,8 @@ impl Board {
 					self.attack_pool = ATK_B2B_TSPIN_MINI[offset];
 				} else if tspin == 0 {
 					if line_count == 4 {
-						self.attack_pool = ATK_B2B_QUAD[self.display.combo as usize];
+						self.attack_pool =
+							ATK_B2B_QUAD[self.display.combo as usize];
 					} else {
 						self.attack_pool = ATK_NORMAL[offset];
 						self.display.b2b = false;
@@ -367,8 +374,8 @@ impl Board {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
 				if self.shadow_block.pos.1
-					+ BLOCK_HEIGHT
-						[self.tmp_block.code as usize * 4 + self.tmp_block.rotation as usize]
+					+ BLOCK_HEIGHT[self.tmp_block.code as usize * 4
+						+ self.tmp_block.rotation as usize]
 					< 21
 				{
 					return false;
