@@ -264,7 +264,9 @@ impl Board {
 				self.attack_pool = 0;
 				break false;
 			}
-			self.attack_pool -= self.garbages.pop_front().unwrap();
+			let popped_lines = self.garbages.pop_front().unwrap();
+			self.attack_pool -= popped_lines;
+			self.display.pending_attack -= popped_lines;
 		}
 	}
 
