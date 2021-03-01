@@ -166,6 +166,9 @@ impl Server {
 		client.state = 1;
 		self.socket.send_to(b"die", src).unwrap();
 
+		if client.attack_target == 0 {
+			return;
+		}
 		// calc win by attack target works only in pair match mode
 		if let Some(addr) =
 			self.client_manager.get_addr_by_id(client.attack_target)
@@ -176,9 +179,15 @@ impl Server {
 				.tmp_pop_by_id(client.attack_target)
 				.unwrap();
 			opponent.state = 1;
+			opponent.attack_target = 0;
+			opponent.dc_ids.remove(&client.id);
 			self.client_manager
 				.tmp_push_by_id(client.attack_target, opponent);
 		} // or the opponent has gone
+
+		// attack_target is used before
+		client.dc_ids.remove(&client.attack_target);
+		client.attack_target = 0;
 	}
 
 	fn set_view(&mut self, from_id: i32, to_id: i32) {
