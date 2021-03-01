@@ -18,6 +18,26 @@ impl Server {
 		}
 	}
 
+	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) { // target id and attr
+
+		let mut client_target = self
+			.client_manager
+			.tmp_pop_by_id(id)
+			.unwrap();
+		client_target.board.push_garbage(lines);
+		self.socket
+			.send_to(
+				format!(
+					"sigatk {}",
+					client_target.board.display.pending_attack
+				)
+				.as_bytes(),
+				addr,
+			)
+			.unwrap();
+		self.client_manager.tmp_push_by_id(id, client_target);
+	}
+
 	fn post_operation(&mut self, mut client: &mut Client) {
 		// note the size effect of counter_attack
 		if client.board.attack_pool > 0 && client.board.counter_attack() {
@@ -28,24 +48,7 @@ impl Server {
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
 				);
-
-				let mut client_target = self
-					.client_manager
-					.tmp_pop_by_id(client.attack_target)
-					.unwrap();
-				client_target.board.push_garbage(client.board.attack_pool);
-				self.socket
-					.send_to(
-						format!(
-							"sigatk {}",
-							client_target.board.display.pending_attack
-						)
-						.as_bytes(),
-						addr,
-					)
-					.unwrap();
-				self.client_manager
-					.tmp_push_by_id(client.attack_target, client_target);
+				self.send_attack(client.attack_target, addr, client.board.attack_pool);
 			} else {
 				eprintln!(
 					"Client {} is attacking nonexistent target {}",
@@ -92,6 +95,44 @@ impl Server {
 		))
 	}
 
+	pub fn pair_success(&mut self, client1: &mut Client, client2: &mut Client) {
+		let id1 = client1.id;
+		let id2 = client2.id;
+		client1.attack_target = id2;
+		client1.state = 2;
+		client2.attack_target = id1;
+		client2.state = 2;
+		client1.dc_ids.insert(id2);
+		client2.dc_ids.insert(id1);
+
+		let addr1 = self
+			.client_manager
+			.get_addr_by_id(id1)
+			.unwrap();
+		let addr2 = self
+			.client_manager
+			.get_addr_by_id(id2)
+			.unwrap();
+		self.socket
+			.send_to(
+				format!("startvs {}", id2).as_bytes(),
+				addr1,
+			)
+			.unwrap();
+		self.socket
+			.send_to(
+				format!("startvs {}", id1).as_bytes(),
+				addr2,
+			)
+			.unwrap();
+
+		client2.board.update_display();
+		client2
+			.send_display(&self.socket, &self.client_manager);
+		client1.board.update_display();
+		client1.send_display(&self.socket, &self.client_manager);
+	}
+
 	pub fn pair_maker(&mut self, mut client: &mut Client) {
 		eprintln!("Pair maker");
 		if client.state == 3 && self.pending_client.is_some() {
@@ -110,42 +151,9 @@ impl Server {
 					);
 					if pending_client.state == 3 {
 						self.pending_client = None;
-						client.attack_target = target_id;
-						client.state = 2;
-						pending_client.attack_target = client.id;
-						pending_client.state = 2;
-						client.dc_ids.insert(target_id);
-						pending_client.dc_ids.insert(client.id);
-
-						let addr1 = self
-							.client_manager
-							.get_addr_by_id(client.id)
-							.unwrap();
-						let addr2 = self
-							.client_manager
-							.get_addr_by_id(target_id)
-							.unwrap();
-						self.socket
-							.send_to(
-								format!("startvs {}", target_id).as_bytes(),
-								addr1,
-							)
-							.unwrap();
-						self.socket
-							.send_to(
-								format!("startvs {}", client.id).as_bytes(),
-								addr2,
-							)
-							.unwrap();
-
-						pending_client.board.update_display();
-						pending_client
-							.send_display(&self.socket, &self.client_manager);
-						client.board.update_display();
-						client.send_display(&self.socket, &self.client_manager);
+						self.pair_success(&mut client, &mut pending_client);
 						self.client_manager
 							.tmp_push_by_id(target_id, pending_client);
-
 						return;
 					}
 				}
@@ -173,6 +181,32 @@ impl Server {
 		} // or the opponent has gone
 	}
 
+	fn set_view(&mut self, from_id: i32, to_id: i32) {
+		let viewed_client = self.client_manager.tmp_pop_by_id(to_id);
+		match viewed_client {
+			Some(mut viewed_client) => {
+				eprintln!("Client {} viewing {}", from_id, to_id);
+				viewed_client.dc_ids.insert(from_id);
+				self.client_manager.tmp_push_by_id(to_id, viewed_client);
+			}
+			None => {
+				eprintln!(
+					"Client {} try to view nonexist {}",
+					from_id, to_id
+				);
+			}
+		}
+	}
+
+	fn send_clients(&mut self, recipient_addr: SocketAddr) {
+		let mut return_msg = String::new();
+		for (key, _) in &self.client_manager.id_addr {
+			return_msg = format!("{}{} ", return_msg, key);
+		}
+		return_msg.pop();
+		self.socket.send_to(&return_msg.as_bytes(), recipient_addr).unwrap();
+	}
+
 	pub fn main_loop(&mut self) {
 		loop {
 			let (mut client, msg, src) = match self.fetch_message() {
@@ -189,28 +223,10 @@ impl Server {
 			} else if words[0] == "suicide" {
 				self.die(&mut client, src);
 			} else if words[0] == "get_clients" {
-				let mut return_msg = String::new();
-				for (key, _) in &self.client_manager.id_addr {
-					return_msg = format!("{}{} ", return_msg, key);
-				}
-				return_msg.pop();
-				self.socket.send_to(&return_msg.as_bytes(), src).unwrap();
+				self.send_clients(src);
 			} else if words[0] == "view" {
 				let id = words[1].parse::<i32>().unwrap_or(0);
-				let viewed_client = self.client_manager.tmp_pop_by_id(id);
-				match viewed_client {
-					Some(mut viewed_client) => {
-						eprintln!("Client {} viewing {}", client.id, id);
-						viewed_client.dc_ids.insert(client.id);
-						self.client_manager.tmp_push_by_id(id, viewed_client);
-					}
-					None => {
-						eprintln!(
-							"Client {} try to view nonexist {}",
-							client.id, id
-						);
-					}
-				}
+				self.set_view(client.id, id);
 			} else if words[0] == "pair" {
 				client.init_board();
 				client.state = 3;

@@ -225,8 +225,6 @@ impl Board {
 		if self.display.pending_attack > 40 {
 			// fatal, immediate flush
 			self.generate_garbage();
-			// TODO: 1. call shadow calc and display sending!
-			// 2. shadow calc death after display sending
 		}
 	}
 
