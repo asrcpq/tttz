@@ -1,6 +1,12 @@
 # My Action Puzzle Game
 
-## Quickstart (vs AI)
+## Require
+
+* rust(cargo)
+
+* a VT100 compatible terminal
+
+## Quickstart (for debian)
 
 1. git clone ...
 

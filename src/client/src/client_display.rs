@@ -9,8 +9,9 @@ use std::collections::HashMap;
 
 pub struct ClientDisplay {
 	last_dirtypos: Vec<Vec<(u32, u32)>>,
-	offset_x: Vec<u32>,
-	offset_y: Vec<u32>,
+	termsize: (u16, u16),
+	offset_x: Vec<i32>,
+	offset_y: Vec<i32>,
 }
 
 impl ClientDisplay {
@@ -18,14 +19,51 @@ impl ClientDisplay {
 		// goto raw mode after ok
 		print!("{}{}", termion::clear::All, termion::cursor::Hide);
 		std::io::stdout().flush().unwrap();
-		ClientDisplay {
+		let mut client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
-			offset_x: vec![5, 40],
-			offset_y: vec![2, 2],
-		}
+			termsize: (0, 0),
+			offset_x: vec![-1; 2],
+			offset_y: vec![-1; 2],
+		};
+		client_display.set_offset();
+		client_display
 	}
 
-	fn blockp(&self, i: u8, j: u8, color: u8, style: u8) {
+	fn checksize(&self) -> bool {
+		if self.offset_x[0] == -1 {
+			print!(
+				"{}{}At least 24r63c size is required.",
+				termion::clear::All,
+				termion::cursor::Goto(1, 1),
+			);
+			return false;
+		}
+		true
+	}
+
+	pub fn set_offset(&mut self) {
+		const DRAW_SIZE: (u16, u16) = (63, 24);
+		let (x, y) = termion::terminal_size().unwrap();
+		if (x, y) == self.termsize {
+			return;
+		} else {
+			print!("{}", termion::clear::All);
+			self.termsize = (x, y);
+		}
+		if x < DRAW_SIZE.0 || y < DRAW_SIZE.1 {
+			self.offset_x[0] = -1;
+			return;
+		}
+		let x1 = (x - DRAW_SIZE.0) / 2;
+		let y1 = (y - DRAW_SIZE.1) / 2;
+		self.disp_box(x1, x1 + DRAW_SIZE.0, y1, y1 + DRAW_SIZE.1);
+		self.offset_x[0] = x1 as i32 + 4;
+		self.offset_y[0] = y1 as i32 + 2;
+		self.offset_x[1] = x1 as i32 + 34;
+		self.offset_y[1] = y1 as i32 + 2;
+	}
+
+	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
 		let (ch1, ch2) = if style == 0 && color != 7 {
 			('[', ']')
 		} else {
@@ -34,42 +72,51 @@ impl ClientDisplay {
 		print!(
 			"[4{}m{}{}{}{}",
 			COLORMAP[color as usize],
-			termion::cursor::Goto(i as u16, j as u16),
+			termion::cursor::Goto(i, j),
 			ch1,
-			termion::cursor::Goto(i as u16 + 1, j as u16),
+			termion::cursor::Goto(i + 1, j),
 			ch2,
 		);
 	}
 
-	pub fn disp_msg(&self, msg: &str, offsetx: u8, mut offsety: u8) {
-		offsety += 22;
+	pub fn disp_msg(&self, msg: &str) {
+		if !self.checksize() {
+			return;
+		}
+		let offsetx = self.offset_x[0] as u16 + 1;
+		let offsety = self.offset_y[0] as u16 + 21;
 		print!(
-			"{}{}{}",
-			termion::style::Reset,
-			termion::cursor::Goto(offsetx as u16, offsety as u16),
+			"{}{}{}{}",
+			termion::cursor::Goto(offsetx, offsety),
+			" ".repeat(16),
+			termion::cursor::Goto(offsetx, offsety),
 			msg
 		);
 	}
 
-	fn disp_info(&self, display: &Display, mut offsetx: u8, mut offsety: u8) {
+	fn disp_info(&self, display: &Display, mut offsetx: u16, mut offsety: u16) {
+		const LEN: usize = 24;
 		offsetx += 0;
 		offsety += 20;
-		print!(
-			"{}id: {}",
-			termion::cursor::Goto(offsetx as u16, offsety as u16,),
-			display.id,
-		);
-		print!(", combo: {}", display.combo);
-		// old direct print next
-		// for i in 0..n {
-		// 	print!("{}{}",
-		// 		termion::cursor::Goto(
-		// 			(offsetx + i) as u16,
-		// 			(offsety + 1) as u16,
-		// 		),
-		// 		ID_TO_CHAR[display.bag_preview[i as usize] as usize],
-		// 	);
-		// }
+		let mut infostring = format!("id: {}", display.id);
+		if display.combo > 0 {
+			infostring = format!("{}, combo: {}", infostring, display.combo,);
+		}
+		if display.b2b {
+			infostring += ", b2b on";
+		}
+		let infostring = infostring.into_bytes();
+		for x in 0..LEN {
+			if x < infostring.len() {
+				print!(
+					"{}{}",
+					termion::cursor::Goto(offsetx + x as u16, offsety,),
+					infostring[x] as char,
+				);
+			} else {
+				print!("{} ", termion::cursor::Goto(offsetx + x as u16, offsety,),);
+			}
+		}
 	}
 
 	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: u32) {
@@ -108,16 +155,17 @@ impl ClientDisplay {
 	fn disp_box(&mut self, left: u16, right: u16, top: u16, bot: u16) {
 		for yy in [top, bot].iter() {
 			print!("{}", termion::cursor::Goto(left + 1, *yy));
-			for _ in left+1..right {
+			for _ in left + 1..right {
 				print!("\u{2500}");
 			}
 		}
 		for xx in [left, right].iter() {
-			for yy in top+1..bot {
+			for yy in top + 1..bot {
 				print!("{}\u{2502}", termion::cursor::Goto(*xx, yy));
 			}
 		}
-		print!("{}\u{250c}{}\u{2514}{}\u{2510}{}\u{2518}",
+		print!(
+			"{}\u{250c}{}\u{2514}{}\u{2510}{}\u{2518}",
 			termion::cursor::Goto(left, top),
 			termion::cursor::Goto(left, bot),
 			termion::cursor::Goto(right, top),
@@ -136,26 +184,24 @@ impl ClientDisplay {
 		for code in [display.hold].iter().chain(display.bag_preview[..n].iter()) {
 			if *code == 7 {
 				doubley += 5;
-				continue
+				continue;
 			}
 			let mut tmpx = offsetx;
 			if *code == 3 {
 				tmpx += 1;
 			}
-			self.mini_blockp(
-				tmpx as u32,
-				doubley as u32,
-				*code,
-				panel,
-			);
+			self.mini_blockp(tmpx as u32, doubley as u32, *code, panel);
 			doubley += 5;
 		}
 	}
 
 	pub fn disp(&mut self, display: Display, panel: u32) {
+		if !self.checksize() {
+			return;
+		}
 		print!("[30m");
-		let offsetx = self.offset_x[panel as usize] as u8;
-		let offsety = self.offset_y[panel as usize] as u8;
+		let offsetx = self.offset_x[panel as usize] as u16;
+		let offsety = self.offset_y[panel as usize] as u16;
 		for i in 0..10 {
 			for j in 20..40 {
 				self.blockp(
@@ -168,15 +214,15 @@ impl ClientDisplay {
 		}
 		// show shadow_block first
 		for i in 0..4 {
-			let x = display.shadow_pos[i * 2];
-			let y = display.shadow_pos[i * 2 + 1];
+			let x = display.shadow_pos[i * 2] as u16;
+			let y = display.shadow_pos[i * 2 + 1] as u16;
 			if y >= 20 {
 				self.blockp(offsetx + x * 2, offsety + y - 20, display.shadow_code, 1);
 			}
 		}
 		for i in 0..4 {
-			let x = display.tmp_pos[i * 2];
-			let y = display.tmp_pos[i * 2 + 1];
+			let x = display.tmp_pos[i * 2] as u16;
+			let y = display.tmp_pos[i * 2 + 1] as u16;
 			if y >= 20 {
 				self.blockp(offsetx + x * 2, offsety + y - 20, display.tmp_code, 0);
 			}
@@ -187,7 +233,14 @@ impl ClientDisplay {
 		self.disp_atk(display.pending_attack, panel);
 	}
 
-	pub fn disp_atk(&self, atk: u32, panel: u32) {
+	pub fn disp_atk_pub(&self, atk: u32, panel: u32) {
+		if !self.checksize() {
+			return;
+		}
+		self.disp_atk(atk, panel);
+	}
+
+	fn disp_atk(&self, atk: u32, panel: u32) {
 		let offsetx = self.offset_x[panel as usize] + 20;
 		let offsety = self.offset_y[panel as usize];
 		print!("{}", termion::style::Reset);

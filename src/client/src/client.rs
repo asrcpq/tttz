@@ -35,17 +35,18 @@ fn main() {
 	loop {
 		if let Ok(amt) = client_socket.recv(&mut buf) {
 			// all long messages are board display
+			client_display.set_offset();
 			if amt < 16 {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg.starts_with("sigatk ") {
 					let pending_atk = msg[7..amt].parse::<u32>().unwrap();
-					client_display.disp_atk(pending_atk, 0);
+					client_display.disp_atk_pub(pending_atk, 0);
 				} else if msg == "start" {
 					state = 2;
 				} else if msg == "die" || msg == "win" {
 					state = 1;
 				}
-				client_display.disp_msg(&msg, 2, 2);
+				client_display.disp_msg(&msg);
 				continue;
 			} else {
 				let decoded: Display = bincode::deserialize(&buf[..amt]).unwrap();
@@ -93,7 +94,6 @@ fn main() {
 					}
 				}
 			}
-			stdout.flush().unwrap();
 		}
 		std::thread::sleep(std::time::Duration::from_millis(10));
 	}

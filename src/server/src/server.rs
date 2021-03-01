@@ -19,36 +19,34 @@ impl Server {
 	}
 
 	fn post_operation(&mut self, mut client: &mut Client) {
-		if client.board.attack_pool > 0 {
-			if client.board.counter_attack() {
-				if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
-					eprintln!(
-						"{} attack {} with {}",
-						client.id, client.attack_target, client.board.attack_pool,
-					);
+		// note the size effect of counter_attack
+		if client.board.attack_pool > 0 && client.board.counter_attack() {
+			if let Some(addr) = self.client_manager.get_addr_by_id(client.attack_target) {
+				eprintln!(
+					"{} attack {} with {}",
+					client.id, client.attack_target, client.board.attack_pool,
+				);
 
-					let mut client_target = self
-						.client_manager
-						.tmp_pop_by_id(client.attack_target)
-						.unwrap();
-					client_target.board.push_garbage(client.board.attack_pool);
-					self.socket
-						.send_to(
-							format!("sigatk {}", client_target.board.display.pending_attack)
-								.as_bytes(),
-							addr,
-						)
-						.unwrap();
-					self.client_manager
-						.tmp_push_by_id(client.attack_target, client_target);
-				} else {
-					eprintln!(
-						"Client {} is attacking nonexistent target {}",
-						client.id, client.attack_target,
-					);
-				}
-				client.board.attack_pool = 0;
+				let mut client_target = self
+					.client_manager
+					.tmp_pop_by_id(client.attack_target)
+					.unwrap();
+				client_target.board.push_garbage(client.board.attack_pool);
+				self.socket
+					.send_to(
+						format!("sigatk {}", client_target.board.display.pending_attack).as_bytes(),
+						addr,
+					)
+					.unwrap();
+				self.client_manager
+					.tmp_push_by_id(client.attack_target, client_target);
+			} else {
+				eprintln!(
+					"Client {} is attacking nonexistent target {}",
+					client.id, client.attack_target,
+				);
 			}
+			client.board.attack_pool = 0;
 		}
 		client.board.update_display();
 		client.send_display(&self.socket, &self.client_manager);
