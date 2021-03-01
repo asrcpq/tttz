@@ -172,6 +172,7 @@ impl Server {
 			// eprintln!("{} from {}", msg, client.id);
 			let words = msg.split_whitespace().collect::<Vec<&str>>();
 			if words[0] == "quit" {
+				eprintln!("Client {} quit", client.id);
 				self.die(&mut client, src);
 				assert!(self.client_manager.pop_by_id(client.id).is_none());
 				continue;

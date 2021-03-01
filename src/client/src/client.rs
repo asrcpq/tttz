@@ -115,6 +115,9 @@ fn proc_line(
 		};
 		client_display.setpanel(panel, id);
 	} else {
+		if line == "pair" {
+			client_socket.socket.set_nonblocking(false).unwrap();
+		}
 		client_socket.send(line.as_bytes()).unwrap();
 	}
 }
@@ -126,7 +129,7 @@ fn text_mode(
 	id: i32
 ) -> i32 {
 	let mut rl = Editor::<()>::new();
-	client_socket.socket.set_nonblocking(false).unwrap();
+	client_socket.socket.set_nonblocking(true).unwrap();
 	loop {
 		let readline = rl.readline("> ");
 		match readline {
@@ -142,10 +145,14 @@ fn text_mode(
 			}
 		}
 		let mut buf = [0; 1024];
+		// drain the data
 		while let Ok(amt) = client_socket.recv(&mut buf) {
+			if amt > 16 {
+				continue
+			}
 			let msg = String::from(
-				std::str::from_utf8(&buf[..amt]
-			).unwrap());
+				std::str::from_utf8(&buf[..amt]).unwrap()
+			);
 			let split = msg
 				.split_whitespace()
 				.collect::<Vec<&str>>();
@@ -156,9 +163,8 @@ fn text_mode(
 				game_state.state = 2;
 				return 1;
 			}
-			if amt < 16 {
-				println!("{}", msg);
-			}
+			println!("{}", msg);
+			break
 		}
 	}
 }
