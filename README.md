@@ -1,22 +1,8 @@
-# My Action Puzzle Game
-
 ## Require
 
 * rust(cargo)
 
 * a VT100 compatible terminal
-
-## Quickstart (for debian)
-
-1. git clone ...
-
-2. sudo apt install cargo
-
-3. cd to project root
-
-4. bash quick\_play\_ai.sh
-
-5. press r
 
 ## Rules
 
@@ -28,7 +14,7 @@
 
 * SRS kick table(with 180 degree kick)
 
-* tspin and back-to-back bonus
+* tspin and back-to-back bonus, no pc(currently)
 
 ## Gameplay
 
