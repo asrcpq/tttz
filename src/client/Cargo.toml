@@ -15,6 +15,7 @@ path = "src/ai1.rs"
 [dependencies]
 termion = "*"
 bincode = "*"
+rustyline = "*"
 
 [dependencies.mpboard]
 path = "../mpboard"

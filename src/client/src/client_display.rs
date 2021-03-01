@@ -12,20 +12,26 @@ pub struct ClientDisplay {
 	termsize: (u16, u16),
 	offset_x: Vec<i32>,
 	offset_y: Vec<i32>,
+	panel_id: Vec<i32>,
 }
 
 impl ClientDisplay {
-	pub fn new() -> ClientDisplay {
-		// goto raw mode after ok
-		print!("{}{}", termion::clear::All, termion::cursor::Hide);
+	pub fn setpanel(&mut self, panel: usize, id: i32) {
+		match self.panel_id.get_mut(panel) {
+			None => return,
+			Some(id2) => *id2 = id,
+		}
+	}
+
+	pub fn new(id: i32) -> ClientDisplay {
 		std::io::stdout().flush().unwrap();
-		let mut client_display = ClientDisplay {
+		let client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
 			termsize: (0, 0),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
+			panel_id: vec![id, 0],
 		};
-		client_display.set_offset();
 		client_display
 	}
 
@@ -201,7 +207,23 @@ impl ClientDisplay {
 		}
 	}
 
-	pub fn disp(&mut self, display: Display, panel: u32) {
+	pub fn disp_by_id(&mut self, display: &Display) {
+		let mut flag = true;
+		for (panel, id2) in self.panel_id.clone().into_iter().enumerate() {
+			if id2 == display.id {
+				self.disp_by_panel(display, panel as u32);
+				flag = false;
+			}
+		}
+		if flag {
+			eprintln!("Receiving unwanted client info");
+		}
+	}
+
+	fn disp_by_panel(&mut self, display: &Display, panel: u32) {
+		if panel >= 2 {
+			panic!("Only support 2 panels");
+		}
 		if !self.checksize() {
 			return;
 		}
@@ -289,12 +311,27 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 	}
 
-	pub fn deinit(&mut self) {
+	pub fn activate(&self) {
+		print!(
+			"{}{}{}",
+			termion::style::Reset,
+			termion::clear::All,
+			termion::cursor::Hide
+		);
+	}
+
+	pub fn deactivate(&self) {
 		print!(
 			"{}{}{}",
 			termion::style::Reset,
 			termion::clear::All,
 			termion::cursor::Show,
 		);
+	}
+}
+
+impl Drop for ClientDisplay {
+	fn drop(&mut self) {
+		self.deactivate();
 	}
 }

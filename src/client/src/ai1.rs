@@ -9,9 +9,7 @@ use std::io::{self, BufRead};
 mod client_socket;
 use client_socket::ClientSocket;
 
-const SLEEP_MILLIS: u64 = 250;
-
-fn main_think(display: Display, client_socket: &ClientSocket) {
+fn main_think(display: Display, client_socket: &ClientSocket, sleep_millis: u64) {
 	let mut heights = [39u8; 10];
 
 	if display.hold == 7 {
@@ -141,13 +139,13 @@ fn main_think(display: Display, client_socket: &ClientSocket) {
 	};
 	for _ in 0..best_rotation {
 		client_socket.send(b"key x").unwrap();
-		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
+		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
 	for _ in 0..times {
 		client_socket
 			.send(format!("key {}", keycode).as_bytes())
 			.unwrap();
-		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
+		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
 	client_socket.send(b"key k").unwrap();
 }
@@ -156,21 +154,22 @@ fn main() {
 	let stdin = io::stdin();
 
 	let mut iter = std::env::args();
-	iter.next();
-	let addr = match iter.next() {
-		Some(string) => string,
-		None => "127.0.0.1:23124".to_string(),
-	};
+	let mut addr = "127.0.0.1:23124".to_string();
+	let mut sleep_millis = 240;
+	let mut mode = "pair".to_string();
+	while let Some(string) = iter.next() {
+		if string == "addr" {
+			addr = iter.next().unwrap();
+		}
+		if string == "mode" {
+			mode = iter.next().unwrap();
+		}
+		if string == "sleep" {
+			sleep_millis = iter.next().unwrap().parse::<u64>().unwrap();
+		}
+	}
 
 	let (client_socket, id) = ClientSocket::new(&addr);
-
-	// decide mode after client connection
-	let args: Vec<String> = std::env::args().collect();
-	let mode = if args.len() == 1 {
-		"pair".to_string()
-	} else {
-		args[1].clone()
-	};
 	// free mode will immediately start, so pause first
 	if mode == "free" {
 		stdin.lock().lines().next().unwrap().unwrap();
@@ -181,7 +180,7 @@ fn main() {
 	let mut buf = [0; 1024];
 	let mut display: Option<Display> = None;
 	loop {
-		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
+		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 
 		// read until last screen
 		while let Ok(amt) = client_socket.recv(&mut buf) {
@@ -213,7 +212,7 @@ fn main() {
 		}
 		if let Some(decoded) = display {
 			if state == 2 {
-				main_think(decoded, &client_socket);
+				main_think(decoded, &client_socket, sleep_millis);
 			}
 			display = None;
 		}

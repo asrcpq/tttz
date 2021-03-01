@@ -217,6 +217,9 @@ impl Board {
 
 	// push a new attack into pending garbage queue
 	pub fn push_garbage(&mut self, atk: u32) {
+		if atk == 0 {
+			return;
+		}
 		self.display.pending_attack += atk;
 		self.garbages.push_back(atk);
 		if self.display.pending_attack > 40 {
