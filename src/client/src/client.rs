@@ -71,7 +71,6 @@ fn main() {
 			} else {
 				match byte {
 					b'q' => {
-						client_socket.send(b"quit").unwrap();
 						break;
 					}
 					b'r' => {

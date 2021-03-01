@@ -1,20 +1,21 @@
 // stupid ai, put block to make least holes and lowest height
 
 extern crate bincode;
-use std::net::SocketAddr;
-use std::net::UdpSocket;
 extern crate mpboard;
 use mpboard::display::Display;
 use mpboard::srs_data::*;
 use std::io::{self, BufRead};
 
+mod client_socket;
+use client_socket::ClientSocket;
+
 const SLEEP_MILLIS: u64 = 250;
 
-fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
+fn main_think(display: Display, client_socket: &ClientSocket) {
 	let mut heights = [39u8; 10];
 
 	if display.hold == 7 {
-		socket.send_to(b"key  ", target_addr).unwrap();
+		client_socket.send(b"key  ").unwrap();
 		return;
 	}
 
@@ -125,7 +126,7 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		display.tmp_code
 	} else {
 		// best solution is from the hold block
-		socket.send_to(b"key  ", target_addr).unwrap();
+		client_socket.send(b"key  ").unwrap();
 		display.hold
 	};
 	// perform action
@@ -139,31 +140,29 @@ fn main_think(display: Display, socket: &UdpSocket, target_addr: SocketAddr) {
 		('l', best_posx - rotated_pos0)
 	};
 	for _ in 0..best_rotation {
-		socket.send_to(b"key x", target_addr).unwrap();
+		client_socket.send(b"key x").unwrap();
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
 	for _ in 0..times {
-		socket
-			.send_to(format!("key {}", keycode).as_bytes(), target_addr)
+		client_socket
+			.send(format!("key {}", keycode).as_bytes())
 			.unwrap();
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 	}
-	socket.send_to(b"key k", target_addr).unwrap();
+	client_socket.send(b"key k").unwrap();
 }
 
 fn main() {
 	let stdin = io::stdin();
 
-	let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-	let target_addr: SocketAddr = "127.0.0.1:23124".parse().unwrap();
-	socket.send_to(b"new client", &target_addr).unwrap();
-	let mut buf = [0; 1024];
-	let (amt, _) = socket.recv_from(&mut buf).unwrap();
-	assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
-	let id: i32 = std::str::from_utf8(&buf[3..amt])
-		.unwrap()
-		.parse::<i32>()
-		.unwrap();
+	let mut iter = std::env::args();
+	iter.next();
+	let addr = match iter.next() {
+		Some(string) => string,
+		None => "127.0.0.1:23124".to_string(),
+	};
+
+	let (client_socket, id) = ClientSocket::new(&addr);
 
 	// decide mode after client connection
 	let args: Vec<String> = std::env::args().collect();
@@ -176,17 +175,16 @@ fn main() {
 	if mode == "free" {
 		stdin.lock().lines().next().unwrap().unwrap();
 	}
-
-	socket.send_to(mode.as_bytes(), target_addr).unwrap();
-	socket.set_nonblocking(true).unwrap();
+	client_socket.send(mode.as_bytes()).unwrap();
 
 	let mut state = 3;
+	let mut buf = [0; 1024];
 	let mut display: Option<Display> = None;
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(SLEEP_MILLIS));
 
 		// read until last screen
-		while let Ok(amt) = socket.recv(&mut buf) {
+		while let Ok(amt) = client_socket.recv(&mut buf) {
 			if amt >= 16 {
 				match bincode::deserialize::<Display>(&buf[..amt]) {
 					Ok(decoded) => {
@@ -204,7 +202,7 @@ fn main() {
 			} else {
 				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
 				if msg == "die" || msg == "win" {
-					socket.send_to(b"pair", target_addr).unwrap();
+					client_socket.send(b"pair").unwrap();
 					state = 3;
 				}
 				if msg == "start" {
@@ -215,7 +213,7 @@ fn main() {
 		}
 		if let Some(decoded) = display {
 			if state == 2 {
-				main_think(decoded, &socket, target_addr);
+				main_think(decoded, &client_socket);
 			}
 			display = None;
 		}

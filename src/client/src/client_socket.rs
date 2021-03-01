@@ -39,3 +39,9 @@ impl ClientSocket {
 		self.socket.recv(&mut buf)
 	}
 }
+
+impl Drop for ClientSocket {
+	fn drop(&mut self) {
+		self.socket.send_to(b"quit", self.addr).unwrap();
+	}
+}
