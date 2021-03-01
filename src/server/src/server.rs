@@ -1,20 +1,22 @@
+extern crate lazy_static;
+
 use crate::client::Client;
 use crate::client_manager::ClientManager;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 
+lazy_static::lazy_static! {
+	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();
+}
+
 pub struct Server {
-	socket: UdpSocket,
 	client_manager: ClientManager,
-	pending_client: Option<i32>,
 }
 
 impl Server {
-	pub fn new(bind_addr: &str) -> Server {
+	pub fn new() -> Server {
 		Server {
-			socket: UdpSocket::bind(bind_addr).unwrap(),
 			client_manager: Default::default(),
-			pending_client: None,
 		}
 	}
 
@@ -23,7 +25,7 @@ impl Server {
 
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		client_target.board.push_garbage(lines);
-		self.socket
+		SOCKET
 			.send_to(
 				format!(
 					"sigatk {}",
@@ -60,13 +62,13 @@ impl Server {
 			client.board.attack_pool = 0;
 		}
 		client.board.update_display();
-		client.send_display(&self.socket, &self.client_manager);
+		client.send_display(&self.client_manager);
 	}
 
 	fn fetch_message(&mut self) -> Option<(Client, String, SocketAddr)> {
 		// get or create client
 		let mut buf = [0; 1024];
-		let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
+		let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
 				id
@@ -81,7 +83,7 @@ impl Server {
 					.starts_with("new client")
 				{
 					let new_id = self.client_manager.new_client_by_addr(src);
-					self.socket
+					SOCKET
 						.send_to(format!("ok {}", new_id).as_bytes(), src)
 						.unwrap();
 				} else {
@@ -97,63 +99,9 @@ impl Server {
 		))
 	}
 
-	pub fn pair_success(&mut self, client1: &mut Client, client2: &mut Client) {
-		let id1 = client1.id;
-		let id2 = client2.id;
-		client1.attack_target = id2;
-		client1.state = 2;
-		client2.attack_target = id1;
-		client2.state = 2;
-		client1.dc_ids.insert(id2);
-		client2.dc_ids.insert(id1);
-
-		let addr1 = self.client_manager.get_addr_by_id(id1).unwrap();
-		let addr2 = self.client_manager.get_addr_by_id(id2).unwrap();
-		self.socket
-			.send_to(format!("startvs {}", id2).as_bytes(), addr1)
-			.unwrap();
-		self.socket
-			.send_to(format!("startvs {}", id1).as_bytes(), addr2)
-			.unwrap();
-
-		client2.board.update_display();
-		client2.send_display(&self.socket, &self.client_manager);
-		client1.board.update_display();
-		client1.send_display(&self.socket, &self.client_manager);
-	}
-
-	pub fn pair_maker(&mut self, mut client: &mut Client) {
-		eprintln!("Pair maker");
-		if client.state == 3 && self.pending_client.is_some() {
-			// pairing succeed
-			let target_id = self.pending_client.unwrap();
-			let another_client = self.client_manager.tmp_pop_by_id(target_id);
-			match another_client {
-				None => {}
-				Some(mut pending_client) => {
-					eprintln!(
-						"{}:{} vs {}:{}",
-						target_id,
-						pending_client.state,
-						client.id,
-						client.state,
-					);
-					if pending_client.state == 3 {
-						self.pending_client = None;
-						self.pair_success(&mut client, &mut pending_client);
-						self.client_manager
-							.tmp_push_by_id(target_id, pending_client);
-						return;
-					}
-				}
-			}
-		}
-		self.pending_client = Some(client.id);
-	}
-
 	pub fn die(&mut self, mut client: &mut Client, src: SocketAddr) {
 		client.state = 1;
-		self.socket.send_to(b"die", src).unwrap();
+		SOCKET.send_to(b"die", src).unwrap();
 
 		if client.attack_target == 0 {
 			return;
@@ -162,7 +110,7 @@ impl Server {
 		if let Some(addr) =
 			self.client_manager.get_addr_by_id(client.attack_target)
 		{
-			self.socket.send_to(b"win", addr).unwrap();
+			SOCKET.send_to(b"win", addr).unwrap();
 			let mut opponent = self
 				.client_manager
 				.tmp_pop_by_id(client.attack_target)
@@ -199,7 +147,7 @@ impl Server {
 			return_msg = format!("{}{} ", return_msg, key);
 		}
 		return_msg.pop();
-		self.socket
+		SOCKET
 			.send_to(&return_msg.as_bytes(), recipient_addr)
 			.unwrap();
 	}
@@ -227,16 +175,14 @@ impl Server {
 			} else if words[0] == "pair" {
 				client.init_board();
 				client.state = 3;
-				if self.pending_client != Some(client.id) {
-					self.pair_maker(&mut client);
-				}
+				self.client_manager.pair_attempt(&mut client);
 			} else {
 				// msg that may cause board refresh
 				if words[0] == "free" {
 					// free mode, attacking nothing
 					client.init_board();
 					client.state = 2;
-					self.socket.send_to(b"start", src).unwrap();
+					SOCKET.send_to(b"start", src).unwrap();
 				} else if client.handle_msg(&words) {
 					self.die(&mut client, src);
 				}

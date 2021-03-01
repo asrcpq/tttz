@@ -4,6 +4,6 @@ mod client;
 mod client_manager;
 
 fn main() {
-	let mut server = Server::new("127.0.0.1:23124");
+	let mut server = Server::new();
 	server.main_loop();
 }

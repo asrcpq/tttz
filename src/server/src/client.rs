@@ -1,9 +1,8 @@
 extern crate mpboard;
 use crate::client_manager::ClientManager;
+use crate::server::SOCKET;
 use mpboard::board::Board;
-
 use std::collections::HashSet;
-use std::net::UdpSocket;
 
 extern crate bincode;
 
@@ -35,9 +34,14 @@ impl Client {
 		self.board = Board::new(self.id);
 	}
 
+	pub fn pair_success(&mut self, target_id: i32) {
+		self.state = 2;
+		self.dc_ids.insert(target_id);
+		self.attack_target = target_id;
+	}
+
 	pub fn send_display(
 		&mut self,
-		socket: &UdpSocket,
 		client_manager: &ClientManager,
 	) {
 		let msg = bincode::serialize(&self.board.display).unwrap();
@@ -53,7 +57,7 @@ impl Client {
 					);
 					continue;
 				};
-			socket.send_to(&msg, dc_addr).unwrap();
+			SOCKET.send_to(&msg, dc_addr).unwrap();
 			new_dc_ids.insert(dc_id);
 		}
 		self.dc_ids = new_dc_ids;

@@ -1,5 +1,6 @@
 extern crate bimap;
 use crate::client::Client;
+use crate::server::SOCKET;
 use bimap::BiMap;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -8,6 +9,7 @@ pub struct ClientManager {
 	id_alloc: i32,
 	clients: HashMap<i32, Client>,
 	pub id_addr: BiMap<i32, SocketAddr>,
+	pending_client: i32,
 }
 
 impl Default for ClientManager {
@@ -16,6 +18,7 @@ impl Default for ClientManager {
 			id_alloc: 1,
 			clients: HashMap::new(),
 			id_addr: BiMap::new(),
+			pending_client: 0,
 		}
 	}
 }
@@ -61,5 +64,64 @@ impl ClientManager {
 			Some(i) => Some(*i),
 			None => None,
 		}
+	}
+
+	pub fn pair_apply(
+		&mut self,
+		client1: &mut Client,
+		client2: &mut Client,
+	) {
+		let id1 = client1.id;
+		let id2 = client2.id;
+		client1.pair_success(id2);
+		client2.pair_success(id1);
+
+		let addr1 = self.get_addr_by_id(id1).unwrap();
+		let addr2 = self.get_addr_by_id(id2).unwrap();
+		SOCKET
+			.send_to(format!("startvs {}", id2).as_bytes(), addr1)
+			.unwrap();
+		SOCKET
+			.send_to(format!("startvs {}", id1).as_bytes(), addr2)
+			.unwrap();
+
+		client2.board.update_display();
+		client2.send_display(self);
+		client1.board.update_display();
+		client1.send_display(self);
+	}
+
+	pub fn pair_attempt(
+		&mut self,
+		mut client: &mut Client,
+	) {
+		if self.pending_client == client.id {
+			// the pending client is just ourselves
+			return;
+		}
+		if client.state == 3 && self.pending_client != 0 {
+			// pairing succeed
+			let target_id = self.pending_client;
+			let another_client = self.tmp_pop_by_id(target_id);
+			match another_client {
+				None => {}
+				Some(mut pending_client) => {
+					eprintln!(
+						"{}:{} vs {}:{}",
+						target_id,
+						pending_client.state,
+						client.id,
+						client.state,
+					);
+					if pending_client.state == 3 {
+						self.pending_client = 0;
+						self.pair_apply(&mut client, &mut pending_client);
+						self.tmp_push_by_id(target_id, pending_client);
+						return;
+					}
+				}
+			}
+		}
+		self.pending_client = client.id;
 	}
 }

@@ -136,6 +136,7 @@ version = "0.1.0"
 dependencies = [
  "bimap",
  "bincode",
+ "lazy_static",
  "mpboard",
 ]
 
