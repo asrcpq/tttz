@@ -1,6 +1,6 @@
 mod client_display;
-mod client_socket;
 mod client_session;
+mod client_socket;
 use client_session::ClientSession;
 
 fn main() {

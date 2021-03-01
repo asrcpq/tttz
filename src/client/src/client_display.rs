@@ -18,21 +18,20 @@ pub struct ClientDisplay {
 impl ClientDisplay {
 	pub fn setpanel(&mut self, panel: usize, id: i32) {
 		match self.panel_id.get_mut(panel) {
-			None => return,
+			None => {}
 			Some(id2) => *id2 = id,
 		}
 	}
 
 	pub fn new(id: i32) -> ClientDisplay {
 		std::io::stdout().flush().unwrap();
-		let client_display = ClientDisplay {
+		ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
 			termsize: (0, 0),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
 			panel_id: vec![id, 0],
-		};
-		client_display
+		}
 	}
 
 	fn checksize(&self) -> bool {

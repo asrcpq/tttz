@@ -86,7 +86,7 @@ impl ClientSession {
 			}
 			std::thread::sleep(std::time::Duration::from_millis(10));
 		}
-		return 2;
+		2
 	}
 
 	fn proc_line(&mut self, line: &str) {
@@ -140,13 +140,15 @@ impl ClientSession {
 			let readline = rl.readline("> ");
 			match readline {
 				Ok(line) => {
-					if line.trim().is_empty() {
-						return 1;
+					if !line.trim().is_empty() {
+						rl.add_history_entry(line.as_str());
+						self.proc_line(&line);
 					}
-					rl.add_history_entry(line.as_str());
-					self.proc_line(&line);
 				}
-				Err(_) => {
+				Err(rustyline::error::ReadlineError::Eof) => {
+					return 0;
+				}
+				_ => {
 					return 2;
 				}
 			}

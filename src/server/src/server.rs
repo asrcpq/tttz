@@ -18,12 +18,10 @@ impl Server {
 		}
 	}
 
-	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) { // target id and attr
+	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) {
+		// target id and attr
 
-		let mut client_target = self
-			.client_manager
-			.tmp_pop_by_id(id)
-			.unwrap();
+		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		client_target.board.push_garbage(lines);
 		self.socket
 			.send_to(
@@ -48,7 +46,11 @@ impl Server {
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
 				);
-				self.send_attack(client.attack_target, addr, client.board.attack_pool);
+				self.send_attack(
+					client.attack_target,
+					addr,
+					client.board.attack_pool,
+				);
 			} else {
 				eprintln!(
 					"Client {} is attacking nonexistent target {}",
@@ -105,30 +107,17 @@ impl Server {
 		client1.dc_ids.insert(id2);
 		client2.dc_ids.insert(id1);
 
-		let addr1 = self
-			.client_manager
-			.get_addr_by_id(id1)
-			.unwrap();
-		let addr2 = self
-			.client_manager
-			.get_addr_by_id(id2)
+		let addr1 = self.client_manager.get_addr_by_id(id1).unwrap();
+		let addr2 = self.client_manager.get_addr_by_id(id2).unwrap();
+		self.socket
+			.send_to(format!("startvs {}", id2).as_bytes(), addr1)
 			.unwrap();
 		self.socket
-			.send_to(
-				format!("startvs {}", id2).as_bytes(),
-				addr1,
-			)
-			.unwrap();
-		self.socket
-			.send_to(
-				format!("startvs {}", id1).as_bytes(),
-				addr2,
-			)
+			.send_to(format!("startvs {}", id1).as_bytes(), addr2)
 			.unwrap();
 
 		client2.board.update_display();
-		client2
-			.send_display(&self.socket, &self.client_manager);
+		client2.send_display(&self.socket, &self.client_manager);
 		client1.board.update_display();
 		client1.send_display(&self.socket, &self.client_manager);
 	}
@@ -199,10 +188,7 @@ impl Server {
 				self.client_manager.tmp_push_by_id(to_id, viewed_client);
 			}
 			None => {
-				eprintln!(
-					"Client {} try to view nonexist {}",
-					from_id, to_id
-				);
+				eprintln!("Client {} try to view nonexist {}", from_id, to_id);
 			}
 		}
 	}
@@ -213,7 +199,9 @@ impl Server {
 			return_msg = format!("{}{} ", return_msg, key);
 		}
 		return_msg.pop();
-		self.socket.send_to(&return_msg.as_bytes(), recipient_addr).unwrap();
+		self.socket
+			.send_to(&return_msg.as_bytes(), recipient_addr)
+			.unwrap();
 	}
 
 	pub fn main_loop(&mut self) {
