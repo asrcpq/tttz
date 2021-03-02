@@ -153,7 +153,7 @@ impl ClientSession {
 					self.client_socket.send(b"suicide").unwrap();
 					self.state = 3;
 				} else {
-					self.client_socket.send(b"pair").unwrap();
+					self.client_socket.send(b"restart").unwrap();
 					self.state = 3;
 				}
 			}

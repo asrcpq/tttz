@@ -130,7 +130,6 @@ impl Server {
 				.tmp_pop_by_id(client.attack_target)
 				.unwrap();
 			opponent.state = 1;
-			opponent.attack_target = 0;
 			opponent.dc_ids.remove(&client.id);
 			self.client_manager
 				.tmp_push_by_id(client.attack_target, opponent);
@@ -138,7 +137,6 @@ impl Server {
 
 		// attack_target is used before
 		client.dc_ids.remove(&client.attack_target);
-		client.attack_target = 0;
 	}
 
 	fn set_view(&mut self, from_id: i32, to_id: i32) {
@@ -211,6 +209,14 @@ impl Server {
 						}
 					} else {
 						eprintln!("SERVER: request: cannot find client {}", id);
+					}
+				}
+			} else if words[0] == "restart" {
+				if let Some(opponent) = self.client_manager.view_by_id(client.attack_target) {
+					if opponent.state == 1 {
+						opponent.send_msg(format!("request {}", client.id).as_bytes());
+					} else {
+						eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
 					}
 				}
 			} else if words[0] == "accept" {
