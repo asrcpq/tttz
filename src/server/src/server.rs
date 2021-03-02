@@ -17,10 +17,11 @@ pub struct Server {
 }
 
 impl Server {
-	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) {
+	// true: kill
+	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) -> bool {
 		// target id and attr
-
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
+		let mut flag = false;
 		client_target.board.push_garbage(lines);
 		SOCKET
 			.send_to(
@@ -33,9 +34,11 @@ impl Server {
 			)
 			.unwrap();
 		if client_target.board.display.pending_attack > 40 {
-			self.die(&mut client_target, addr);
+			client_target.board.generate_garbage();
+			flag = true;
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
+		flag
 	}
 
 	fn post_operation(&mut self, mut client: &mut Client) {
@@ -48,11 +51,13 @@ impl Server {
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
 				);
-				self.send_attack(
+				if self.send_attack(
 					client.attack_target,
 					addr,
 					client.board.attack_pool,
-				);
+				) {
+					self.die(client, false);
+				};
 			} else {
 				eprintln!(
 					"Client {} is attacking nonexistent target {}",
@@ -99,9 +104,14 @@ impl Server {
 		))
 	}
 
-	pub fn die(&mut self, mut client: &mut Client, src: SocketAddr) {
+	pub fn die(&mut self, mut client: &mut Client, die: bool) {
 		client.state = 1;
-		SOCKET.send_to(b"die", src).unwrap();
+		eprintln!("SERVER client {} gameover", client.id);
+		if die {
+			client.send_msg(b"die");
+		} else {
+			client.send_msg(b"win");
+		}
 
 		if client.attack_target == 0 {
 			return;
@@ -110,7 +120,11 @@ impl Server {
 		if let Some(addr) =
 			self.client_manager.get_addr_by_id(client.attack_target)
 		{
-			SOCKET.send_to(b"win", addr).unwrap();
+			if die {
+				SOCKET.send_to(b"win", addr).unwrap();
+			} else {
+				SOCKET.send_to(b"die", addr).unwrap();
+			}
 			let mut opponent = self
 				.client_manager
 				.tmp_pop_by_id(client.attack_target)
@@ -162,11 +176,11 @@ impl Server {
 			let words = msg.split_whitespace().collect::<Vec<&str>>();
 			if words[0] == "quit" {
 				eprintln!("Client {} quit", client.id);
-				self.die(&mut client, src);
+				self.die(&mut client, true);
 				assert!(self.client_manager.pop_by_id(client.id).is_none());
 				continue;
 			} else if words[0] == "suicide" {
-				self.die(&mut client, src);
+				self.die(&mut client, true);
 			} else if words[0] == "clients" {
 				self.send_clients(src);
 			} else if words[0] == "view" {
@@ -188,7 +202,7 @@ impl Server {
 					ai1::main("127.0.0.1:23124", sleep, strategy);
 				}));
 			} else if words[0] == "request" {
-				if let Ok(id) = words[1].parse::<i32>() {
+				if let Ok(id) = words.get(1).unwrap_or(&"0").parse::<i32>() {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
 							opponent.send_msg(format!("request {}", client.id).as_bytes());
@@ -219,7 +233,7 @@ impl Server {
 					client.state = 2;
 					SOCKET.send_to(b"start", src).unwrap();
 				} else if client.handle_msg(&words) {
-					self.die(&mut client, src);
+					self.die(&mut client, true);
 				}
 				// update_display should always be evaluated in this cycle
 				if client.display_update {

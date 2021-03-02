@@ -222,10 +222,6 @@ impl Board {
 		}
 		self.display.pending_attack += atk;
 		self.garbages.push_back(atk);
-		if self.display.pending_attack > 40 {
-			// fatal, immediate flush
-			self.generate_garbage();
-		}
 	}
 
 	// pull all pending garbages and write to board color

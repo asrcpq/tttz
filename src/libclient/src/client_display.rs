@@ -294,7 +294,7 @@ impl ClientDisplay {
 		self.disp_atk(atk, panel);
 	}
 
-	fn disp_atk(&self, atk: u32, panel: u32) {
+	fn disp_atk(&self, mut atk: u32, panel: u32) {
 		let offsetx = self.offset_x[panel as usize] + 20;
 		let offsety = self.offset_y[panel as usize];
 		print!("{}", termion::style::Reset);
@@ -316,6 +316,9 @@ impl ClientDisplay {
 				"[46m"
 			}
 		);
+		if atk > 20 {
+			atk = 20; // we only show <20
+		}
 		for i in (20 - atk as u16)..20 {
 			print!(
 				"{} ",
