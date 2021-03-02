@@ -12,7 +12,6 @@ use std::collections::VecDeque;
 
 fn main_think(
 	display: &Display,
-	sleep_millis: u64,
 ) -> VecDeque<u8> {
 	let mut heights = [39u8; 10];
 
@@ -137,7 +136,11 @@ fn main_think(
 	let current_posx = INITIAL_POS[best_code as usize];
 	let rotated_pos0 =
 		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
-	let (keycode, times) = if rotated_pos0 > best_posx {
+	let (keycode, times) = if best_posx == 0 {
+		(b'H', 1)
+	} else if best_posx == 10 - BLOCK_WIDTH[best_code as usize] {
+		(b'L', 1)
+	} else if rotated_pos0 > best_posx {
 		//left
 		(b'h', rotated_pos0 - best_posx)
 	} else {
@@ -145,11 +148,9 @@ fn main_think(
 	};
 	for _ in 0..best_rotation {
 		ret.push_back(b'x');
-		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
 	for _ in 0..times {
 		ret.push_back(keycode);
-		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
 	ret.push_back(b'k');
 	ret
@@ -205,7 +206,7 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 				if state == 2 {
 					if moveflag {
 						if operation_queue.is_empty() {
-							operation_queue = main_think(decoded, sleep_millis);
+							operation_queue = main_think(decoded);
 						}
 						client_socket.send(format!(
 							"key {}",
@@ -221,9 +222,10 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 		} else {
 			if let Some(ref decoded) = display {
 				if state == 2 {
-					operation_queue = main_think(decoded, sleep_millis);
+					operation_queue = main_think(decoded);
 					while let Some(byte) = operation_queue.pop_front() {
 						client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
+						std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 					}
 				}
 				display = None;
