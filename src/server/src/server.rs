@@ -195,7 +195,6 @@ impl Server {
 					}
 				}
 			} else if words[0] == "pair" {
-				client.init_board();
 				client.state = 3;
 				self.client_manager.pair_attempt(&mut client);
 			} else {

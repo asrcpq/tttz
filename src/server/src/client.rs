@@ -41,6 +41,7 @@ impl Client {
 		self.state = 2;
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
+		self.init_board();
 	}
 
 	pub fn send_msg(&self, msg: &[u8]) {

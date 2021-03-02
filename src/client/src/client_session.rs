@@ -43,9 +43,10 @@ impl ClientSession {
 	}
 
 	fn textmode_print(&self, msg: &str) {
-		print!("{}{}{}{}{}",
+		print!("{}{}{}{}{}{}",
 			termion::cursor::Hide,
 			termion::cursor::Goto(1, 2),
+			termion::clear::CurrentLine,
 			msg,
 			termion::cursor::Show,
 			termion::cursor::Goto(1, 1),
@@ -181,7 +182,9 @@ impl ClientSession {
 		loop {
 			if let Ok(amt) = self.client_socket.recv(&mut buf) {
 				// all long messages are board display
-				self.client_display.set_offset();
+				if self.mode == 1 {
+					self.client_display.set_offset();
+				}
 				if amt < 16 {
 					let msg =
 						String::from(std::str::from_utf8(&buf[..amt]).unwrap());

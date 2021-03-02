@@ -7,9 +7,12 @@ use mypuzzle_mpboard::srs_data::*;
 
 use std::collections::HashMap;
 
+const DRAW_SIZE: (u16, u16) = (63, 24);
+
 pub struct ClientDisplay {
 	last_dirtypos: Vec<Vec<(u32, u32)>>,
 	termsize: (u16, u16),
+	offset0: (u16, u16),
 	offset_x: Vec<i32>,
 	offset_y: Vec<i32>,
 	panel_id: Vec<i32>,
@@ -24,21 +27,22 @@ impl ClientDisplay {
 	}
 
 	pub fn new(id: i32) -> ClientDisplay {
-		let (x, y) = termion::terminal_size().unwrap();
-		let client_display = ClientDisplay {
+		let mut client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
-			termsize: (x, y),
+			termsize: (0, 0),
+			offset0: (1, 1),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
 			panel_id: vec![id, 0],
 		};
+		client_display.set_offset();
 		client_display.deactivate(); // start from text mode
 		std::io::stdout().flush().unwrap();
 		client_display
 	}
 
 	fn checksize(&self) -> bool {
-		if self.offset_x[0] == -1 {
+		if self.termsize.0 < 63 || self.termsize.1 < 24 {
 			print!(
 				"{}{}At least 24r63c size is required.",
 				termion::clear::All,
@@ -61,14 +65,22 @@ impl ClientDisplay {
 			self.offset_x[0] = -1;
 			return;
 		}
-		const DRAW_SIZE: (u16, u16) = (63, 24);
-		let x1 = (x - DRAW_SIZE.0) / 2;
-		let y1 = (y - DRAW_SIZE.1) / 2;
-		self.disp_box(x1, x1 + DRAW_SIZE.0, y1, y1 + DRAW_SIZE.1);
-		self.offset_x[0] = x1 as i32 + 4;
-		self.offset_y[0] = y1 as i32 + 2;
-		self.offset_x[1] = x1 as i32 + 34;
-		self.offset_y[1] = y1 as i32 + 2;
+		self.offset0.0 = (x - DRAW_SIZE.0) / 2;
+		self.offset0.1 = (y - DRAW_SIZE.1) / 2;
+		self.disp_mainbox();
+		self.offset_x[0] = self.offset0.0 as i32 + 4;
+		self.offset_y[0] = self.offset0.1 as i32 + 2;
+		self.offset_x[1] = self.offset0.0 as i32 + 34;
+		self.offset_y[1] = self.offset0.1 as i32 + 2;
+	}
+	
+	pub fn disp_mainbox(&self) {
+		self.disp_box(
+			self.offset0.0,
+			self.offset0.0 + DRAW_SIZE.0,
+			self.offset0.1,
+			self.offset0.1 + DRAW_SIZE.1,
+		);
 	}
 
 	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
@@ -165,7 +177,7 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 	}
 
-	fn disp_box(&mut self, left: u16, right: u16, top: u16, bot: u16) {
+	fn disp_box(&self, left: u16, right: u16, top: u16, bot: u16) {
 		for yy in [top, bot].iter() {
 			print!("{}", termion::cursor::Goto(left + 1, *yy));
 			for _ in left + 1..right {
