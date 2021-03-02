@@ -24,14 +24,16 @@ impl ClientDisplay {
 	}
 
 	pub fn new(id: i32) -> ClientDisplay {
-		std::io::stdout().flush().unwrap();
-		ClientDisplay {
+		let client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
 			termsize: (0, 0),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
 			panel_id: vec![id, 0],
-		}
+		};
+		client_display.deactivate(); // start from text mode
+		std::io::stdout().flush().unwrap();
+		client_display
 	}
 
 	fn checksize(&self) -> bool {
