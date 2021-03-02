@@ -32,6 +32,9 @@ impl Server {
 				addr,
 			)
 			.unwrap();
+		if client_target.board.display.pending_attack > 40 {
+			self.die(&mut client_target, addr);
+		}
 		self.client_manager.tmp_push_by_id(id, client_target);
 	}
 
@@ -170,8 +173,19 @@ impl Server {
 				let id = words[1].parse::<i32>().unwrap_or(0);
 				self.set_view(client.id, id);
 			} else if words[0] == "aispawn" {
-				self.ai_threads.push(std::thread::spawn(|| {
-					ai1::main("127.0.0.1:23124", 240);
+				let strategy: bool = words.get(1) == Some(&"strategy");
+				let sleep = match words.get(2) {
+					Some(t) => t.parse::<u64>().unwrap_or(240),
+					None => {
+						if strategy {
+							0
+						} else {
+							240
+						}
+					},
+				};
+				self.ai_threads.push(std::thread::spawn(move || {
+					ai1::main("127.0.0.1:23124", sleep, strategy);
 				}));
 			} else if words[0] == "request" {
 				if let Ok(id) = words[1].parse::<i32>() {

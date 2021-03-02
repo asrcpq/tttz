@@ -8,16 +8,19 @@ use mypuzzle_mpboard::srs_data::*;
 extern crate mypuzzle_libclient;
 use mypuzzle_libclient::client_socket::ClientSocket;
 
+use std::collections::VecDeque;
+
 fn main_think(
-	display: Display,
-	client_socket: &ClientSocket,
+	display: &Display,
 	sleep_millis: u64,
-) {
+) -> VecDeque<u8> {
 	let mut heights = [39u8; 10];
 
+	let mut ret = VecDeque::new();
+
 	if display.hold == 7 {
-		client_socket.send(b"key  ").unwrap();
-		return;
+		ret.push_back(b' ');
+		return ret;
 	}
 
 	// calc height
@@ -127,7 +130,7 @@ fn main_think(
 		display.tmp_code
 	} else {
 		// best solution is from the hold block
-		client_socket.send(b"key  ").unwrap();
+		ret.push_back(b' ');
 		display.hold
 	};
 	// perform action
@@ -136,32 +139,33 @@ fn main_think(
 		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if rotated_pos0 > best_posx {
 		//left
-		('h', rotated_pos0 - best_posx)
+		(b'h', rotated_pos0 - best_posx)
 	} else {
-		('l', best_posx - rotated_pos0)
+		(b'l', best_posx - rotated_pos0)
 	};
 	for _ in 0..best_rotation {
-		client_socket.send(b"key x").unwrap();
+		ret.push_back(b'x');
 		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
 	for _ in 0..times {
-		client_socket
-			.send(format!("key {}", keycode).as_bytes())
-			.unwrap();
+		ret.push_back(keycode);
 		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
 	}
-	client_socket.send(b"key k").unwrap();
+	ret.push_back(b'k');
+	ret
 }
 
-pub fn main(addr: &str, sleep_millis: u64) {
+pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 	let (client_socket, id) = ClientSocket::new(&addr);
+	let main_sleep = 10;
 
 	let mut state = 3;
 	let mut buf = [0; 1024];
 	let mut display: Option<Display> = None;
+	let mut moveflag = false;
+	let mut operation_queue: VecDeque<u8> = VecDeque::new();
 	loop {
-		std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
-
+		std::thread::sleep(std::time::Duration::from_millis(main_sleep));
 		// read until last screen
 		while let Ok(amt) = client_socket.recv(&mut buf) {
 			if amt >= 64 {
@@ -169,10 +173,12 @@ pub fn main(addr: &str, sleep_millis: u64) {
 					Ok(decoded) => {
 						if decoded.id == id {
 							display = Some(decoded);
+						} else {
+							// strategy ai moves after user move
+							if strategy {
+								moveflag = true;
+							}
 						}
-						// else {
-						// eprintln!("Get wrong message {}, I am {}", decoded.id, id);
-						// }
 					}
 					Err(_) => {
 						eprintln!("Deserialize error");
@@ -194,11 +200,34 @@ pub fn main(addr: &str, sleep_millis: u64) {
 				eprintln!("Short msg: {}", msg);
 			}
 		}
-		if let Some(decoded) = display {
-			if state == 2 {
-				main_think(decoded, &client_socket, sleep_millis);
+		if strategy {
+			if let Some(ref decoded) = display {
+				if state == 2 {
+					if moveflag {
+						if operation_queue.is_empty() {
+							operation_queue = main_think(decoded, sleep_millis);
+						}
+						client_socket.send(format!(
+							"key {}",
+							operation_queue.pop_front().unwrap() as char,
+						).as_bytes()).unwrap();
+						moveflag = false;
+					}
+				}
+				if !strategy {
+					display = None;
+				}
 			}
-			display = None;
+		} else {
+			if let Some(ref decoded) = display {
+				if state == 2 {
+					operation_queue = main_think(decoded, sleep_millis);
+					while let Some(byte) = operation_queue.pop_front() {
+						client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
+					}
+				}
+				display = None;
+			}
 		}
 	}
 }
