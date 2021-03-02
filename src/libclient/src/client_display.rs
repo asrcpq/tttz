@@ -24,9 +24,10 @@ impl ClientDisplay {
 	}
 
 	pub fn new(id: i32) -> ClientDisplay {
+		let (x, y) = termion::terminal_size().unwrap();
 		let client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
-			termsize: (0, 0),
+			termsize: (x, y),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
 			panel_id: vec![id, 0],
@@ -49,7 +50,6 @@ impl ClientDisplay {
 	}
 
 	pub fn set_offset(&mut self) {
-		const DRAW_SIZE: (u16, u16) = (63, 24);
 		let (x, y) = termion::terminal_size().unwrap();
 		if (x, y) == self.termsize {
 			return;
@@ -61,6 +61,7 @@ impl ClientDisplay {
 			self.offset_x[0] = -1;
 			return;
 		}
+		const DRAW_SIZE: (u16, u16) = (63, 24);
 		let x1 = (x - DRAW_SIZE.0) / 2;
 		let y1 = (y - DRAW_SIZE.1) / 2;
 		self.disp_box(x1, x1 + DRAW_SIZE.0, y1, y1 + DRAW_SIZE.1);
@@ -323,9 +324,10 @@ impl ClientDisplay {
 
 	pub fn deactivate(&self) {
 		print!(
-			"{}{}{}",
+			"{}{}{}{}",
 			termion::style::Reset,
 			termion::clear::All,
+			termion::cursor::Goto(1, 1),
 			termion::cursor::Show,
 		);
 	}

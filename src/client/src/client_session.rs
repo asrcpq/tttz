@@ -42,6 +42,16 @@ impl ClientSession {
 		}
 	}
 
+	fn textmode_print(&self, msg: &str) {
+		print!("{}{}{}{}{}",
+			termion::cursor::Hide,
+			termion::cursor::Goto(1, 2),
+			msg,
+			termion::cursor::Show,
+			termion::cursor::Goto(1, 1),
+		);
+	}
+
 	// true quit
 	fn proc_line(&mut self, line: &str) -> bool {
 		let split: Vec<&str> = line.split_whitespace().collect();
@@ -56,7 +66,7 @@ impl ClientSession {
 				.send(&line.bytes().collect::<Vec<u8>>()[4..])
 				.unwrap();
 		} else if split[0] == "myid" {
-			println!("{}", self.id);
+			self.textmode_print(&format!("{}", self.id));
 		} else if split[0] == "panel" {
 			if split.len() < 3 {
 				return false
@@ -119,7 +129,6 @@ impl ClientSession {
 					return true
 				}
 				self.textbuffer = String::new();
-				return false
 			} else {
 				self.textbuffer.push(byte as char);
 			}
@@ -177,8 +186,11 @@ impl ClientSession {
 					let msg =
 						String::from(std::str::from_utf8(&buf[..amt]).unwrap());
 					self.handle_recv(&msg);
-					self.client_display.disp_msg(&msg);
-					continue;
+					if self.mode == 1 {
+						self.client_display.disp_msg(&msg);
+					} else {
+						self.textmode_print(&msg);
+					}
 				} else {
 					let decoded: Display =
 						bincode::deserialize(&buf[..amt]).unwrap();
