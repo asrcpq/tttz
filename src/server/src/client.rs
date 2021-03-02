@@ -1,7 +1,7 @@
-extern crate mpboard;
+extern crate mypuzzle_mpboard;
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
-use mpboard::board::Board;
+use mypuzzle_mpboard::board::Board;
 use std::collections::HashSet;
 
 extern crate bincode;

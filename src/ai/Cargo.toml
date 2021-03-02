@@ -1,20 +1,16 @@
 [package]
-name = "mypuzzle-client"
+name = "mypuzzle-ai"
 version = "0.1.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
 
-[[bin]]
-name = "mypuzzle-client"
-path = "src/client.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-termion = "*"
 bincode = "*"
-rustyline = "*"
-
-[dependencies.mypuzzle-mpboard]
-path = "../mpboard"
 
 [dependencies.mypuzzle-libclient]
 path = "../libclient"
+
+[dependencies.mypuzzle-mpboard]
+path = "../mpboard"

@@ -1,5 +1,6 @@
 extern crate lazy_static;
-
+extern crate mypuzzle_ai;
+use mypuzzle_ai::ai1;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
 use std::net::SocketAddr;
@@ -9,17 +10,13 @@ lazy_static::lazy_static! {
 	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();
 }
 
+#[derive(Default)]
 pub struct Server {
 	client_manager: ClientManager,
+	ai_threads: Vec<std::thread::JoinHandle<()>>,
 }
 
 impl Server {
-	pub fn new() -> Server {
-		Server {
-			client_manager: Default::default(),
-		}
-	}
-
 	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) {
 		// target id and attr
 
@@ -172,6 +169,10 @@ impl Server {
 			} else if words[0] == "view" {
 				let id = words[1].parse::<i32>().unwrap_or(0);
 				self.set_view(client.id, id);
+			} else if words[0] == "vsai" {
+				self.ai_threads.push(std::thread::spawn(|| {
+					ai1::main(&[]);
+				}));
 			} else if words[0] == "pair" {
 				client.init_board();
 				client.state = 3;

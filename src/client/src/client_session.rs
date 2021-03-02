@@ -10,8 +10,8 @@ use rustyline::Editor;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
-extern crate mpboard;
-use mpboard::display::Display;
+extern crate mypuzzle_mpboard;
+use mypuzzle_mpboard::display::Display;
 
 pub struct ClientSession {
 	client_socket: ClientSocket,
@@ -122,6 +122,10 @@ impl ClientSession {
 			let opid = split[1].parse::<i32>().unwrap();
 			self.client_display.setpanel(0, self.id);
 			self.client_display.setpanel(1, opid);
+			self.state = 2;
+			return Some(1);
+		} else if split[0] == "start" {
+			self.client_display.setpanel(0, self.id);
 			self.state = 2;
 			return Some(1);
 		} else if split[0] == "sigatk" {

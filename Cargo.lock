@@ -112,12 +112,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
-name = "mpboard"
+name = "mypuzzle-ai"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
- "rand",
- "serde",
+ "bincode",
+ "mypuzzle-libclient",
+ "mypuzzle-mpboard",
 ]
 
 [[package]]
@@ -125,9 +125,27 @@ name = "mypuzzle-client"
 version = "0.1.0"
 dependencies = [
  "bincode",
- "mpboard",
+ "mypuzzle-libclient",
+ "mypuzzle-mpboard",
  "rustyline",
  "termion",
+]
+
+[[package]]
+name = "mypuzzle-libclient"
+version = "0.1.0"
+dependencies = [
+ "mypuzzle-mpboard",
+ "termion",
+]
+
+[[package]]
+name = "mypuzzle-mpboard"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "rand",
+ "serde",
 ]
 
 [[package]]
@@ -137,7 +155,8 @@ dependencies = [
  "bimap",
  "bincode",
  "lazy_static",
- "mpboard",
+ "mypuzzle-ai",
+ "mypuzzle-mpboard",
 ]
 
 [[package]]

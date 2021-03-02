@@ -1,6 +1,8 @@
-mod client_display;
+extern crate mypuzzle_libclient;
+use mypuzzle_libclient::client_display;
+use mypuzzle_libclient::client_socket;
+
 mod client_session;
-mod client_socket;
 use client_session::ClientSession;
 
 fn main() {

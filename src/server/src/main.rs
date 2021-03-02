@@ -4,6 +4,6 @@ mod client;
 mod client_manager;
 
 fn main() {
-	let mut server = Server::new();
+	let mut server: Server = Default::default();
 	server.main_loop();
 }

@@ -1,5 +1,5 @@
 [package]
-name = "mpboard"
+name = "mypuzzle-mpboard"
 version = "0.1.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"

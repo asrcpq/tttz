@@ -1,13 +1,12 @@
 // stupid ai, put block to make least holes and lowest height
 
 extern crate bincode;
-extern crate mpboard;
-use mpboard::display::Display;
-use mpboard::srs_data::*;
-use std::io::{self, BufRead};
+extern crate mypuzzle_mpboard;
+use mypuzzle_mpboard::display::Display;
+use mypuzzle_mpboard::srs_data::*;
 
-mod client_socket;
-use client_socket::ClientSocket;
+extern crate mypuzzle_libclient;
+use mypuzzle_libclient::client_socket::ClientSocket;
 
 fn main_think(
 	display: Display,
@@ -154,30 +153,24 @@ fn main_think(
 	client_socket.send(b"key k").unwrap();
 }
 
-fn main() {
-	let stdin = io::stdin();
-
-	let mut iter = std::env::args();
+pub fn main(args: &[&str]) {
+	let mut iter = args.iter();
 	let mut addr = "127.0.0.1:23124".to_string();
 	let mut sleep_millis = 240;
 	let mut mode = "pair".to_string();
 	while let Some(string) = iter.next() {
-		if string == "addr" {
-			addr = iter.next().unwrap();
+		if *string == "addr" {
+			addr = iter.next().unwrap().to_string();
 		}
-		if string == "mode" {
-			mode = iter.next().unwrap();
+		if *string == "mode" {
+			mode = iter.next().unwrap().to_string();
 		}
-		if string == "sleep" {
+		if *string == "sleep" {
 			sleep_millis = iter.next().unwrap().parse::<u64>().unwrap();
 		}
 	}
 
 	let (client_socket, id) = ClientSocket::new(&addr);
-	// free mode will immediately start, so pause first
-	if mode == "free" {
-		stdin.lock().lines().next().unwrap().unwrap();
-	}
 	client_socket.send(mode.as_bytes()).unwrap();
 
 	let mut state = 3;

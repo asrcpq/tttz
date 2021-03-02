@@ -1,9 +1,9 @@
 extern crate termion;
 use std::io::Write;
 
-extern crate mpboard;
-use mpboard::display::Display;
-use mpboard::srs_data::*;
+extern crate mypuzzle_mpboard;
+use mypuzzle_mpboard::display::Display;
+use mypuzzle_mpboard::srs_data::*;
 
 use std::collections::HashMap;
 
