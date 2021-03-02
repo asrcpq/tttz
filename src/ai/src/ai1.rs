@@ -164,7 +164,7 @@ pub fn main(addr: &str, sleep_millis: u64) {
 
 		// read until last screen
 		while let Ok(amt) = client_socket.recv(&mut buf) {
-			if amt >= 16 {
+			if amt >= 64 {
 				match bincode::deserialize::<Display>(&buf[..amt]) {
 					Ok(decoded) => {
 						if decoded.id == id {

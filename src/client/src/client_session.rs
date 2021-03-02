@@ -185,7 +185,7 @@ impl ClientSession {
 				if self.mode == 1 {
 					self.client_display.set_offset();
 				}
-				if amt < 16 {
+				if amt < 64 {
 					let msg =
 						String::from(std::str::from_utf8(&buf[..amt]).unwrap());
 					self.handle_recv(&msg);

@@ -12,15 +12,22 @@ impl ClientSocket {
 		let target_addr: SocketAddr =
 			addr.to_socket_addrs().unwrap().next().unwrap();
 		eprintln!("{:?}", target_addr);
-		socket.send_to(b"new client", &target_addr).unwrap();
+		socket.set_nonblocking(true).unwrap();
 		let mut buf = [0; 1024];
-		let (amt, _) = socket.recv_from(&mut buf).unwrap();
-		assert!(std::str::from_utf8(&buf).unwrap().starts_with("ok"));
+		let amt = loop {
+			socket.send_to(b"new client", &target_addr).unwrap();
+			std::thread::sleep(std::time::Duration::from_millis(1000));
+			if let Ok(amt) = socket.recv(&mut buf) {
+				if std::str::from_utf8(&buf).unwrap().starts_with("ok") {
+					break amt
+				}
+			}
+			std::thread::sleep(std::time::Duration::from_millis(1000));
+		};
 		let id: i32 = std::str::from_utf8(&buf[3..amt])
 			.unwrap()
 			.parse::<i32>()
 			.unwrap();
-		socket.set_nonblocking(true).unwrap();
 		(
 			ClientSocket {
 				socket,
