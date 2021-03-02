@@ -101,6 +101,7 @@ impl ClientSession {
 			return Some(1);
 		} else if split[0] == "start" {
 			self.client_display.setpanel(0, self.id);
+			self.modeswitch(1);
 			self.state = 2;
 			return Some(1);
 		} else if split[0] == "sigatk" {

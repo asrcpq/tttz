@@ -67,7 +67,6 @@ impl ClientDisplay {
 		}
 		self.offset0.0 = (x - DRAW_SIZE.0) / 2;
 		self.offset0.1 = (y - DRAW_SIZE.1) / 2;
-		self.disp_mainbox();
 		self.offset_x[0] = self.offset0.0 as i32 + 4;
 		self.offset_y[0] = self.offset0.1 as i32 + 2;
 		self.offset_x[1] = self.offset0.0 as i32 + 34;
@@ -335,6 +334,7 @@ impl ClientDisplay {
 			termion::clear::All,
 			termion::cursor::Hide
 		);
+		self.disp_mainbox();
 	}
 
 	pub fn deactivate(&self) {
