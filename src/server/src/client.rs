@@ -3,11 +3,13 @@ use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use mypuzzle_mpboard::board::Board;
 use std::collections::HashSet;
+use std::net::SocketAddr;
 
 extern crate bincode;
 
 pub struct Client {
 	pub id: i32,
+	addr: SocketAddr,
 	pub dc_ids: HashSet<i32>,
 	// 1: waiting
 	// 2: in-game
@@ -19,9 +21,10 @@ pub struct Client {
 }
 
 impl Client {
-	pub fn new(id: i32) -> Client {
+	pub fn new(id: i32, addr: SocketAddr,) -> Client {
 		Client {
 			id,
+			addr,
 			dc_ids: HashSet::new(),
 			state: 1,
 			board: Board::new(id),
@@ -38,6 +41,10 @@ impl Client {
 		self.state = 2;
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
+	}
+
+	pub fn send_msg(&self, msg: &[u8]) {
+		SOCKET.send_to(&msg, self.addr).unwrap();
 	}
 
 	pub fn send_display(

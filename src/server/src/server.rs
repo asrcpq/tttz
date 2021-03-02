@@ -155,7 +155,7 @@ impl Server {
 				None => continue,
 				x => x.unwrap(),
 			};
-			// eprintln!("{} from {}", msg, client.id);
+			eprintln!("SERVER client {} send: {}", client.id, msg);
 			let words = msg.split_whitespace().collect::<Vec<&str>>();
 			if words[0] == "quit" {
 				eprintln!("Client {} quit", client.id);
@@ -164,15 +164,36 @@ impl Server {
 				continue;
 			} else if words[0] == "suicide" {
 				self.die(&mut client, src);
-			} else if words[0] == "get_clients" {
+			} else if words[0] == "clients" {
 				self.send_clients(src);
 			} else if words[0] == "view" {
 				let id = words[1].parse::<i32>().unwrap_or(0);
 				self.set_view(client.id, id);
-			} else if words[0] == "vsai" {
+			} else if words[0] == "aispawn" {
 				self.ai_threads.push(std::thread::spawn(|| {
-					ai1::main(&[]);
+					ai1::main("127.0.0.1:23124", 240);
 				}));
+			} else if words[0] == "request" {
+				if let Ok(id) = words[1].parse::<i32>() {
+					if let Some(opponent) = self.client_manager.view_by_id(id) {
+						if opponent.state == 1 {
+							opponent.send_msg(format!("request {}", client.id).as_bytes());
+						} else {
+							eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
+						}
+					} else {
+						eprintln!("SERVER: request: cannot find client {}", id);
+					}
+				}
+			} else if words[0] == "accept" {
+				if let Ok(id) = words[1].parse::<i32>() {
+					if let Some(mut opponent) = self.client_manager.tmp_pop_by_id(id) {
+						self.client_manager.pair_apply(&mut client, &mut opponent);
+						self.client_manager.tmp_push_by_id(id, opponent);
+					} else {
+						eprintln!("SERVER: accept: cannot find client {}", id);
+					}
+				}
 			} else if words[0] == "pair" {
 				client.init_board();
 				client.state = 3;

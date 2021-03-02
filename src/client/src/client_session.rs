@@ -95,6 +95,8 @@ impl ClientSession {
 			self.client_socket
 				.send(&line.bytes().collect::<Vec<u8>>()[4..])
 				.unwrap();
+		} else if split[0] == "myid" {
+			println!("{}", self.id);
 		} else if split[0] == "panel" {
 			if split.len() < 3 {
 				return;

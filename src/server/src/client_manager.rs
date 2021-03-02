@@ -24,6 +24,10 @@ impl Default for ClientManager {
 }
 
 impl ClientManager {
+	pub fn view_by_id(&mut self, id: i32) -> Option<&Client> {
+		self.clients.get(&id)
+	}
+
 	pub fn tmp_pop_by_id(&mut self, id: i32) -> Option<Client> {
 		self.clients.remove(&id)
 	}
@@ -34,7 +38,7 @@ impl ClientManager {
 	}
 
 	pub fn new_client_by_addr(&mut self, src: SocketAddr) -> i32 {
-		let mut client = Client::new(self.id_alloc);
+		let mut client = Client::new(self.id_alloc, src);
 		client.dc_ids.insert(self.id_alloc);
 		self.clients.insert(self.id_alloc, client);
 		eprintln!("Assign id {}", self.id_alloc);

@@ -153,25 +153,8 @@ fn main_think(
 	client_socket.send(b"key k").unwrap();
 }
 
-pub fn main(args: &[&str]) {
-	let mut iter = args.iter();
-	let mut addr = "127.0.0.1:23124".to_string();
-	let mut sleep_millis = 240;
-	let mut mode = "pair".to_string();
-	while let Some(string) = iter.next() {
-		if *string == "addr" {
-			addr = iter.next().unwrap().to_string();
-		}
-		if *string == "mode" {
-			mode = iter.next().unwrap().to_string();
-		}
-		if *string == "sleep" {
-			sleep_millis = iter.next().unwrap().parse::<u64>().unwrap();
-		}
-	}
-
+pub fn main(addr: &str, sleep_millis: u64) {
 	let (client_socket, id) = ClientSocket::new(&addr);
-	client_socket.send(mode.as_bytes()).unwrap();
 
 	let mut state = 3;
 	let mut buf = [0; 1024];
@@ -196,13 +179,17 @@ pub fn main(args: &[&str]) {
 					}
 				}
 			} else {
-				let msg = std::str::from_utf8(&buf[..amt]).unwrap();
+				let msg = String::from(std::str::from_utf8(&buf[..amt]).unwrap());
+				let words: Vec<&str> = msg.split_whitespace().collect();
 				if msg == "die" || msg == "win" {
-					client_socket.send(b"pair").unwrap();
-					state = 3;
-				}
-				if msg.starts_with("startvs ") {
+					state = 1;
+				} else if msg.starts_with("start") {
 					state = 2;
+				} else if words[0] == "request" {
+					let id = words[1].parse::<i32>().unwrap();
+					client_socket.send(format!("accept {}", id).as_bytes()).unwrap();
+				} else if msg == "terminate" {
+					return
 				}
 				eprintln!("Short msg: {}", msg);
 			}
