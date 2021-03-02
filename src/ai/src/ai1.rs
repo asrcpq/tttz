@@ -138,7 +138,7 @@ fn main_think(
 		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if best_posx == 0 {
 		(b'H', 1)
-	} else if best_posx == 10 - BLOCK_WIDTH[best_code as usize] {
+	} else if best_posx == 10 - BLOCK_WIDTH[(best_code * 4 + best_rotation) as usize] {
 		(b'L', 1)
 	} else if rotated_pos0 > best_posx {
 		//left
@@ -146,8 +146,12 @@ fn main_think(
 	} else {
 		(b'l', best_posx - rotated_pos0)
 	};
-	for _ in 0..best_rotation {
+	if best_rotation == 1 {
 		ret.push_back(b'x');
+	} else if best_rotation == 3 {
+		ret.push_back(b'z');
+	} else if best_rotation == 2 {
+		ret.push_back(b'd');
 	}
 	for _ in 0..times {
 		ret.push_back(keycode);
