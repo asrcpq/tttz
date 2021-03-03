@@ -222,8 +222,12 @@ impl Server {
 			} else if words[0] == "accept" {
 				if let Ok(id) = words[1].parse::<i32>() {
 					if let Some(mut opponent) = self.client_manager.tmp_pop_by_id(id) {
-						self.client_manager.pair_apply(&mut client, &mut opponent);
-						self.client_manager.tmp_push_by_id(id, opponent);
+						if opponent.state != 3 {
+							eprintln!("SERVER: accept: but the sender is not pairing.");
+						} else {
+							self.client_manager.pair_apply(&mut client, &mut opponent);
+							self.client_manager.tmp_push_by_id(id, opponent);
+						}
 					} else {
 						eprintln!("SERVER: accept: cannot find client {}", id);
 					}
@@ -238,6 +242,7 @@ impl Server {
 					// free mode, attacking nothing
 					client.init_board();
 					client.state = 2;
+					client.attack_target = 0;
 					SOCKET.send_to(b"start", src).unwrap();
 				} else {
 					dieflag = client.handle_msg(&words);
