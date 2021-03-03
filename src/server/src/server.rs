@@ -60,8 +60,8 @@ impl Server {
 				};
 			} else {
 				eprintln!(
-					"Client {} is attacking nonexistent target {}",
-					client.id, client.attack_target,
+					"Client {} is attacking nonexistent target {} with {}",
+					client.id, client.attack_target, client.board.attack_pool,
 				);
 			}
 			client.board.attack_pool = 0;

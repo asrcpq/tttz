@@ -49,6 +49,7 @@ impl Board {
 	}
 
 	fn movedown1_nohard(&mut self) -> bool {
+		self.ontop = false;
 		self.tmp_block.pos.1 += 1;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.1 -= 1;
