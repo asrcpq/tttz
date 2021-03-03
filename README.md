@@ -32,4 +32,18 @@
 
 * Space: hold
 
-* r: suicide/start matching
+* r: suicide/restart
+
+* /: enter cmd mode
+
+## Commands:
+
+* `aispawn strategy` or `aispawn speed [sleep_millis]`
+
+* `clients` list clients
+
+* `myid`
+
+* `request <id>` send battle request to id(ai will immediately accept)
+
+* `accept <id>` accept battle request from id
