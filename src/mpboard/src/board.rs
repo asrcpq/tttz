@@ -368,7 +368,6 @@ impl Board {
 	}
 
 	pub fn calc_shadow(&mut self) -> bool {
-		// prevent infloop
 		self.shadow_block = self.tmp_block.clone();
 		loop {
 			self.shadow_block.pos.1 += 1;

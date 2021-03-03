@@ -141,6 +141,7 @@ impl Client {
 						// which is impossible when the attacker is already popped
 						eprintln!("Self attacking is not allowed");
 						self.display_update = false;
+						return false;
 					}
 					eprintln!("Attacking {}", id);
 					id

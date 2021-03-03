@@ -232,19 +232,24 @@ impl Server {
 				client.state = 3;
 				self.client_manager.pair_attempt(&mut client);
 			} else {
+				let mut dieflag = false;
 				// msg that may cause board refresh
 				if words[0] == "free" {
 					// free mode, attacking nothing
 					client.init_board();
 					client.state = 2;
 					SOCKET.send_to(b"start", src).unwrap();
-				} else if client.handle_msg(&words) {
-					self.die(&mut client, true);
+				} else {
+					dieflag = client.handle_msg(&words);
 				}
 				// update_display should always be evaluated in this cycle
 				if client.display_update {
 					// display is included in after_operation
 					self.post_operation(&mut client);
+				}
+				// update display before die
+				if dieflag {
+					self.die(&mut client, true);
 				}
 			}
 			self.client_manager.tmp_push_by_id(client.id, client);
