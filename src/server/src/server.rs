@@ -203,6 +203,7 @@ impl Server {
 				if let Ok(id) = words.get(1).unwrap_or(&"0").parse::<i32>() {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
+							client.state = 3;
 							opponent.send_msg(format!("request {}", client.id).as_bytes());
 						} else {
 							eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
@@ -214,6 +215,7 @@ impl Server {
 			} else if words[0] == "restart" {
 				if let Some(opponent) = self.client_manager.view_by_id(client.attack_target) {
 					if opponent.state == 1 {
+						client.state = 3;
 						opponent.send_msg(format!("request {}", client.id).as_bytes());
 					} else {
 						eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
