@@ -22,6 +22,7 @@ impl Default for RandomGenerator {
 impl RandomGenerator {
 	fn generate_bag(&mut self) {
 		let mut b = vec![0, 1, 2, 3, 4, 5, 6];
+		// let mut b = vec![0; 7]; // for debug
 		b.shuffle(&mut self.rng);
 		self.bag.extend(b.into_iter());
 	}

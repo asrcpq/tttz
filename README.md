@@ -12,9 +12,11 @@
 
 * 40 lines of pending attack cause sudden death
 
+* Garbage in same attack has a 20% probability to shift
+
 * SRS kick table(with 180 degree kick)
 
-* tspin and back-to-back bonus, no pc(currently)
+* tspin, b2b and pc implemented
 
 ## Gameplay
 

@@ -35,6 +35,7 @@ impl Server {
 			.unwrap();
 		if client_target.board.display.pending_attack > 40 {
 			client_target.board.generate_garbage();
+			client_target.send_display(&self.client_manager);
 			flag = true;
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);

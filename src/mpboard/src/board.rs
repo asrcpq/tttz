@@ -13,6 +13,7 @@ pub struct Board {
 	pub display: Display,
 	pub attack_pool: u32,
 	pub garbages: VecDeque<u32>,
+	height: usize,
 }
 
 impl Board {
@@ -26,6 +27,7 @@ impl Board {
 			display: Display::new(id),
 			attack_pool: 0,
 			garbages: VecDeque::new(),
+			height: 40,
 		};
 		board.calc_shadow();
 		board
@@ -227,8 +229,9 @@ impl Board {
 
 	// pull all pending garbages and write to board color
 	pub fn generate_garbage(&mut self) {
+		const SAME_LINE: f32 = 0.7;
 		for mut count in self.garbages.drain(..) {
-			let slot = self.rg.rng.gen_range(0..10);
+			let mut slot = self.rg.rng.gen_range(0..10);
 			if count == 0 {
 				eprintln!("Bug: zero in garbage");
 				continue;
@@ -243,6 +246,10 @@ impl Board {
 				}
 			}
 			for y in 0..(count as usize) {
+				let same = self.rg.rng.gen::<f32>();
+				if same >= SAME_LINE {
+					slot = self.rg.rng.gen_range(0..10);
+				}
 				let yy = 39 - y;
 				for x in 0..10 {
 					self.display.color[yy * 10 + x] = 2;
@@ -287,6 +294,9 @@ impl Board {
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
+			if py < self.height {
+				self.height = py;
+			}
 
 			let mut flag = true;
 			for l in lines_tocheck.iter() {
@@ -304,6 +314,7 @@ impl Board {
 
 		// put attack amount into pool
 		if line_count > 0 {
+			self.height += line_count as usize;
 			if self.attack_pool != 0 {
 				eprintln!("Error! attack_pool not cleared.");
 			}
@@ -345,6 +356,9 @@ impl Board {
 			self.display.combo += 1;
 			if self.display.combo > 20 {
 				self.display.combo = 20;
+			}
+			if self.height == 40 {
+				self.attack_pool += ATK_AC[self.display.combo as usize];
 			}
 		} else {
 			// plain drop: attack execution
