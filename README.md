@@ -4,19 +4,19 @@
 
 * a VT100 compatible terminal
 
-## Rules
+## Features
 
-* No gravity(blocks can move down), infinite hold swap
+* SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
 
-* Pending Attack won't apply until a drop without line clear
+* Non-realtime
 
-* 40 lines of pending attack cause sudden death
+	* No gravity(blocks can move down), infinite hold swap
+	
+	* Pending Attack won't apply until a drop without line clear
+	
+	* 40 lines of pending attack cause sudden death
 
-* Garbage in same attack has a 20% probability to shift
-
-* SRS kick table(with 180 degree kick)
-
-* tspin, b2b and pc implemented
+* Garbage in same attack has a 30% probability to shift
 
 ## Gameplay
 

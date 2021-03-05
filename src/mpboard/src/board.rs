@@ -229,7 +229,7 @@ impl Board {
 
 	// pull all pending garbages and write to board color
 	pub fn generate_garbage(&mut self) {
-		const SAME_LINE: f32 = 0.7;
+		const SAME_LINE: f32 = 0.6;
 		for mut count in self.garbages.drain(..) {
 			let mut slot = self.rg.rng.gen_range(0..10);
 			if count == 0 {
