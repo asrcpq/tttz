@@ -395,6 +395,8 @@ impl Board {
 						+ self.tmp_block.rotation as usize]
 					< 21
 				{
+					// now this should never happen
+					eprintln!("[41mSERVER[0m calc shadow return false");
 					return false;
 				} else {
 					self.shadow_block.pos.1 -= 1;

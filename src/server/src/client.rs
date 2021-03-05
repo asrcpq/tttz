@@ -120,9 +120,7 @@ impl Client {
 				}
 			}
 		}
-		if !self.board.calc_shadow() {
-			return false;
-		}
+		self.board.calc_shadow();
 		true
 	}
 
