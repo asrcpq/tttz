@@ -83,7 +83,7 @@ impl ClientDisplay {
 	}
 
 	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
-		let (ch1, ch2) = if style == 0 && color != 7 || style == 1 {
+		let (ch1, ch2) = if color != 7 {
 			('[', ']')
 		} else {
 			(' ', ' ')
@@ -296,28 +296,32 @@ impl ClientDisplay {
 	fn disp_atk(&self, mut atk: u32, panel: u32) {
 		let offsetx = self.offset_x[panel as usize] + 20;
 		let offsety = self.offset_y[panel as usize];
-		print!("{}", termion::style::Reset);
+		let fg = if atk < 4 {
+			"[43m"
+		} else if atk < 10 {
+			"[41m"
+		} else if atk <= 20 {
+			"[45m"
+		} else {
+			"[46m"
+		};
+		let bg = if atk <= 20 {
+			"[0m"
+		} else {
+			"[45m"
+		};
+		print!("{}", bg);
+		if atk > 20 {
+			atk -= 20;
+		}
+		if atk > 20 { atk = 20; }
 		for i in 0..(20 - atk as u16) {
 			print!(
 				"{} ",
 				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
 			);
 		}
-		print!(
-			"{}",
-			if atk < 4 {
-				"[43m"
-			} else if atk < 10 {
-				"[41m"
-			} else if atk < 20 {
-				"[45m"
-			} else {
-				"[46m"
-			}
-		);
-		if atk > 20 {
-			atk = 20; // we only show <20
-		}
+		print!("{}", fg);
 		for i in (20 - atk as u16)..20 {
 			print!(
 				"{} ",

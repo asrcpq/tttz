@@ -82,9 +82,6 @@ impl ClientSession {
 			};
 			self.client_display.setpanel(panel, id);
 		} else {
-			if line == "pair" {
-				self.client_socket.socket.set_nonblocking(false).unwrap();
-			}
 			self.client_socket.send(line.as_bytes()).unwrap();
 		}
 		false

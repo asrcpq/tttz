@@ -49,3 +49,7 @@
 * `request <id>` send battle request to id(ai will immediately accept)
 
 * `accept <id>` accept battle request from id
+
+* `pair` start pairing
+
+* `quit`
