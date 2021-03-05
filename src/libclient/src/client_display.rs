@@ -283,52 +283,37 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 		self.disp_info(&display, offsetx, offsety);
 		self.disp_hold_next(6, &display, panel);
-		self.disp_atk(display.pending_attack, panel);
+		self.disp_atk(display, panel);
 	}
 
-	pub fn disp_atk_pub(&self, atk: u32, panel: u32) {
-		if !self.checksize() {
-			return;
-		}
-		self.disp_atk(atk, panel);
-	}
-
-	fn disp_atk(&self, mut atk: u32, panel: u32) {
+	pub fn disp_atk(&self, display: &Display, panel: u32) {
 		let offsetx = self.offset_x[panel as usize] + 20;
 		let offsety = self.offset_y[panel as usize];
-		let fg = if atk < 4 {
-			"[43m"
-		} else if atk < 10 {
-			"[41m"
-		} else if atk <= 20 {
-			"[45m"
-		} else {
-			"[46m"
-		};
-		let bg = if atk <= 20 {
-			"[0m"
-		} else {
-			"[45m"
-		};
-		print!("{}", bg);
-		if atk > 20 {
-			atk -= 20;
-		}
-		if atk > 20 { atk = 20; }
-		for i in 0..(20 - atk as u16) {
-			print!(
-				"{} ",
-				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
-			);
-		}
-		print!("{}", fg);
-		for i in (20 - atk as u16)..20 {
-			print!(
-				"{} ",
-				termion::cursor::Goto(offsetx as u16, offsety as u16 + i),
-			);
+		let mut dy = 0;
+		for (mut ind, each_garbage) in display.garbages.iter().enumerate() {
+			let mut each_garbage = *each_garbage as u16;
+			let flag = dy + each_garbage > 20;
+			if flag {
+				each_garbage = 20 - dy;
+			}
+			if ind > 4 { ind = 4; }
+			print!("[4{}m", 5 - ind);
+			for i in dy..(dy + each_garbage as u16) {
+				print!("{} ",
+					termion::cursor::Goto(offsetx as u16, offsety as u16 + (19 - i)),
+				)
+			}
+			if flag {
+				break
+			}
+			dy += each_garbage;
 		}
 		print!("{}", termion::style::Reset);
+		for i in dy..20 {
+			print!("{} ",
+				termion::cursor::Goto(offsetx as u16, offsety as u16 + (19 - i)),
+			)
+		}
 	}
 
 	pub fn activate(&self) {

@@ -51,6 +51,10 @@ impl Block {
 		ret
 	}
 
+	pub fn bottom_pos(&self) -> i32 {
+		self.pos.1 + BLOCK_HEIGHT[(self.code * 4 + self.rotation as u8) as usize] - 1
+	}
+
 	pub fn test(&self, board: &Board) -> bool {
 		for block_id in 0..4 {
 			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;

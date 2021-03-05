@@ -1,5 +1,6 @@
 extern crate serde;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 
 // interface between server and client
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -14,7 +15,7 @@ pub struct Display {
 	pub bag_preview: [u8; 6],
 	pub combo: u32,
 	pub b2b: bool,
-	pub pending_attack: u32,
+	pub garbages: VecDeque<u32>,
 }
 
 impl Display {
@@ -30,7 +31,7 @@ impl Display {
 			bag_preview: [0; 6],
 			combo: 0,
 			b2b: false,
-			pending_attack: 0,
+			garbages: VecDeque::new(),
 		}
 	}
 }

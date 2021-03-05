@@ -18,25 +18,30 @@ pub struct Server {
 
 impl Server {
 	// true: kill
-	fn send_attack(&mut self, id: i32, addr: SocketAddr, lines: u32) -> bool {
+	fn send_attack(&mut self, id: i32, lines: u32) -> bool {
 		// target id and attr
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
 		client_target.board.push_garbage(lines);
-		SOCKET
-			.send_to(
-				format!(
-					"sigatk {}",
-					client_target.board.display.pending_attack
-				)
-				.as_bytes(),
-				addr,
-			)
-			.unwrap();
-		if client_target.board.display.pending_attack > 40 {
-			client_target.board.generate_garbage();
+		if client_target.board.display.garbages.len() > 5 {
+			client_target.board.generate_garbage(5);
+			client_target.board.calc_shadow(); // add test against move shadow block up
+			if client_target.board.height < 0 {
+				eprintln!("SERVER: Height overflow death {}", client_target.board.height);
+				flag = true;
+			}
+			if client_target.board.tmp_block.bottom_pos() < 19 { // invisible + 1
+				eprintln!("SERVER: invisible + 1 pop death");
+				flag = true;
+			}
+			client_target.board.update_display();
 			client_target.send_display(&self.client_manager);
-			flag = true;
+		} else {
+			client_target.broadcast_msg(&self.client_manager, format!(
+				"sigatk {} {}",
+				client_target.id,
+				lines,
+			).as_bytes());
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
 		flag
@@ -45,16 +50,13 @@ impl Server {
 	fn post_operation(&mut self, mut client: &mut Client) {
 		// note the size effect of counter_attack
 		if client.board.attack_pool > 0 && client.board.counter_attack() {
-			if let Some(addr) =
-				self.client_manager.get_addr_by_id(client.attack_target)
-			{
+			if self.client_manager.get_addr_by_id(client.attack_target).is_some() {
 				eprintln!(
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
 				);
 				if self.send_attack(
 					client.attack_target,
-					addr,
 					client.board.attack_pool,
 				) {
 					self.die(client, false);

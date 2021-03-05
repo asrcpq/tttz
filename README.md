@@ -8,15 +8,22 @@
 
 * SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
 
-* Non-realtime
-
-	* No gravity(blocks can move down), infinite hold swap
-	
-	* Pending Attack won't apply until a drop without line clear
-	
-	* 40 lines of pending attack cause sudden death
+* Non-realtime(described below)
 
 * Garbage in same attack has a 30% probability to shift
+
+## Non real-time features
+
+* No gravity(blocks can move down), infinite hold swap
+
+* Pending Attack won't apply until
+
+	* a drop without line clear will drain the pending garbages
+
+	* early garbages will be popped to keep the length of
+	garbage sequence always not greater than 5(5 attacks pending max)
+
+* 40 lines of pending attack cause sudden death
 
 ## Gameplay
 

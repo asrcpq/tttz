@@ -48,11 +48,11 @@ impl Client {
 		SOCKET.send_to(&msg, self.addr).unwrap();
 	}
 
-	pub fn send_display(
+	pub fn broadcast_msg(
 		&mut self,
 		client_manager: &ClientManager,
+		msg: &[u8],
 	) {
-		let msg = bincode::serialize(&self.board.display).unwrap();
 		let mut new_dc_ids: HashSet<i32> = HashSet::new();
 		for dc_id in self.dc_ids.drain() {
 			let dc_addr =
@@ -69,6 +69,14 @@ impl Client {
 			new_dc_ids.insert(dc_id);
 		}
 		self.dc_ids = new_dc_ids;
+	}
+
+	pub fn send_display(
+		&mut self,
+		client_manager: &ClientManager,
+	) {
+		let msg = bincode::serialize(&self.board.display).unwrap();
+		self.broadcast_msg(client_manager, &msg);
 	}
 
 	// die = false

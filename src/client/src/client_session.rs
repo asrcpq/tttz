@@ -10,6 +10,8 @@ use crate::client_socket::ClientSocket;
 extern crate mypuzzle_mpboard;
 use mypuzzle_mpboard::display::Display;
 
+use std::collections::HashMap;
+
 pub struct ClientSession {
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
@@ -17,6 +19,7 @@ pub struct ClientSession {
 	id: i32,
 	mode: i32,
 	textbuffer: String,
+	last_display: HashMap<i32, Display>,
 }
 
 impl ClientSession {
@@ -30,6 +33,7 @@ impl ClientSession {
 			id,
 			mode: 0,
 			textbuffer: String::new(),
+			last_display: HashMap::new(),
 		}
 	}
 
@@ -84,30 +88,40 @@ impl ClientSession {
 				Ok(id) => id,
 				Err(_) => return false,
 			};
-			self.client_display.setpanel(panel, id);
+			self.setpanel(panel, id);
 		} else {
 			self.client_socket.send(line.as_bytes()).unwrap();
 		}
 		false
 	}
 
+	fn setpanel(&mut self, panel: usize, id: i32) {
+		self.last_display.insert(id, Display::new(id));
+		self.client_display.setpanel(panel, id);
+	}
+
 	fn handle_recv(&mut self, msg: &str) -> Option<i32> {
 		let split = msg.split_whitespace().collect::<Vec<&str>>();
 		if split[0] == "startvs" {
 			let opid = split[1].parse::<i32>().unwrap();
-			self.client_display.setpanel(0, self.id);
-			self.client_display.setpanel(1, opid);
+			self.setpanel(0, self.id);
+			self.setpanel(1, opid);
 			self.modeswitch(1);
 			self.state = 2;
 			return Some(1);
 		} else if split[0] == "start" {
-			self.client_display.setpanel(0, self.id);
+			self.setpanel(0, self.id);
 			self.modeswitch(1);
 			self.state = 2;
 			return Some(1);
 		} else if split[0] == "sigatk" {
-			let pending_atk = split[1].parse::<u32>().unwrap();
-			self.client_display.disp_atk_pub(pending_atk, 0);
+			let id = split[1].parse::<i32>().unwrap();
+			let pending_atk = split[2].parse::<u32>().unwrap();
+			if let Some(mut display) = self.last_display.remove(&id) {
+				display.garbages.push_back(pending_atk);
+				self.client_display.disp_atk(&display, 0);
+				self.last_display.insert(id, display);
+			}
 		} else if msg == "die" || msg == "win" {
 			self.state = 1;
 		}
@@ -197,9 +211,13 @@ impl ClientSession {
 						self.textmode_print(&msg);
 					}
 				} else {
-					let decoded: Display =
-						bincode::deserialize(&buf[..amt]).unwrap();
-					self.client_display.disp_by_id(&decoded);
+					let display: Display = bincode::deserialize(&buf[..amt]).unwrap();
+					if self.last_display.remove(&display.id).is_some() {
+						self.client_display.disp_by_id(&display);
+						self.last_display.insert(display.id, display);
+					} else {
+						eprintln!("Receiving unexpected id {}", display.id);
+					}
 				}
 				stdout.flush().unwrap();
 			}

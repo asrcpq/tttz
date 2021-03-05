@@ -3,7 +3,6 @@ use crate::display::Display;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
 use rand::Rng;
-use std::collections::VecDeque;
 
 pub struct Board {
 	ontop: bool,
@@ -12,8 +11,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub display: Display,
 	pub attack_pool: u32,
-	pub garbages: VecDeque<u32>,
-	height: i32,
+	pub height: i32,
 }
 
 impl Board {
@@ -26,7 +24,6 @@ impl Board {
 			rg,
 			display: Display::new(id),
 			attack_pool: 0,
-			garbages: VecDeque::new(),
 			height: 40,
 		};
 		board.calc_shadow();
@@ -214,14 +211,21 @@ impl Board {
 		if atk == 0 {
 			return;
 		}
-		self.display.pending_attack += atk;
-		self.garbages.push_back(atk);
+		self.display.garbages.push_back(atk);
 	}
 
 	// pull all pending garbages and write to board color
-	pub fn generate_garbage(&mut self) {
+	pub fn generate_garbage(&mut self, keep: usize) -> u32 {
 		const SAME_LINE: f32 = 0.6;
-		for mut count in self.garbages.drain(..) {
+		let mut ret = 0;
+		loop {
+			if self.display.garbages.len() <= keep {
+				break
+			}
+			let mut count = match self.display.garbages.pop_front() {
+				Some(x) => x,
+				None => break,
+			};
 			self.height -= count as i32;
 			let mut slot = self.rg.rng.gen_range(0..10);
 			if count == 0 {
@@ -231,6 +235,7 @@ impl Board {
 			if count > 40 {
 				count = 40;
 			}
+			ret += count;
 			for y in 0..(40 - count as usize) {
 				for x in 0..10 {
 					self.display.color[y * 10 + x] =
@@ -244,12 +249,15 @@ impl Board {
 				}
 				let yy = 39 - y;
 				for x in 0..10 {
-					self.display.color[yy * 10 + x] = 2;
+					self.display.color[yy * 10 + x] = 2; // L = white
 				}
 				self.display.color[yy * 10 + slot] = 7;
+				if !self.tmp_block.test(self) {
+					self.tmp_block.pos.1 -= 1;
+				}
 			}
 		}
-		self.display.pending_attack = 0;
+		ret
 	}
 
 	// should only called when attack_pool > 0
@@ -257,21 +265,19 @@ impl Board {
 	pub fn counter_attack(&mut self) -> bool {
 		loop {
 			// return if attack remains
-			if self.garbages.is_empty() {
+			if self.display.garbages.is_empty() {
 				break self.attack_pool > 0;
 			}
-			if self.garbages[0] >= self.attack_pool {
-				self.garbages[0] -= self.attack_pool;
-				if self.garbages[0] == 0 {
-					self.garbages.pop_front();
+			if self.display.garbages[0] >= self.attack_pool {
+				self.display.garbages[0] -= self.attack_pool;
+				if self.display.garbages[0] == 0 {
+					self.display.garbages.pop_front();
 				}
-				self.display.pending_attack -= self.attack_pool;
 				self.attack_pool = 0;
 				break false;
 			}
-			let popped_lines = self.garbages.pop_front().unwrap();
+			let popped_lines = self.display.garbages.pop_front().unwrap();
 			self.attack_pool -= popped_lines;
-			self.display.pending_attack -= popped_lines;
 		}
 	}
 
@@ -355,11 +361,10 @@ impl Board {
 			}
 		} else {
 			// plain drop: attack execution
-			self.generate_garbage();
+			self.generate_garbage(0);
 			if self.height < 0 {
 				return true
 			}
-			self.display.pending_attack = 0;
 		}
 
 		// new block
@@ -395,8 +400,8 @@ impl Board {
 						+ self.tmp_block.rotation as usize]
 					< 21
 				{
-					// now this should never happen
-					eprintln!("[41mSERVER[0m calc shadow return false");
+					// this happens when dead caused by garbage generation
+					eprintln!("SERVER: calc shadow return false");
 					return false;
 				} else {
 					self.shadow_block.pos.1 -= 1;
