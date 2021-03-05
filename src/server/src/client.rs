@@ -125,7 +125,9 @@ impl Client {
 				}
 			}
 		}
-		self.board.calc_shadow();
+		if !self.board.calc_shadow() {
+			return false
+		}
 		true
 	}
 

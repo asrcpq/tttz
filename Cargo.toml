@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"src/mpboard",
 	"src/server",
 	"src/ai",
 	"src/client",

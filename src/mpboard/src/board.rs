@@ -55,9 +55,19 @@ impl Board {
 	}
 
 	pub fn slowdown(&mut self, dy: u8) {
-		for _ in 0..dy {
-			if !self.movedown1_nohard() {
-				break;
+		let first_visible = 21 - BLOCK_HEIGHT[
+			(self.tmp_block.code * 4
+			+ self.tmp_block.rotation as u8) as usize
+		];
+		if self.tmp_block.pos.1 < first_visible {
+			for _ in self.tmp_block.pos.1..first_visible {
+				self.movedown1_nohard();
+			}
+		} else {
+			for _ in 0..dy {
+				if !self.movedown1_nohard() {
+					break;
+				}
 			}
 		}
 	}
@@ -395,16 +405,11 @@ impl Board {
 		loop {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
-				if self.shadow_block.pos.1
-					+ BLOCK_HEIGHT[self.tmp_block.code as usize * 4
-						+ self.tmp_block.rotation as usize]
-					< 21
-				{
-					// this happens when dead caused by garbage generation
+				self.shadow_block.pos.1 -= 1;
+				if self.shadow_block.bottom_pos() < 21 {
 					eprintln!("SERVER: calc shadow return false");
 					return false;
 				} else {
-					self.shadow_block.pos.1 -= 1;
 					return true;
 				}
 			}
