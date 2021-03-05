@@ -20,10 +20,7 @@
 
 	* a drop without line clear will drain the pending garbages
 
-	* early garbages will be popped to keep the length of
-	garbage sequence always not greater than 5(5 attacks pending max)
-
-* 40 lines of pending attack cause sudden death
+	* max 5 attacks pending, or early attacks will pop
 
 ## Gameplay
 
