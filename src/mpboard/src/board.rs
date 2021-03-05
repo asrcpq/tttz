@@ -411,3 +411,59 @@ impl Board {
 		}
 	}
 }
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_is_pos_inside() {
+		let board = Board::new(1);
+		assert_eq!(board.is_pos_inside((10, 40)), false);
+		assert_eq!(board.is_pos_inside((10, 5)), false);
+		assert_eq!(board.is_pos_inside((0, 0)), true);
+		assert_eq!(board.is_pos_inside((4, 20)), true);
+	}
+
+	fn generate_solidlines(heights: [usize; 10]) -> Display {
+		let mut display = Display::new(1);
+		for i in 0..10 {
+			for j in 0..heights[i] {
+				display.color[(39 - j) * 10 + i] = 1;
+			}
+		}
+		display
+	}
+
+	#[test]
+	fn test_calc_shadow() {
+		let mut board = Board::new(1);
+		board.tmp_block = Block::new(1); // █▄▄
+		board.display = generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
+		board.calc_shadow();
+		use std::collections::HashSet;
+		let mut blocks: HashSet<(i32, i32)> = HashSet::new();
+		blocks.insert((3, 33));
+		blocks.insert((3, 34));
+		blocks.insert((4, 34));
+		blocks.insert((5, 34));
+		let shadow_pos = board.shadow_block.getpos();
+		println!("{:?} {:?}", blocks, shadow_pos);
+		for i in 0..4 {
+			blocks.remove(&(shadow_pos[i * 2] as i32, shadow_pos[i * 2 + 1] as i32));
+		}
+		assert!(blocks.is_empty());
+		board.move2(-1); // move to very left
+		board.calc_shadow();
+
+		blocks.insert((0, 35));
+		blocks.insert((0, 36));
+		blocks.insert((1, 36));
+		blocks.insert((2, 36));
+		let shadow_pos = board.shadow_block.getpos();
+		println!("{:?} {:?}", blocks, shadow_pos);
+		for i in 0..4 {
+			blocks.remove(&(shadow_pos[i * 2] as i32, shadow_pos[i * 2 + 1] as i32));
+		}
+	}
+}

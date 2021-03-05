@@ -26,7 +26,7 @@ pub static ref BPT: Vec<i32> = vec![
 ];
 
 pub static ref INITIAL_POS: Vec<i32> = vec![
-	3, 4, 4, 5, 4, 4, 4
+	3, 3, 3, 4, 3, 3, 3
 ];
 
 // each line has two pairs of points of tspin check
