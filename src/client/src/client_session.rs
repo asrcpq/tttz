@@ -54,7 +54,7 @@ impl ClientSession {
 	}
 
 	// true quit
-	fn proc_line(&mut self, line: &str) -> bool {
+	pub fn proc_line(&mut self, line: &str) -> bool {
 		let split: Vec<&str> = line.split_whitespace().collect();
 		if split.len() == 0 {
 			self.modeswitch(1);
@@ -62,6 +62,10 @@ impl ClientSession {
 		}
 		if split[0] == "quit" {
 			return true
+		} else if split[0] == "sleep" { // for scripts
+			if let Ok(t) = split[1].parse::<u64>() {
+				std::thread::sleep(std::time::Duration::from_millis(t));
+			}
 		} else if split[0] == "msg" {
 			self.client_socket
 				.send(&line.bytes().collect::<Vec<u8>>()[4..])
