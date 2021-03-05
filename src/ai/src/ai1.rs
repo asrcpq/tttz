@@ -10,9 +10,7 @@ use mypuzzle_libclient::client_socket::ClientSocket;
 
 use std::collections::VecDeque;
 
-fn main_think(
-	display: &Display,
-) -> VecDeque<u8> {
+fn main_think(display: &Display) -> VecDeque<u8> {
 	let mut heights = [39u8; 10];
 
 	let mut ret = VecDeque::new();
@@ -138,7 +136,9 @@ fn main_think(
 		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if best_posx == 0 {
 		(b'H', 1)
-	} else if best_posx == 10 - BLOCK_WIDTH[(best_code * 4 + best_rotation) as usize] {
+	} else if best_posx
+		== 10 - BLOCK_WIDTH[(best_code * 4 + best_rotation) as usize]
+	{
 		(b'L', 1)
 	} else if rotated_pos0 > best_posx {
 		//left
@@ -190,7 +190,8 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 					}
 				}
 			} else {
-				let msg = String::from(std::str::from_utf8(&buf[..amt]).unwrap());
+				let msg =
+					String::from(std::str::from_utf8(&buf[..amt]).unwrap());
 				let words: Vec<&str> = msg.split_whitespace().collect();
 				if msg == "die" || msg == "win" {
 					state = 1;
@@ -198,42 +199,49 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 					state = 2;
 				} else if words[0] == "request" {
 					let id = words[1].parse::<i32>().unwrap();
-					client_socket.send(format!("accept {}", id).as_bytes()).unwrap();
+					client_socket
+						.send(format!("accept {}", id).as_bytes())
+						.unwrap();
 				} else if msg == "terminate" {
-					return
+					return;
 				}
 				eprintln!("Short msg: {}", msg);
 			}
 		}
 		if strategy {
 			if let Some(ref decoded) = display {
-				if state == 2 {
-					if moveflag {
-						if operation_queue.is_empty() {
-							operation_queue = main_think(decoded);
-						}
-						client_socket.send(format!(
-							"key {}",
-							operation_queue.pop_front().unwrap() as char,
-						).as_bytes()).unwrap();
-						moveflag = false;
+				if state == 2 && moveflag {
+					if operation_queue.is_empty() {
+						operation_queue = main_think(decoded);
 					}
+					client_socket
+						.send(
+							format!(
+								"key {}",
+								operation_queue.pop_front().unwrap() as char,
+							)
+							.as_bytes(),
+						)
+						.unwrap();
+					moveflag = false;
 				}
 				if !strategy {
 					display = None;
 				}
 			}
-		} else {
-			if let Some(ref decoded) = display {
-				if state == 2 {
-					operation_queue = main_think(decoded);
-					while let Some(byte) = operation_queue.pop_front() {
-						client_socket.send(format!("key {}", byte as char).as_bytes()).unwrap();
-						std::thread::sleep(std::time::Duration::from_millis(sleep_millis));
-					}
+		} else if let Some(ref decoded) = display {
+			if state == 2 {
+				operation_queue = main_think(decoded);
+				while let Some(byte) = operation_queue.pop_front() {
+					client_socket
+						.send(format!("key {}", byte as char).as_bytes())
+						.unwrap();
+					std::thread::sleep(std::time::Duration::from_millis(
+						sleep_millis,
+					));
 				}
-				display = None;
 			}
+			display = None;
 		}
 	}
 }

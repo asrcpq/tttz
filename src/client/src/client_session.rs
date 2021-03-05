@@ -25,7 +25,7 @@ pub struct ClientSession {
 impl ClientSession {
 	pub fn new(addr: String) -> ClientSession {
 		let (client_socket, id) = ClientSocket::new(&addr);
-		let client_display = ClientDisplay::new(id);
+		let client_display = Default::default();
 		ClientSession {
 			client_socket,
 			client_display,
@@ -47,7 +47,8 @@ impl ClientSession {
 	}
 
 	fn textmode_print(&self, msg: &str) {
-		print!("{}{}{}{}{}{}",
+		print!(
+			"{}{}{}{}{}{}",
 			termion::cursor::Hide,
 			termion::cursor::Goto(1, 2),
 			termion::clear::CurrentLine,
@@ -60,13 +61,14 @@ impl ClientSession {
 	// true quit
 	pub fn proc_line(&mut self, line: &str) -> bool {
 		let split: Vec<&str> = line.split_whitespace().collect();
-		if split.len() == 0 {
+		if split.is_empty() {
 			self.modeswitch(1);
 			return false;
 		}
 		if split[0] == "quit" {
-			return true
-		} else if split[0] == "sleep" { // for scripts
+			return true;
+		} else if split[0] == "sleep" {
+			// for scripts
 			if let Ok(t) = split[1].parse::<u64>() {
 				std::thread::sleep(std::time::Duration::from_millis(t));
 			}
@@ -78,7 +80,7 @@ impl ClientSession {
 			self.textmode_print(&format!("{}", self.id));
 		} else if split[0] == "panel" {
 			if split.len() < 3 {
-				return false
+				return false;
 			}
 			let panel = match split[1].parse::<usize>() {
 				Ok(id) => id,
@@ -119,7 +121,7 @@ impl ClientSession {
 			let pending_atk = split[2].parse::<u32>().unwrap();
 			if let Some(mut display) = self.last_display.remove(&id) {
 				display.garbages.push_back(pending_atk);
-				self.client_display.disp_atk(&display, 0);
+				self.client_display.disp_atk_by_id(&display);
 				self.last_display.insert(id, display);
 			}
 		} else if msg == "die" || msg == "win" {
@@ -134,7 +136,7 @@ impl ClientSession {
 			if byte == 23 {
 				while let Some(ch) = self.textbuffer.pop() {
 					if ch.is_whitespace() {
-						break
+						break;
 					}
 				}
 			} else if byte == 3 {
@@ -143,7 +145,7 @@ impl ClientSession {
 				self.textbuffer.pop();
 			} else if byte == b'\r' {
 				if self.proc_line(&self.textbuffer.clone()) {
-					return true
+					return true;
 				}
 				self.textbuffer = String::new();
 			} else {
@@ -155,7 +157,7 @@ impl ClientSession {
 				termion::clear::CurrentLine,
 				self.textbuffer,
 			);
-			return false
+			return false;
 		}
 
 		// mode == 1
@@ -179,9 +181,7 @@ impl ClientSession {
 			_ => {
 				if self.state == 2 {
 					self.client_socket
-						.send(
-							format!("key {}", byte as char).as_bytes(),
-						)
+						.send(format!("key {}", byte as char).as_bytes())
 						.unwrap();
 				}
 			}
@@ -211,7 +211,8 @@ impl ClientSession {
 						self.textmode_print(&msg);
 					}
 				} else {
-					let display: Display = bincode::deserialize(&buf[..amt]).unwrap();
+					let display: Display =
+						bincode::deserialize(&buf[..amt]).unwrap();
 					if self.last_display.remove(&display.id).is_some() {
 						self.client_display.disp_by_id(&display);
 						self.last_display.insert(display.id, display);
@@ -223,7 +224,7 @@ impl ClientSession {
 			}
 			if let Some(Ok(byte)) = stdin.next() {
 				if self.byte_handle(byte) {
-					break
+					break;
 				}
 				stdout.flush().unwrap();
 			}

@@ -21,7 +21,7 @@ pub struct Client {
 }
 
 impl Client {
-	pub fn new(id: i32, addr: SocketAddr,) -> Client {
+	pub fn new(id: i32, addr: SocketAddr) -> Client {
 		Client {
 			id,
 			addr,
@@ -71,10 +71,7 @@ impl Client {
 		self.dc_ids = new_dc_ids;
 	}
 
-	pub fn send_display(
-		&mut self,
-		client_manager: &ClientManager,
-	) {
+	pub fn send_display(&mut self, client_manager: &ClientManager) {
 		let msg = bincode::serialize(&self.board.display).unwrap();
 		self.broadcast_msg(client_manager, &msg);
 	}
@@ -100,12 +97,12 @@ impl Client {
 				}
 				"k" => {
 					if self.board.press_up() {
-						return false
+						return false;
 					}
 				}
 				"j" => {
 					if self.board.press_down() {
-						return false
+						return false;
 					}
 				}
 				"J" => {
@@ -180,7 +177,8 @@ impl Client {
 			eprintln!("SERVER: Height overflow death {}", self.board.height);
 			flag = true;
 		}
-		if self.board.tmp_block.bottom_pos() < 19 { // invisible + 1
+		if self.board.tmp_block.bottom_pos() < 19 {
+			// invisible + 1
 			eprintln!("SERVER: invisible + 1 pop death");
 			flag = true;
 		}

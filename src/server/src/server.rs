@@ -1,8 +1,8 @@
 extern crate lazy_static;
 extern crate mypuzzle_ai;
-use mypuzzle_ai::ai1;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
+use mypuzzle_ai::ai1;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 
@@ -28,11 +28,10 @@ impl Server {
 			flag = client_target.flush_garbage(MAX_GARBAGE_LEN);
 			client_target.send_display(&self.client_manager);
 		} else {
-			client_target.broadcast_msg(&self.client_manager, format!(
-				"sigatk {} {}",
-				client_target.id,
-				lines,
-			).as_bytes());
+			client_target.broadcast_msg(
+				&self.client_manager,
+				format!("sigatk {} {}", client_target.id, lines,).as_bytes(),
+			);
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
 		flag
@@ -41,15 +40,18 @@ impl Server {
 	fn post_operation(&mut self, mut client: &mut Client) {
 		// note the size effect of counter_attack
 		if client.board.attack_pool > 0 && client.board.counter_attack() {
-			if self.client_manager.get_addr_by_id(client.attack_target).is_some() {
+			if self
+				.client_manager
+				.get_addr_by_id(client.attack_target)
+				.is_some()
+			{
 				eprintln!(
 					"{} attack {} with {}",
 					client.id, client.attack_target, client.board.attack_pool,
 				);
-				if self.send_attack(
-					client.attack_target,
-					client.board.attack_pool,
-				) {
+				if self
+					.send_attack(client.attack_target, client.board.attack_pool)
+				{
 					self.die(client, false);
 				};
 			} else {
@@ -188,7 +190,7 @@ impl Server {
 						} else {
 							240
 						}
-					},
+					}
 				};
 				self.ai_threads.push(std::thread::spawn(move || {
 					ai1::main("127.0.0.1:23124", sleep, strategy);
@@ -198,30 +200,45 @@ impl Server {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
 							client.state = 3;
-							opponent.send_msg(format!("request {}", client.id).as_bytes());
+							opponent.send_msg(
+								format!("request {}", client.id).as_bytes(),
+							);
 						} else {
-							eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
+							eprintln!(
+								"SERVER: request: invalid opponent state {}",
+								opponent.state
+							);
 						}
 					} else {
 						eprintln!("SERVER: request: cannot find client {}", id);
 					}
 				}
 			} else if words[0] == "restart" {
-				if let Some(opponent) = self.client_manager.view_by_id(client.attack_target) {
+				if let Some(opponent) =
+					self.client_manager.view_by_id(client.attack_target)
+				{
 					if opponent.state == 1 {
 						client.state = 3;
-						opponent.send_msg(format!("request {}", client.id).as_bytes());
+						opponent.send_msg(
+							format!("request {}", client.id).as_bytes(),
+						);
 					} else {
-						eprintln!("SERVER: request: invalid opponent state {}", opponent.state);
+						eprintln!(
+							"SERVER: request: invalid opponent state {}",
+							opponent.state
+						);
 					}
 				}
 			} else if words[0] == "accept" {
 				if let Ok(id) = words[1].parse::<i32>() {
-					if let Some(mut opponent) = self.client_manager.tmp_pop_by_id(id) {
+					if let Some(mut opponent) =
+						self.client_manager.tmp_pop_by_id(id)
+					{
 						if opponent.state != 3 {
 							eprintln!("SERVER: accept: but the sender is not pairing.");
 						} else {
-							self.client_manager.pair_apply(&mut client, &mut opponent);
+							self.client_manager
+								.pair_apply(&mut client, &mut opponent);
 							self.client_manager.tmp_push_by_id(id, opponent);
 						}
 					} else {

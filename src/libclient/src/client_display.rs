@@ -15,30 +15,29 @@ pub struct ClientDisplay {
 	offset0: (u16, u16),
 	offset_x: Vec<i32>,
 	offset_y: Vec<i32>,
-	panel_id: Vec<i32>,
+	id_panel: HashMap<i32, usize>,
 }
 
-impl ClientDisplay {
-	pub fn setpanel(&mut self, panel: usize, id: i32) {
-		match self.panel_id.get_mut(panel) {
-			None => {}
-			Some(id2) => *id2 = id,
-		}
-	}
-
-	pub fn new(id: i32) -> ClientDisplay {
+impl Default for ClientDisplay {
+	fn default() -> ClientDisplay {
 		let mut client_display = ClientDisplay {
 			last_dirtypos: vec![vec![]; 2],
 			termsize: (0, 0),
 			offset0: (1, 1),
 			offset_x: vec![-1; 2],
 			offset_y: vec![-1; 2],
-			panel_id: vec![id, 0],
+			id_panel: HashMap::new(),
 		};
 		client_display.set_offset();
 		client_display.deactivate(); // start from text mode
 		std::io::stdout().flush().unwrap();
 		client_display
+	}
+}
+
+impl ClientDisplay {
+	pub fn setpanel(&mut self, panel: usize, id: i32) {
+		self.id_panel.insert(id, panel);
 	}
 
 	fn checksize(&self) -> bool {
@@ -72,7 +71,7 @@ impl ClientDisplay {
 		self.offset_x[1] = self.offset0.0 as i32 + 34;
 		self.offset_y[1] = self.offset0.1 as i32 + 2;
 	}
-	
+
 	pub fn disp_mainbox(&self) {
 		self.disp_box(
 			self.offset0.0,
@@ -83,11 +82,7 @@ impl ClientDisplay {
 	}
 
 	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
-		let (ch1, ch2) = if color != 7 {
-			('[', ']')
-		} else {
-			(' ', ' ')
-		};
+		let (ch1, ch2) = if color != 7 { ('[', ']') } else { (' ', ' ') };
 		let fgbg = 4 - style; // 0 bg 1 fg
 		print!(
 			"[{}{}m{}{}{}{}",
@@ -143,7 +138,7 @@ impl ClientDisplay {
 		}
 	}
 
-	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: u32) {
+	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: usize) {
 		let mut print_info: HashMap<(u32, u32), i32> = HashMap::new();
 		for i in 0..4 {
 			let bpt_offset = 32 * code + i * 2;
@@ -171,7 +166,7 @@ impl ClientDisplay {
 				termion::cursor::Goto(*x as u16, *y as u16),
 				print_char,
 			);
-			self.last_dirtypos[panel as usize].push((*x, *y))
+			self.last_dirtypos[panel].push((*x, *y))
 		}
 		print!("{}", termion::style::Reset);
 	}
@@ -197,9 +192,9 @@ impl ClientDisplay {
 		);
 	}
 
-	fn disp_hold_next(&mut self, n: usize, display: &Display, panel: u32) {
-		let offsetx = 23 + self.offset_x[panel as usize] as u16;
-		let offsety = self.offset_y[panel as usize] as u16 + 1;
+	fn disp_hold_next(&mut self, n: usize, display: &Display, panel: usize) {
+		let offsetx = 23 + self.offset_x[panel] as u16;
+		let offsety = self.offset_y[panel] as u16 + 1;
 		let mut doubley = offsety * 2;
 		for (x, y) in self.last_dirtypos[panel as usize].drain(..) {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
@@ -221,19 +216,17 @@ impl ClientDisplay {
 	}
 
 	pub fn disp_by_id(&mut self, display: &Display) {
-		let mut flag = true;
-		for (panel, id2) in self.panel_id.clone().into_iter().enumerate() {
-			if id2 == display.id {
-				self.disp_by_panel(display, panel as u32);
-				flag = false;
+		let panel = match self.id_panel.get(&display.id) {
+			Some(panel) => *panel,
+			None => {
+				eprintln!("Wrong client received");
+				return;
 			}
-		}
-		if flag {
-			eprintln!("Receiving unwanted client info");
-		}
+		};
+		self.disp_by_panel(display, panel);
 	}
 
-	fn disp_by_panel(&mut self, display: &Display, panel: u32) {
+	fn disp_by_panel(&mut self, display: &Display, panel: usize) {
 		if panel >= 2 {
 			panic!("Only support 2 panels");
 		}
@@ -241,8 +234,8 @@ impl ClientDisplay {
 			return;
 		}
 		print!("[30m");
-		let offsetx = self.offset_x[panel as usize] as u16;
-		let offsety = self.offset_y[panel as usize] as u16;
+		let offsetx = self.offset_x[panel] as u16;
+		let offsety = self.offset_y[panel] as u16;
 		for i in 0..10 {
 			for j in 20..40 {
 				self.blockp(
@@ -283,12 +276,19 @@ impl ClientDisplay {
 		print!("{}", termion::style::Reset);
 		self.disp_info(&display, offsetx, offsety);
 		self.disp_hold_next(6, &display, panel);
-		self.disp_atk(display, panel);
+		self.disp_atk_by_id(display);
 	}
 
-	pub fn disp_atk(&self, display: &Display, panel: u32) {
-		let offsetx = self.offset_x[panel as usize] + 20;
-		let offsety = self.offset_y[panel as usize];
+	pub fn disp_atk_by_id(&self, display: &Display) {
+		let panel = match self.id_panel.get(&display.id) {
+			Some(panel) => *panel,
+			None => {
+				eprintln!("Wrong client sigatk received.");
+				return;
+			}
+		};
+		let offsetx = self.offset_x[panel] + 20;
+		let offsety = self.offset_y[panel];
 		let mut dy = 0;
 		for (mut ind, each_garbage) in display.garbages.iter().enumerate() {
 			let mut each_garbage = *each_garbage as u16;
@@ -296,22 +296,32 @@ impl ClientDisplay {
 			if flag {
 				each_garbage = 20 - dy;
 			}
-			if ind > 4 { ind = 4; }
+			if ind > 4 {
+				ind = 4;
+			}
 			print!("[4{}m", 5 - ind);
 			for i in dy..(dy + each_garbage as u16) {
-				print!("{} ",
-					termion::cursor::Goto(offsetx as u16, offsety as u16 + (19 - i)),
+				print!(
+					"{} ",
+					termion::cursor::Goto(
+						offsetx as u16,
+						offsety as u16 + (19 - i)
+					),
 				)
 			}
 			if flag {
-				break
+				break;
 			}
 			dy += each_garbage;
 		}
 		print!("{}", termion::style::Reset);
 		for i in dy..20 {
-			print!("{} ",
-				termion::cursor::Goto(offsetx as u16, offsety as u16 + (19 - i)),
+			print!(
+				"{} ",
+				termion::cursor::Goto(
+					offsetx as u16,
+					offsety as u16 + (19 - i)
+				),
 			)
 		}
 	}

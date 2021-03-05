@@ -19,7 +19,7 @@ impl ClientSocket {
 			std::thread::sleep(std::time::Duration::from_millis(1000));
 			if let Ok(amt) = socket.recv(&mut buf) {
 				if std::str::from_utf8(&buf).unwrap().starts_with("ok") {
-					break amt
+					break amt;
 				}
 			}
 			std::thread::sleep(std::time::Duration::from_millis(1000));

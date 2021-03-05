@@ -30,11 +30,7 @@ impl Block {
 	pub fn new(code: u8) -> Block {
 		Block {
 			code,
-			pos: (INITIAL_POS[code as usize], if code == 0 {
-				19
-			} else {
-				18
-			}),
+			pos: (INITIAL_POS[code as usize], if code == 0 { 19 } else { 18 }),
 			rotation: 0,
 		}
 	}
@@ -52,7 +48,9 @@ impl Block {
 	}
 
 	pub fn bottom_pos(&self) -> i32 {
-		self.pos.1 + BLOCK_HEIGHT[(self.code * 4 + self.rotation as u8) as usize] - 1
+		self.pos.1
+			+ BLOCK_HEIGHT[(self.code * 4 + self.rotation as u8) as usize]
+			- 1
 	}
 
 	pub fn test(&self, board: &Board) -> bool {

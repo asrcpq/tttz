@@ -5,7 +5,6 @@ use crate::srs_data::*;
 use rand::Rng;
 
 pub struct Board {
-	ontop: bool,
 	pub tmp_block: Block,
 	pub shadow_block: Block,
 	pub rg: RandomGenerator,
@@ -18,7 +17,6 @@ impl Board {
 	pub fn new(id: i32) -> Board {
 		let mut rg: RandomGenerator = Default::default();
 		let mut board = Board {
-			ontop: true,
 			tmp_block: Block::new(rg.get()),
 			shadow_block: Block::new(0),
 			rg,
@@ -48,7 +46,6 @@ impl Board {
 	}
 
 	fn movedown1_nohard(&mut self) -> bool {
-		self.ontop = false;
 		self.tmp_block.pos.1 += 1;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.1 -= 1;
@@ -99,9 +96,6 @@ impl Board {
 			};
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
-			if self.ontop {
-				self.tmp_block.pos.1 = 0;
-			}
 			if self.tmp_block.test(self) {
 				return true;
 			}
@@ -119,11 +113,9 @@ impl Board {
 			self.display.hold = self.tmp_block.code;
 			self.tmp_block = Block::new(tmp);
 		}
-		self.ontop = true;
 	}
 
 	pub fn soft_drop(&mut self) -> bool {
-		self.ontop = false;
 		if self.shadow_block.pos.1 == self.tmp_block.pos.1 {
 			return false;
 		}
@@ -220,7 +212,7 @@ impl Board {
 		let mut ret = 0;
 		loop {
 			if self.display.garbages.len() <= keep {
-				break
+				break;
 			}
 			let mut count = match self.display.garbages.pop_front() {
 				Some(x) => x,
@@ -372,15 +364,14 @@ impl Board {
 			// plain drop: attack execution
 			self.generate_garbage(0);
 			if self.height < 0 {
-				return true
+				return true;
 			}
 		}
 
 		// new block
-		self.ontop = true;
 		self.tmp_block = Block::new(self.rg.get());
-		if ! self.tmp_block.test(self) {
-			return true
+		if !self.tmp_block.test(self) {
+			return true;
 		}
 		false
 	}
@@ -388,7 +379,7 @@ impl Board {
 	// true = death
 	pub fn press_down(&mut self) -> bool {
 		if !self.soft_drop() {
-			return self.hard_drop()
+			return self.hard_drop();
 		}
 		false
 	}
@@ -469,7 +460,10 @@ mod test {
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
-			blocks.remove(&(shadow_pos[i * 2] as i32, shadow_pos[i * 2 + 1] as i32));
+			blocks.remove(&(
+				shadow_pos[i * 2] as i32,
+				shadow_pos[i * 2 + 1] as i32,
+			));
 		}
 		assert!(blocks.is_empty());
 		board.move2(-1); // move to very left
@@ -482,7 +476,10 @@ mod test {
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
-			blocks.remove(&(shadow_pos[i * 2] as i32, shadow_pos[i * 2 + 1] as i32));
+			blocks.remove(&(
+				shadow_pos[i * 2] as i32,
+				shadow_pos[i * 2 + 1] as i32,
+			));
 		}
 	}
 }

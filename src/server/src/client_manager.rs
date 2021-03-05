@@ -70,11 +70,7 @@ impl ClientManager {
 		}
 	}
 
-	pub fn pair_apply(
-		&mut self,
-		client1: &mut Client,
-		client2: &mut Client,
-	) {
+	pub fn pair_apply(&mut self, client1: &mut Client, client2: &mut Client) {
 		let id1 = client1.id;
 		let id2 = client2.id;
 		client1.pair_success(id2);
@@ -95,10 +91,7 @@ impl ClientManager {
 		client1.send_display(self);
 	}
 
-	pub fn pair_attempt(
-		&mut self,
-		mut client: &mut Client,
-	) {
+	pub fn pair_attempt(&mut self, mut client: &mut Client) {
 		if self.pending_client == client.id {
 			// the pending client is just ourselves
 			return;

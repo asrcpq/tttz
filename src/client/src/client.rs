@@ -21,7 +21,7 @@ fn main() {
 				cmds.push(string);
 			}
 		}
-	};
+	}
 	let mut client_session = ClientSession::new(addr);
 	for line in cmds.drain(..) {
 		println!("executing {}", line);
