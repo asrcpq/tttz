@@ -177,6 +177,19 @@ impl Server {
 				self.die(&mut client, true);
 			} else if words[0] == "clients" {
 				self.send_clients(src);
+			} else if words[0] == "kick" {
+				let mut flag = true;
+				if let Some(w) = words.get(1) {
+					if let Ok(id) = w.parse::<i32>() {
+						if id != client.id {
+							self.client_manager.pop_by_id(id);
+							flag =false;
+						}
+					}
+				}
+				if flag {
+					eprintln!("SERVER: kick failed.");
+				}
 			} else if words[0] == "view" {
 				let id = words[1].parse::<i32>().unwrap_or(0);
 				self.set_view(client.id, id);
