@@ -211,13 +211,15 @@ impl ClientSession {
 						self.textmode_print(&msg);
 					}
 				} else {
-					let display: Display =
-						bincode::deserialize(&buf[..amt]).unwrap();
-					if self.last_display.remove(&display.id).is_some() {
-						self.client_display.disp_by_id(&display);
-						self.last_display.insert(display.id, display);
-					} else {
-						eprintln!("Receiving unexpected id {}", display.id);
+					if self.mode == 1 {
+						let display: Display =
+							bincode::deserialize(&buf[..amt]).unwrap();
+						if self.last_display.remove(&display.id).is_some() {
+							self.client_display.disp_by_id(&display);
+							self.last_display.insert(display.id, display);
+						} else {
+							eprintln!("Receiving unexpected id {}", display.id);
+						}
 					}
 				}
 				stdout.flush().unwrap();

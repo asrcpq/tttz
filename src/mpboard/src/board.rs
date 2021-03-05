@@ -380,7 +380,7 @@ impl Board {
 
 		// new block
 		self.tmp_block = Block::new(self.rg.get());
-		if !self.tmp_block.test(self) {
+		if !self.calc_shadow() {
 			return true;
 		}
 		false
@@ -406,8 +406,8 @@ impl Board {
 			self.shadow_block.pos.1 += 1;
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 -= 1;
-				if self.shadow_block.bottom_pos() < 21 {
-					eprintln!("SERVER: calc shadow return false");
+				if self.shadow_block.bottom_pos() < 20 {
+					eprintln!("SERVER: shadow_block bottom {}", self.shadow_block.bottom_pos());
 					return false;
 				} else {
 					return true;

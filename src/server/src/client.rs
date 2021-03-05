@@ -125,9 +125,8 @@ impl Client {
 				}
 			}
 		}
-		if !self.board.calc_shadow() {
-			return false
-		}
+		// return value ignored, only board change cause death
+		self.board.calc_shadow();
 		true
 	}
 

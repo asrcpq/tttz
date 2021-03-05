@@ -22,6 +22,10 @@
 
 	* max 5 attacks pending, or early attacks will pop
 
+* Block generate at top
+
+* Die, if **after board change** shadow block is totally invisible
+
 ## Gameplay
 
 * h/l: move left/right
