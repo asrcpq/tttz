@@ -281,6 +281,51 @@ impl Board {
 		}
 	}
 
+	// providing whether tspin, shape offset and cleared lines
+	// change self b2b and attack_pool
+	fn calc_tspin_b2b(&mut self, tspin: u32, offset: usize, line_count: u32) {
+		if self.display.b2b {
+			if tspin == 2 {
+				self.attack_pool = ATK_B2B_TSPIN_REGULAR[offset];
+			} else if tspin == 1 {
+				self.attack_pool = ATK_B2B_TSPIN_MINI[offset];
+			} else if tspin == 0 {
+				if line_count == 4 {
+					self.attack_pool =
+						ATK_B2B_QUAD[self.display.combo as usize];
+				} else {
+					self.attack_pool = ATK_NORMAL[offset];
+					self.display.b2b = false;
+				}
+			} else {
+				unreachable!();
+			}
+		} else if tspin == 2 {
+			self.attack_pool = ATK_TSPIN_REGULAR[offset];
+			self.display.b2b = true;
+		} else if tspin == 1 {
+			self.attack_pool = ATK_TSPIN_MINI[offset];
+			self.display.b2b = true;
+		} else if tspin == 0 {
+			if line_count == 4 {
+				self.display.b2b = true;
+			}
+			self.attack_pool = ATK_NORMAL[offset];
+		} else {
+			unreachable!();
+		}
+		if tspin == 2 || line_count == 4 {
+			self.display.b2b = true;
+		}
+		self.display.combo += 1;
+		if self.display.combo > 20 {
+			self.display.combo = 20;
+		}
+		if self.height == 40 {
+			self.attack_pool += ATK_AC[self.display.combo as usize];
+		}
+	}
+
 	// true: die
 	pub fn hard_drop(&mut self) -> bool {
 		let tmppos = self.tmp_block.getpos();
@@ -293,10 +338,13 @@ impl Board {
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
+
+			// tmp is higher, update height
 			if py < self.height as usize {
 				self.height = py as i32;
 			}
 
+			// generate lines that changed
 			let mut flag = true;
 			for l in lines_tocheck.iter() {
 				if *l == py {
@@ -309,8 +357,8 @@ impl Board {
 
 			self.display.color[px + py * 10] = self.tmp_block.code;
 		}
-		let line_count = self.checkline(lines_tocheck);
 
+		let line_count = self.checkline(lines_tocheck);
 		// put attack amount into pool
 		if line_count > 0 {
 			self.height += line_count as i32;
@@ -319,46 +367,7 @@ impl Board {
 			}
 			let offset =
 				21 * (line_count - 1) as usize + self.display.combo as usize;
-			if self.display.b2b {
-				if tspin == 2 {
-					self.attack_pool = ATK_B2B_TSPIN_REGULAR[offset];
-				} else if tspin == 1 {
-					self.attack_pool = ATK_B2B_TSPIN_MINI[offset];
-				} else if tspin == 0 {
-					if line_count == 4 {
-						self.attack_pool =
-							ATK_B2B_QUAD[self.display.combo as usize];
-					} else {
-						self.attack_pool = ATK_NORMAL[offset];
-						self.display.b2b = false;
-					}
-				} else {
-					unreachable!();
-				}
-			} else if tspin == 2 {
-				self.attack_pool = ATK_TSPIN_REGULAR[offset];
-				self.display.b2b = true;
-			} else if tspin == 1 {
-				self.attack_pool = ATK_TSPIN_MINI[offset];
-				self.display.b2b = true;
-			} else if tspin == 0 {
-				if line_count == 4 {
-					self.display.b2b = true;
-				}
-				self.attack_pool = ATK_NORMAL[offset];
-			} else {
-				unreachable!();
-			}
-			if tspin == 2 || line_count == 4 {
-				self.display.b2b = true;
-			}
-			self.display.combo += 1;
-			if self.display.combo > 20 {
-				self.display.combo = 20;
-			}
-			if self.height == 40 {
-				self.attack_pool += ATK_AC[self.display.combo as usize];
-			}
+			self.calc_tspin_b2b(tspin, offset, line_count);
 		} else {
 			// plain drop: attack execution
 			self.generate_garbage(0);

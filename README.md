@@ -12,7 +12,7 @@
 
 * Garbage in same attack has a 30% probability to shift
 
-## Non real-time features
+## Non-realtime features
 
 * No gravity(blocks can move down), infinite hold swap
 

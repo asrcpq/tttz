@@ -170,4 +170,21 @@ impl Client {
 		}
 		false
 	}
+
+	// true = death
+	pub fn flush_garbage(&mut self, max: usize) -> bool {
+		let mut flag = false;
+		self.board.generate_garbage(max);
+		self.board.calc_shadow(); // add test against move shadow block up
+		if self.board.height < 0 {
+			eprintln!("SERVER: Height overflow death {}", self.board.height);
+			flag = true;
+		}
+		if self.board.tmp_block.bottom_pos() < 19 { // invisible + 1
+			eprintln!("SERVER: invisible + 1 pop death");
+			flag = true;
+		}
+		self.board.update_display();
+		flag
+	}
 }

@@ -19,22 +19,13 @@ pub struct Server {
 impl Server {
 	// true: kill
 	fn send_attack(&mut self, id: i32, lines: u32) -> bool {
+		const MAX_GARBAGE_LEN: usize = 5;
 		// target id and attr
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
 		client_target.board.push_garbage(lines);
-		if client_target.board.display.garbages.len() > 5 {
-			client_target.board.generate_garbage(5);
-			client_target.board.calc_shadow(); // add test against move shadow block up
-			if client_target.board.height < 0 {
-				eprintln!("SERVER: Height overflow death {}", client_target.board.height);
-				flag = true;
-			}
-			if client_target.board.tmp_block.bottom_pos() < 19 { // invisible + 1
-				eprintln!("SERVER: invisible + 1 pop death");
-				flag = true;
-			}
-			client_target.board.update_display();
+		if client_target.board.display.garbages.len() > MAX_GARBAGE_LEN {
+			flag = client_target.flush_garbage(MAX_GARBAGE_LEN);
 			client_target.send_display(&self.client_manager);
 		} else {
 			client_target.broadcast_msg(&self.client_manager, format!(
