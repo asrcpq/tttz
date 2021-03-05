@@ -30,7 +30,11 @@ impl Block {
 	pub fn new(code: u8) -> Block {
 		Block {
 			code,
-			pos: (INITIAL_POS[code as usize], 0),
+			pos: (INITIAL_POS[code as usize], if code == 0 {
+				19
+			} else {
+				18
+			}),
 			rotation: 0,
 		}
 	}

@@ -91,10 +91,14 @@ impl Client {
 					self.board.move2(-1);
 				}
 				"k" => {
-					self.board.press_up();
+					if self.board.press_up() {
+						return false
+					}
 				}
 				"j" => {
-					self.board.press_down();
+					if self.board.press_down() {
+						return false
+					}
 				}
 				"J" => {
 					self.board.slowdown(1);

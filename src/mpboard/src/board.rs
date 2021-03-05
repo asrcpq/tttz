@@ -13,7 +13,7 @@ pub struct Board {
 	pub display: Display,
 	pub attack_pool: u32,
 	pub garbages: VecDeque<u32>,
-	height: usize,
+	height: i32,
 }
 
 impl Board {
@@ -61,18 +61,9 @@ impl Board {
 	}
 
 	pub fn slowdown(&mut self, dy: u8) {
-		let first_visible = 21
-			- BLOCK_HEIGHT[(self.tmp_block.code * 4
-				+ self.tmp_block.rotation as u8) as usize];
-		if self.tmp_block.pos.1 < first_visible {
-			for _ in self.tmp_block.pos.1..first_visible {
-				self.movedown1_nohard();
-			}
-		} else {
-			for _ in 0..dy {
-				if !self.movedown1_nohard() {
-					break;
-				}
+		for _ in 0..dy {
+			if !self.movedown1_nohard() {
+				break;
 			}
 		}
 	}
@@ -231,6 +222,7 @@ impl Board {
 	pub fn generate_garbage(&mut self) {
 		const SAME_LINE: f32 = 0.6;
 		for mut count in self.garbages.drain(..) {
+			self.height -= count as i32;
 			let mut slot = self.rg.rng.gen_range(0..10);
 			if count == 0 {
 				eprintln!("Bug: zero in garbage");
@@ -283,7 +275,8 @@ impl Board {
 		}
 	}
 
-	pub fn hard_drop(&mut self) {
+	// true: die
+	pub fn hard_drop(&mut self) -> bool {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color
@@ -294,8 +287,8 @@ impl Board {
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
-			if py < self.height {
-				self.height = py;
+			if py < self.height as usize {
+				self.height = py as i32;
 			}
 
 			let mut flag = true;
@@ -314,7 +307,7 @@ impl Board {
 
 		// put attack amount into pool
 		if line_count > 0 {
-			self.height += line_count as usize;
+			self.height += line_count as i32;
 			if self.attack_pool != 0 {
 				eprintln!("Error! attack_pool not cleared.");
 			}
@@ -363,23 +356,33 @@ impl Board {
 		} else {
 			// plain drop: attack execution
 			self.generate_garbage();
+			if self.height < 0 {
+				return true
+			}
 			self.display.pending_attack = 0;
 		}
 
 		// new block
 		self.ontop = true;
 		self.tmp_block = Block::new(self.rg.get());
-	}
-
-	pub fn press_down(&mut self) {
-		if !self.soft_drop() {
-			self.hard_drop();
+		if ! self.tmp_block.test(self) {
+			return true
 		}
+		false
 	}
 
-	pub fn press_up(&mut self) {
+	// true = death
+	pub fn press_down(&mut self) -> bool {
+		if !self.soft_drop() {
+			return self.hard_drop()
+		}
+		false
+	}
+
+	// true = death
+	pub fn press_up(&mut self) -> bool {
 		self.soft_drop();
-		self.hard_drop();
+		self.hard_drop()
 	}
 
 	pub fn calc_shadow(&mut self) -> bool {
