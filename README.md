@@ -50,6 +50,8 @@
 
 * `aispawn strategy` or `aispawn speed [sleep_millis]`
 
+* `kick <id>`
+
 * `clients` list clients
 
 * `myid`

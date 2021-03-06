@@ -70,6 +70,7 @@ impl ClientDisplay {
 		self.offset_y[0] = self.offset0.1 as i32 + 2;
 		self.offset_x[1] = self.offset0.0 as i32 + 34;
 		self.offset_y[1] = self.offset0.1 as i32 + 2;
+		self.disp_mainbox();
 	}
 
 	pub fn disp_mainbox(&self) {
