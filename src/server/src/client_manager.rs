@@ -1,6 +1,8 @@
+extern crate tttz_protocol;
+use tttz_protocol::ServerMsg;
+
 extern crate bimap;
 use crate::client::Client;
-use crate::server::SOCKET;
 use bimap::BiMap;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -24,8 +26,12 @@ impl Default for ClientManager {
 }
 
 impl ClientManager {
-	pub fn view_by_id(&mut self, id: i32) -> Option<&Client> {
+	pub fn view_by_id(&self, id: i32) -> Option<&Client> {
 		self.clients.get(&id)
+	}
+
+	pub fn send_msg_by_id(&self, id: i32, msg: ServerMsg) {
+		self.view_by_id(id).unwrap().send_msg(msg);
 	}
 
 	pub fn tmp_pop_by_id(&mut self, id: i32) -> Option<Client> {
@@ -75,16 +81,6 @@ impl ClientManager {
 		let id2 = client2.id;
 		client1.pair_success(id2);
 		client2.pair_success(id1);
-
-		let addr1 = self.get_addr_by_id(id1).unwrap();
-		let addr2 = self.get_addr_by_id(id2).unwrap();
-		SOCKET
-			.send_to(format!("startvs {}", id2).as_bytes(), addr1)
-			.unwrap();
-		SOCKET
-			.send_to(format!("startvs {}", id1).as_bytes(), addr2)
-			.unwrap();
-
 		client2.board.update_display();
 		client2.send_display(self);
 		client1.board.update_display();

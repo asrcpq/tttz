@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
 // interface between server and client
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Display {
 	pub id: i32,
 	pub color: Vec<u8>,

@@ -14,3 +14,6 @@ path = "../mpboard"
 
 [dependencies.tttz-ai]
 path = "../ai"
+
+[dependencies.tttz-protocol]
+path = "../protocol"

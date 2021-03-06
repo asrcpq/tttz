@@ -1,11 +1,14 @@
+extern crate bincode;
+
 extern crate tttz_mpboard;
+extern crate tttz_protocol;
+use tttz_protocol::ServerMsg;
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use tttz_mpboard::board::Board;
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::SocketAddr;
-
-extern crate bincode;
 
 pub struct Client {
 	pub id: i32,
@@ -42,21 +45,21 @@ impl Client {
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
 		self.init_board();
+		self.send_msg(ServerMsg::Start(target_id));
 	}
 
-	pub fn send_msg(&self, msg: &[u8]) {
-		SOCKET.send_to(&msg, self.addr).unwrap();
+	pub fn send_msg(&self, msg: ServerMsg) {
+		SOCKET.send_to(&bincode::serialize(&msg).unwrap(), self.addr).unwrap();
 	}
 
 	pub fn broadcast_msg(
-		&mut self,
+		&self,
 		client_manager: &ClientManager,
-		msg: &[u8],
-	) {
-		let mut new_dc_ids: HashSet<i32> = HashSet::new();
-		for dc_id in self.dc_ids.drain() {
+		msg: &ServerMsg,
+	) { // TODO maintain the view list in client, when exit do cleaning
+		for dc_id in self.dc_ids.iter() {
 			let dc_addr =
-				if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
+				if let Some(addr) = client_manager.get_addr_by_id(*dc_id) {
 					addr
 				} else {
 					eprintln!(
@@ -65,15 +68,12 @@ impl Client {
 					);
 					continue;
 				};
-			SOCKET.send_to(&msg, dc_addr).unwrap();
-			new_dc_ids.insert(dc_id);
+			SOCKET.send_to(&msg.serialized(), dc_addr).unwrap();
 		}
-		self.dc_ids = new_dc_ids;
 	}
 
 	pub fn send_display(&mut self, client_manager: &ClientManager) {
-		let msg = bincode::serialize(&self.board.display).unwrap();
-		self.broadcast_msg(client_manager, &msg);
+		self.broadcast_msg(client_manager, &ServerMsg::Display(Cow::Borrowed(&self.board.display)));
 	}
 
 	// die = false

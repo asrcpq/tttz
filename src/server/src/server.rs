@@ -3,6 +3,7 @@ extern crate tttz_ai;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
 use tttz_ai::ai1;
+use tttz_protocol::ServerMsg;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 
@@ -30,7 +31,7 @@ impl Server {
 		} else {
 			client_target.broadcast_msg(
 				&self.client_manager,
-				format!("sigatk {} {}", client_target.id, lines,).as_bytes(),
+				&ServerMsg::Attack(client_target.id, lines),
 			);
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
@@ -84,9 +85,10 @@ impl Server {
 					.starts_with("new client")
 				{
 					let new_id = self.client_manager.new_client_by_addr(src);
-					SOCKET
-						.send_to(format!("ok {}", new_id).as_bytes(), src)
-						.unwrap();
+					self.client_manager.send_msg_by_id(
+						new_id,
+						ServerMsg::AllocId(new_id),
+					);
 				} else {
 					eprintln!("Unknown client: {:?}", src);
 				}
@@ -103,28 +105,18 @@ impl Server {
 	pub fn die(&mut self, mut client: &mut Client, die: bool) {
 		client.state = 1;
 		eprintln!("SERVER client {} gameover", client.id);
-		if die {
-			client.send_msg(b"die");
-		} else {
-			client.send_msg(b"win");
-		}
+		client.send_msg(ServerMsg::GameOver(!die));
 
 		if client.attack_target == 0 {
 			return;
 		}
 		// calc win by attack target works only in pair match mode
-		if let Some(addr) =
-			self.client_manager.get_addr_by_id(client.attack_target)
-		{
-			if die {
-				SOCKET.send_to(b"win", addr).unwrap();
-			} else {
-				SOCKET.send_to(b"die", addr).unwrap();
-			}
+		if self.client_manager.get_addr_by_id(client.attack_target).is_some() {
 			let mut opponent = self
 				.client_manager
 				.tmp_pop_by_id(client.attack_target)
 				.unwrap();
+			opponent.send_msg(ServerMsg::GameOver(die));
 			opponent.state = 1;
 			opponent.dc_ids.remove(&client.id);
 			self.client_manager
@@ -182,8 +174,10 @@ impl Server {
 				if let Some(w) = words.get(1) {
 					if let Ok(id) = w.parse::<i32>() {
 						if id != client.id {
-							self.client_manager.pop_by_id(id);
-							flag =false;
+							if let Some(client) = self.client_manager.pop_by_id(id) {
+								client.send_msg(ServerMsg::Terminate);
+								flag = false;
+							}
 						}
 					}
 				}
@@ -213,9 +207,7 @@ impl Server {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
 							client.state = 3;
-							opponent.send_msg(
-								format!("request {}", client.id).as_bytes(),
-							);
+							opponent.send_msg(ServerMsg::Request(client.id));
 						} else {
 							eprintln!(
 								"SERVER: request: invalid opponent state {}",
@@ -232,9 +224,7 @@ impl Server {
 				{
 					if opponent.state == 1 {
 						client.state = 3;
-						opponent.send_msg(
-							format!("request {}", client.id).as_bytes(),
-						);
+						opponent.send_msg(ServerMsg::Request(client.id));
 					} else {
 						eprintln!(
 							"SERVER: request: invalid opponent state {}",
@@ -269,7 +259,7 @@ impl Server {
 					client.init_board();
 					client.state = 2;
 					client.attack_target = 0;
-					SOCKET.send_to(b"start", src).unwrap();
+					client.send_msg(ServerMsg::Start(0));
 				} else {
 					dieflag = client.handle_msg(&words);
 				}

@@ -1,0 +1,12 @@
+[package]
+name = "tttz-protocol"
+version = "0.1.0"
+authors = ["asrcpq <asrcpq@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "*"
+bincode = "*"
+
+[dependencies.tttz-mpboard]
+path = "../mpboard"

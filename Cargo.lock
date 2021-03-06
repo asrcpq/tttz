@@ -195,6 +195,7 @@ dependencies = [
  "bincode",
  "tttz-libclient",
  "tttz-mpboard",
+ "tttz-protocol",
 ]
 
 [[package]]
@@ -202,9 +203,11 @@ name = "tttz-client"
 version = "0.2.0"
 dependencies = [
  "bincode",
+ "lazy_static",
  "termion",
  "tttz-libclient",
  "tttz-mpboard",
+ "tttz-protocol",
 ]
 
 [[package]]
@@ -213,6 +216,7 @@ version = "0.2.0"
 dependencies = [
  "termion",
  "tttz-mpboard",
+ "tttz-protocol",
 ]
 
 [[package]]
@@ -225,6 +229,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tttz-protocol"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "serde",
+ "tttz-mpboard",
+]
+
+[[package]]
 name = "tttz-server"
 version = "0.2.0"
 dependencies = [
@@ -233,6 +246,7 @@ dependencies = [
  "lazy_static",
  "tttz-ai",
  "tttz-mpboard",
+ "tttz-protocol",
 ]
 
 [[package]]

@@ -11,9 +11,13 @@ path = "src/client.rs"
 [dependencies]
 termion = "*"
 bincode = "*"
+lazy_static = "*"
 
 [dependencies.tttz-mpboard]
 path = "../mpboard"
 
 [dependencies.tttz-libclient]
 path = "../libclient"
+
+[dependencies.tttz-protocol]
+path = "../protocol"

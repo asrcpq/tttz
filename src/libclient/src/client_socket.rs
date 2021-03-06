@@ -1,3 +1,5 @@
+extern crate tttz_protocol;
+use tttz_protocol::ServerMsg;
 use std::net::UdpSocket;
 use std::net::{SocketAddr, ToSocketAddrs};
 
@@ -14,20 +16,16 @@ impl ClientSocket {
 		eprintln!("{:?}", target_addr);
 		socket.set_nonblocking(true).unwrap();
 		let mut buf = [0; 1024];
-		let amt = loop {
+		let id = loop {
 			socket.send_to(b"new client", &target_addr).unwrap();
 			std::thread::sleep(std::time::Duration::from_millis(1000));
 			if let Ok(amt) = socket.recv(&mut buf) {
-				if std::str::from_utf8(&buf).unwrap().starts_with("ok") {
-					break amt;
+				if let Ok(ServerMsg::AllocId(id)) = ServerMsg::from_serialized(&buf[..amt]) {
+					break id;
 				}
 			}
 			std::thread::sleep(std::time::Duration::from_millis(1000));
 		};
-		let id: i32 = std::str::from_utf8(&buf[3..amt])
-			.unwrap()
-			.parse::<i32>()
-			.unwrap();
 		(
 			ClientSocket {
 				socket,

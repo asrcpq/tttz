@@ -11,3 +11,6 @@ termion = "*"
 
 [dependencies.tttz-mpboard]
 path = "../mpboard"
+
+[dependencies.tttz-protocol]
+path = "../protocol"

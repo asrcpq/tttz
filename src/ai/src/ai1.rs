@@ -4,6 +4,8 @@ extern crate bincode;
 extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
 use tttz_mpboard::srs_data::*;
+extern crate tttz_protocol;
+use tttz_protocol::ServerMsg;
 
 extern crate tttz_libclient;
 use tttz_libclient::client_socket::ClientSocket;
@@ -166,50 +168,46 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 
 	let mut state = 3;
 	let mut buf = [0; 1024];
-	let mut display: Option<Display> = None;
+	let mut last_display: Option<Display> = None;
 	let mut moveflag = false;
 	let mut operation_queue: VecDeque<u8> = VecDeque::new();
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(main_sleep));
 		// read until last screen
 		while let Ok(amt) = client_socket.recv(&mut buf) {
-			if amt >= 64 {
-				match bincode::deserialize::<Display>(&buf[..amt]) {
-					Ok(decoded) => {
-						if decoded.id == id {
-							display = Some(decoded);
+			if let Ok(server_msg) = ServerMsg::from_serialized(&buf[..amt]) {
+				match server_msg {
+					ServerMsg::Display(display) => {
+						if display.id == id {
+							last_display = Some(display.into_owned());
 						} else {
 							// strategy ai moves after user move
 							if strategy {
 								moveflag = true;
 							}
 						}
+					},
+					ServerMsg::GameOver(_) => {
+						state = 1;
+					},
+					ServerMsg::Start(_) => {
+						state = 2;
 					}
-					Err(_) => {
-						eprintln!("Deserialize error");
+					ServerMsg::Request(id) => {
+						state = 2;
+						client_socket
+							.send(format!("accept {}", id).as_bytes())
+							.unwrap();
 					}
+					ServerMsg::Terminate => {
+						return;
+					}
+					_ => eprintln!("Skipping msg: {}", server_msg),
 				}
-			} else {
-				let msg =
-					String::from(std::str::from_utf8(&buf[..amt]).unwrap());
-				let words: Vec<&str> = msg.split_whitespace().collect();
-				if msg == "die" || msg == "win" {
-					state = 1;
-				} else if msg.starts_with("start") {
-					state = 2;
-				} else if words[0] == "request" {
-					let id = words[1].parse::<i32>().unwrap();
-					client_socket
-						.send(format!("accept {}", id).as_bytes())
-						.unwrap();
-				} else if msg == "terminate" {
-					return;
-				}
-				eprintln!("Short msg: {}", msg);
 			}
 		}
 		if strategy {
-			if let Some(ref decoded) = display {
+			if let Some(ref decoded) = last_display {
 				if state == 2 && moveflag {
 					if operation_queue.is_empty() {
 						operation_queue = main_think(decoded);
@@ -225,11 +223,9 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 						.unwrap();
 					moveflag = false;
 				}
-				if !strategy {
-					display = None;
-				}
+				last_display = None;
 			}
-		} else if let Some(ref decoded) = display {
+		} else if let Some(ref decoded) = last_display {
 			if state == 2 {
 				operation_queue = main_think(decoded);
 				while let Some(byte) = operation_queue.pop_front() {
@@ -241,7 +237,7 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 					));
 				}
 			}
-			display = None;
+			last_display = None;
 		}
 	}
 }

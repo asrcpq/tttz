@@ -9,6 +9,8 @@ use crate::client_socket::ClientSocket;
 
 extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
+extern crate tttz_protocol;
+use tttz_protocol::ServerMsg;
 
 use std::collections::HashMap;
 
@@ -102,32 +104,39 @@ impl ClientSession {
 		self.client_display.setpanel(panel, id);
 	}
 
-	fn handle_recv(&mut self, msg: &str) -> Option<i32> {
-		let split = msg.split_whitespace().collect::<Vec<&str>>();
-		if split[0] == "startvs" {
-			let opid = split[1].parse::<i32>().unwrap();
-			self.setpanel(0, self.id);
-			self.setpanel(1, opid);
-			self.modeswitch(1);
-			self.state = 2;
-			return Some(1);
-		} else if split[0] == "start" {
-			self.setpanel(0, self.id);
-			self.modeswitch(1);
-			self.state = 2;
-			return Some(1);
-		} else if split[0] == "sigatk" {
-			let id = split[1].parse::<i32>().unwrap();
-			let pending_atk = split[2].parse::<u32>().unwrap();
-			if let Some(mut display) = self.last_display.remove(&id) {
-				display.garbages.push_back(pending_atk);
-				self.client_display.disp_atk_by_id(&display);
-				self.last_display.insert(id, display);
-			}
-		} else if msg == "die" || msg == "win" {
-			self.state = 1;
+	// display msg in all modes
+	fn show_msg(&self, msg: &str) {
+		// show msg
+		if self.mode == 1 {
+			self.client_display.disp_msg(&msg);
+			self.client_display.disp_msg(&msg);
+		} else {
+			self.textmode_print(&msg);
 		}
-		None
+	}
+
+	// handle recv without display
+	fn handle_msg(&mut self, msg: &ServerMsg) {
+		match msg {
+			ServerMsg::Start(id) => {
+				self.setpanel(0, self.id);
+				self.setpanel(1, *id);
+				self.modeswitch(1);
+				self.state = 2;
+			},
+			ServerMsg::Attack(id, amount) => {
+				if let Some(mut display) = self.last_display.remove(&id) {
+					display.garbages.push_back(*amount);
+					self.client_display.disp_atk_by_id(&display);
+					self.last_display.insert(*id, display);
+				}
+			},
+			ServerMsg::GameOver(_) => {
+				self.state = 1;
+			}
+			_ => { unreachable!() }
+		}
+		self.show_msg(&msg.to_string());
 	}
 
 	fn byte_handle(&mut self, byte: u8) -> bool {
@@ -189,41 +198,39 @@ impl ClientSession {
 		false
 	}
 
+	fn recv_phase(&mut self) {
+		let mut buf = [0; 1024];
+		if let Ok(amt) = self.client_socket.recv(&mut buf) {
+			if let Ok(server_msg) = bincode::deserialize::<ServerMsg>(&buf[..amt]) {
+				match server_msg {
+					ServerMsg::Display(display) => {
+						if self.last_display.remove(&display.id).is_some() {
+							self.client_display.disp_by_id(&display);
+							self.last_display.insert(display.id, display.into_owned());
+						} else {
+							eprintln!("Received display of unknown id {}", display.id);
+						}
+					},
+					x => {self.handle_msg(&x) },
+				}
+				stdout().flush().unwrap();
+				return
+			} else {
+				self.show_msg("Parse fail!");
+			}
+		}
+	}
+
 	pub fn main_loop(&mut self) {
 		let mut stdin = async_stdin().bytes();
 		let stdout = stdout();
 		let mut stdout = stdout.lock().into_raw_mode().unwrap();
 		self.client_socket.socket.set_nonblocking(true).unwrap();
-		let mut buf = [0; 1024];
 		loop {
-			if let Ok(amt) = self.client_socket.recv(&mut buf) {
-				// all long messages are board display
-				if self.mode == 1 {
-					self.client_display.set_offset();
-				}
-				if amt < 64 {
-					let msg =
-						String::from(std::str::from_utf8(&buf[..amt]).unwrap());
-					self.handle_recv(&msg);
-					if self.mode == 1 {
-						self.client_display.disp_msg(&msg);
-					} else {
-						self.textmode_print(&msg);
-					}
-				} else {
-					if self.mode == 1 {
-						let display: Display =
-							bincode::deserialize(&buf[..amt]).unwrap();
-						if self.last_display.remove(&display.id).is_some() {
-							self.client_display.disp_by_id(&display);
-							self.last_display.insert(display.id, display);
-						} else {
-							eprintln!("Receiving unexpected id {}", display.id);
-						}
-					}
-				}
-				stdout.flush().unwrap();
+			if self.mode == 1 {
+				self.client_display.set_offset();
 			}
+			self.recv_phase();
 			if let Some(Ok(byte)) = stdin.next() {
 				if self.byte_handle(byte) {
 					break;
