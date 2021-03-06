@@ -400,6 +400,7 @@ impl Board {
 		self.hard_drop()
 	}
 
+	// false: die
 	pub fn calc_shadow(&mut self) -> bool {
 		self.shadow_block = self.tmp_block.clone();
 		loop {

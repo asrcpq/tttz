@@ -1,3 +1,5 @@
+![screenshot](https://imgur.com/a/qPhIsh4)
+
 ## Require
 
 * rust(cargo)
@@ -8,13 +10,15 @@
 
 * SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
 
-* Non-realtime(described below)
+* Event-based(instead of frame-based, details below)
 
 * Garbage in same attack has a 30% probability to shift
 
-## Non-realtime features
+## Event-based features
 
 * No gravity(blocks can move down), infinite hold swap
+
+	This means the board won't change when there's no input.
 
 * Pending Attack won't apply until
 
@@ -24,7 +28,11 @@
 
 * Block generate at top
 
-* Die, if **after board change** shadow block is totally invisible
+	Precisely, at y=38(bottom = 0) to prevent wall kick.
+
+* Die, if after board change shadow block is totally invisible
+
+	There are two types of board changes: hard drop and garbage overflow.
 
 ## Gameplay
 

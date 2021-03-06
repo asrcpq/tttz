@@ -61,7 +61,7 @@ checksum = "b7282d924be3275cec7f6756ff4121987bc6481325397dde6ba3e7802b1a8b1c"
 
 [[package]]
 name = "mypuzzle-ai"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bincode",
  "mypuzzle-libclient",
@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "mypuzzle-client"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bincode",
  "mypuzzle-libclient",
@@ -80,7 +80,7 @@ dependencies = [
 
 [[package]]
 name = "mypuzzle-libclient"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mypuzzle-mpboard",
  "termion",
@@ -88,7 +88,7 @@ dependencies = [
 
 [[package]]
 name = "mypuzzle-mpboard"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "lazy_static",
  "rand",
@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "mypuzzle-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bimap",
  "bincode",
