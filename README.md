@@ -1,5 +1,3 @@
-![screenshot](https://imgur.com/a/qPhIsh4)
-
 ## Require
 
 * rust(cargo)
