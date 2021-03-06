@@ -1,7 +1,7 @@
-extern crate mypuzzle_mpboard;
+extern crate tttz_mpboard;
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
-use mypuzzle_mpboard::board::Board;
+use tttz_mpboard::board::Board;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 

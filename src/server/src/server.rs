@@ -1,8 +1,8 @@
 extern crate lazy_static;
-extern crate mypuzzle_ai;
+extern crate tttz_ai;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
-use mypuzzle_ai::ai1;
+use tttz_ai::ai1;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 

@@ -1,5 +1,5 @@
 [package]
-name = "mypuzzle-server"
+name = "tttz-server"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
@@ -9,8 +9,8 @@ bincode = "*"
 bimap = "*"
 lazy_static = "*"
 
-[dependencies.mypuzzle-mpboard]
+[dependencies.tttz-mpboard]
 path = "../mpboard"
 
-[dependencies.mypuzzle-ai]
+[dependencies.tttz-ai]
 path = "../ai"

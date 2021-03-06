@@ -1,5 +1,5 @@
 [package]
-name = "mypuzzle-ai"
+name = "tttz-ai"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
@@ -9,8 +9,8 @@ edition = "2018"
 [dependencies]
 bincode = "*"
 
-[dependencies.mypuzzle-libclient]
+[dependencies.tttz-libclient]
 path = "../libclient"
 
-[dependencies.mypuzzle-mpboard]
+[dependencies.tttz-mpboard]
 path = "../mpboard"

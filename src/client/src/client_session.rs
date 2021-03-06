@@ -7,8 +7,8 @@ extern crate bincode;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
-extern crate mypuzzle_mpboard;
-use mypuzzle_mpboard::display::Display;
+extern crate tttz_mpboard;
+use tttz_mpboard::display::Display;
 
 use std::collections::HashMap;
 

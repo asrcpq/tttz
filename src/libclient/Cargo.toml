@@ -1,5 +1,5 @@
 [package]
-name = "mypuzzle-libclient"
+name = "tttz-libclient"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 termion = "*"
 
-[dependencies.mypuzzle-mpboard]
+[dependencies.tttz-mpboard]
 path = "../mpboard"

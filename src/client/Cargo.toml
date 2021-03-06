@@ -1,19 +1,19 @@
 [package]
-name = "mypuzzle-client"
+name = "tttz-client"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
 
 [[bin]]
-name = "mypuzzle-client"
+name = "tttz-client"
 path = "src/client.rs"
 
 [dependencies]
 termion = "*"
 bincode = "*"
 
-[dependencies.mypuzzle-mpboard]
+[dependencies.tttz-mpboard]
 path = "../mpboard"
 
-[dependencies.mypuzzle-libclient]
+[dependencies.tttz-libclient]
 path = "../libclient"
