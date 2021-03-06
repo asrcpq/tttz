@@ -14,7 +14,7 @@ pub enum AiType {
 	Speed(u64), // sleep
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum KeyType {
 	Left,
 	Right,
@@ -25,6 +25,9 @@ pub enum KeyType {
 	SoftDrop,
 	HardDrop,
 	Hold,
+	Rotate,
+	RotateReverse,
+	RotateFlip,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -33,6 +36,7 @@ pub enum ClientMsg {
 	Quit,
 	Suicide,
 	GetClients,
+	PlaySingle,
 	Kick(IdType),
 	View(IdType),
 	SpawnAi(AiType),
@@ -43,7 +47,23 @@ pub enum ClientMsg {
 	KeyEvent(KeyType),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+// TODO add a trait for this
+impl ClientMsg {
+	pub fn from_serialized(buf: &[u8]) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
+		bincode::deserialize(buf)
+	}
+
+	pub fn serialized(&self) -> Vec<u8> {
+		bincode::serialize(self).unwrap()
+	}
+}
+impl std::fmt::Display for ClientMsg {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{:?}", self) // just use debug
+	}
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum ServerMsg<'a> {
 	AllocId(IdType), // response of new client
 	Attack(IdType, u32), // receiver, amount

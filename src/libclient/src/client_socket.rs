@@ -1,5 +1,6 @@
+extern crate bincode;
 extern crate tttz_protocol;
-use tttz_protocol::ServerMsg;
+use tttz_protocol::{ClientMsg, ServerMsg};
 use std::net::UdpSocket;
 use std::net::{SocketAddr, ToSocketAddrs};
 
@@ -15,38 +16,39 @@ impl ClientSocket {
 			addr.to_socket_addrs().unwrap().next().unwrap();
 		eprintln!("{:?}", target_addr);
 		socket.set_nonblocking(true).unwrap();
-		let mut buf = [0; 1024];
+		let client_socket = ClientSocket {
+			socket,
+			addr: target_addr,
+		};
 		let id = loop {
-			socket.send_to(b"new client", &target_addr).unwrap();
+			client_socket.send(ClientMsg::NewClient).unwrap();
 			std::thread::sleep(std::time::Duration::from_millis(1000));
-			if let Ok(amt) = socket.recv(&mut buf) {
-				if let Ok(ServerMsg::AllocId(id)) = ServerMsg::from_serialized(&buf[..amt]) {
-					break id;
-				}
+			if let Ok(ServerMsg::AllocId(id)) = client_socket.recv() {
+				break id;
 			}
 			std::thread::sleep(std::time::Duration::from_millis(1000));
 		};
-		(
-			ClientSocket {
-				socket,
-				addr: target_addr,
-			},
-			id,
-		)
+		(client_socket, id)
 	}
 
-	pub fn send(&self, buf: &[u8]) -> std::io::Result<()> {
-		self.socket.send_to(buf, self.addr)?;
+	pub fn send(&self, buf: ClientMsg) -> std::io::Result<()> {
+		self.socket.send_to(&bincode::serialize(&buf).unwrap(), self.addr)?;
 		Ok(())
 	}
 
-	pub fn recv(&self, mut buf: &mut [u8]) -> std::io::Result<usize> {
-		self.socket.recv(&mut buf)
+	pub fn recv<'a, 'b>(&'b self) -> Result<ServerMsg<'a>, ()> {
+		let mut buf = [0; 1024];
+		if let Ok(amt) = self.socket.recv(&mut buf) {
+			if let Ok(server_msg) = bincode::deserialize(&buf[..amt]) {
+				return Ok(server_msg)
+			}
+		}
+		Err(())
 	}
 }
 
 impl Drop for ClientSocket {
 	fn drop(&mut self) {
-		self.socket.send_to(b"quit", self.addr).unwrap();
+		self.send(ClientMsg::Quit).unwrap();
 	}
 }

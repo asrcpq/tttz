@@ -2,7 +2,7 @@ extern crate bincode;
 
 extern crate tttz_mpboard;
 extern crate tttz_protocol;
-use tttz_protocol::ServerMsg;
+use tttz_protocol::{KeyType, ServerMsg};
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use tttz_mpboard::board::Board;
@@ -76,96 +76,55 @@ impl Client {
 		self.broadcast_msg(client_manager, &ServerMsg::Display(Cow::Borrowed(&self.board.display)));
 	}
 
-	// die = false
-	fn process_key(&mut self, words: &[&str]) -> bool {
-		if words.len() == 1 {
-			self.board.hold();
-		} else {
-			match words[1] {
-				"r" => return false,
-				"h" => {
-					self.board.move1(1);
+	// true = die
+	pub fn process_key(&mut self, key_type: KeyType) -> bool {
+		if self.state != 2 { // not playing
+			return false;
+		}
+		match key_type {
+			KeyType::Hold => {
+				self.board.hold();
+			}
+			KeyType::Left => {
+				self.board.move1(1);
+			}
+			KeyType::LLeft => {
+				self.board.move2(1);
+			}
+			KeyType::Right => {
+				self.board.move1(-1);
+			}
+			KeyType::RRight => {
+				self.board.move2(-1);
+			}
+			KeyType::HardDrop => {
+				if self.board.press_up() {
+					return true;
 				}
-				"H" => {
-					self.board.move2(1);
+			}
+			KeyType::SoftDrop => {
+				if self.board.press_down() {
+					return true;
 				}
-				"l" => {
-					self.board.move1(-1);
-				}
-				"L" => {
-					self.board.move2(-1);
-				}
-				"k" => {
-					if self.board.press_up() {
-						return false;
-					}
-				}
-				"j" => {
-					if self.board.press_down() {
-						return false;
-					}
-				}
-				"J" => {
-					self.board.slowdown(1);
-				}
-				"K" => {
-					self.board.slowdown(5);
-				}
-				"z" => {
-					self.board.rotate(-1);
-				}
-				"x" => {
-					self.board.rotate(1);
-				}
-				"d" => {
-					self.board.rotate(2);
-				}
-				ch => {
-					eprintln!("Unknown key {}", ch);
-				}
+			}
+			KeyType::Down1 => {
+				self.board.slowdown(1);
+			}
+			KeyType::Down5 => {
+				self.board.slowdown(5);
+			}
+			KeyType::RotateReverse => {
+				self.board.rotate(-1);
+			}
+			KeyType::Rotate => {
+				self.board.rotate(1);
+			}
+			KeyType::RotateFlip => {
+				self.board.rotate(2);
 			}
 		}
 		// return value ignored, only board change cause death
 		self.board.calc_shadow();
-		true
-	}
-
-	// die = true
-	pub fn handle_msg(&mut self, words: &[&str]) -> bool {
-		if self.state != 2 {
-			self.display_update = false;
-			return false;
-		}
-		if words[0] == "key" {
-			self.display_update = true;
-			if !self.process_key(words) {
-				return true;
-			}
-		} else if words[0] == "attack" {
-			let id = match words[1].parse::<i32>() {
-				Ok(id) => {
-					if id == self.id {
-						// on garbage sending, the attacked needs to be popped from clients
-						// which is impossible when the attacker is already popped
-						eprintln!("Self attacking is not allowed");
-						self.display_update = false;
-						return false;
-					}
-					eprintln!("Attacking {}", id);
-					id
-				}
-				Err(_) => {
-					eprintln!("Invalid attack msg: attack {}", words[1]);
-					self.display_update = false;
-					return false;
-				}
-			};
-			self.attack_target = id;
-			self.display_update = false;
-		} else {
-			eprintln!("Unknown msg: {:?}", words);
-			self.display_update = false;
-		}
 		false
 	}
 

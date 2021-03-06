@@ -214,6 +214,7 @@ dependencies = [
 name = "tttz-libclient"
 version = "0.2.0"
 dependencies = [
+ "bincode",
  "termion",
  "tttz-mpboard",
  "tttz-protocol",

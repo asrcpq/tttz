@@ -2,7 +2,6 @@ extern crate termion;
 use std::io::{stdout, Read, Write};
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-extern crate bincode;
 
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
@@ -10,7 +9,7 @@ use crate::client_socket::ClientSocket;
 extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
 extern crate tttz_protocol;
-use tttz_protocol::ServerMsg;
+use tttz_protocol::{AiType, ClientMsg, KeyType, ServerMsg};
 
 use std::collections::HashMap;
 
@@ -60,6 +59,29 @@ impl ClientSession {
 		);
 	}
 
+	fn send_spawnai(&self, words: Vec<&str>) {
+		if let Some(keyword) = words.get(2) {
+			if keyword == &"strategy" {
+				self.client_socket
+					.send(ClientMsg::SpawnAi(AiType::Strategy))
+					.unwrap();
+				return;
+			} else if keyword == &"speed" {
+				if let Some(sleep) = words.get(3) {
+					if let Ok(sleep) = sleep.parse::<u64>() {
+						self.client_socket
+							.send(ClientMsg::SpawnAi(AiType::Speed(sleep)))
+							.unwrap();
+						return;
+					}
+				}
+			}
+		}
+		self.client_socket
+			.send(ClientMsg::SpawnAi(AiType::Speed(240)))
+			.unwrap();
+	}
+
 	// true quit
 	pub fn proc_line(&mut self, line: &str) -> bool {
 		let split: Vec<&str> = line.split_whitespace().collect();
@@ -68,16 +90,13 @@ impl ClientSession {
 			return false;
 		}
 		if split[0] == "quit" {
+			// no need to send server quit, which is done in client_socket's drop
 			return true;
 		} else if split[0] == "sleep" {
 			// for scripts
 			if let Ok(t) = split[1].parse::<u64>() {
 				std::thread::sleep(std::time::Duration::from_millis(t));
 			}
-		} else if split[0] == "msg" {
-			self.client_socket
-				.send(&line.bytes().collect::<Vec<u8>>()[4..])
-				.unwrap();
 		} else if split[0] == "myid" {
 			self.textmode_print(&format!("{}", self.id));
 		} else if split[0] == "panel" {
@@ -94,7 +113,30 @@ impl ClientSession {
 			};
 			self.setpanel(panel, id);
 		} else {
-			self.client_socket.send(line.as_bytes()).unwrap();
+			match split[0] {
+				"spawnai" => {
+					self.send_spawnai(split);
+				}
+				"request" => {
+					if let Some(keyword) = split.get(1) {
+						if let Ok(id) = keyword.parse::<i32>() {
+							self.client_socket
+								.send(ClientMsg::Request(id))
+								.unwrap();
+						}
+					}
+				}
+				"accept" => {
+					if let Some(keyword) = split.get(1) {
+						if let Ok(id) = keyword.parse::<i32>() {
+							self.client_socket
+								.send(ClientMsg::Accept(id))
+								.unwrap();
+						}
+					}
+				}
+				_ => {},
+			}
 		}
 		false
 	}
@@ -116,25 +158,26 @@ impl ClientSession {
 	}
 
 	// handle recv without display
-	fn handle_msg(&mut self, msg: &ServerMsg) {
+	fn handle_msg(&mut self, msg: ServerMsg) {
 		match msg {
 			ServerMsg::Start(id) => {
 				self.setpanel(0, self.id);
-				self.setpanel(1, *id);
+				self.setpanel(1, id);
 				self.modeswitch(1);
 				self.state = 2;
 			},
 			ServerMsg::Attack(id, amount) => {
 				if let Some(mut display) = self.last_display.remove(&id) {
-					display.garbages.push_back(*amount);
+					display.garbages.push_back(amount);
 					self.client_display.disp_atk_by_id(&display);
-					self.last_display.insert(*id, display);
+					self.last_display.insert(id, display);
 				}
 			},
 			ServerMsg::GameOver(_) => {
 				self.state = 1;
 			}
-			_ => { unreachable!() }
+			ServerMsg::Request(_) => {}
+			_ => { eprintln!("Unknown message received!") }
 		}
 		self.show_msg(&msg.to_string());
 	}
@@ -176,10 +219,10 @@ impl ClientSession {
 			}
 			b'r' => {
 				if self.state == 2 {
-					self.client_socket.send(b"suicide").unwrap();
+					self.client_socket.send(ClientMsg::Suicide).unwrap();
 					self.state = 3;
 				} else {
-					self.client_socket.send(b"restart").unwrap();
+					self.client_socket.send(ClientMsg::Restart).unwrap();
 					self.state = 3;
 				}
 			}
@@ -190,7 +233,23 @@ impl ClientSession {
 			_ => {
 				if self.state == 2 {
 					self.client_socket
-						.send(format!("key {}", byte as char).as_bytes())
+						.send(ClientMsg::KeyEvent(
+							match byte {
+								b'h' => {KeyType::Left},
+								b'H' => {KeyType::LLeft},
+								b'l' => {KeyType::Right},
+								b'L' => {KeyType::RRight},
+								b' ' => {KeyType::Hold},
+								b'j' => {KeyType::SoftDrop},
+								b'k' => {KeyType::HardDrop},
+								b'J' => {KeyType::Down1},
+								b'K' => {KeyType::Down5},
+								b'x' => {KeyType::Rotate},
+								b'z' => {KeyType::RotateReverse},
+								b'd' => {KeyType::RotateFlip},
+								_ => return false,
+							}
+						))
 						.unwrap();
 				}
 			}
@@ -199,25 +258,20 @@ impl ClientSession {
 	}
 
 	fn recv_phase(&mut self) {
-		let mut buf = [0; 1024];
-		if let Ok(amt) = self.client_socket.recv(&mut buf) {
-			if let Ok(server_msg) = bincode::deserialize::<ServerMsg>(&buf[..amt]) {
-				match server_msg {
-					ServerMsg::Display(display) => {
-						if self.last_display.remove(&display.id).is_some() {
-							self.client_display.disp_by_id(&display);
-							self.last_display.insert(display.id, display.into_owned());
-						} else {
-							eprintln!("Received display of unknown id {}", display.id);
-						}
-					},
-					x => {self.handle_msg(&x) },
-				}
-				stdout().flush().unwrap();
-				return
-			} else {
-				self.show_msg("Parse fail!");
+		if let Ok(server_msg) = self.client_socket.recv() {
+			match server_msg {
+				ServerMsg::Display(display) => {
+					if self.last_display.remove(&display.id).is_some() {
+						self.client_display.disp_by_id(&display);
+						self.last_display.insert(display.id, display.into_owned());
+					} else {
+						eprintln!("Received display of unknown id {}", display.id);
+					}
+				},
+				x => {self.handle_msg(x) },
 			}
+			stdout().flush().unwrap();
+			return
 		}
 	}
 

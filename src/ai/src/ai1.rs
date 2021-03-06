@@ -5,20 +5,20 @@ extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
-use tttz_protocol::ServerMsg;
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 extern crate tttz_libclient;
 use tttz_libclient::client_socket::ClientSocket;
 
 use std::collections::VecDeque;
 
-fn main_think(display: &Display) -> VecDeque<u8> {
+fn main_think(display: &Display) -> VecDeque<KeyType> {
 	let mut heights = [39u8; 10];
 
 	let mut ret = VecDeque::new();
 
 	if display.hold == 7 {
-		ret.push_back(b' ');
+		ret.push_back(KeyType::Hold);
 		return ret;
 	}
 
@@ -129,7 +129,7 @@ fn main_think(display: &Display) -> VecDeque<u8> {
 		display.tmp_code
 	} else {
 		// best solution is from the hold block
-		ret.push_back(b' ');
+		ret.push_back(KeyType::Hold);
 		display.hold
 	};
 	// perform action
@@ -137,28 +137,27 @@ fn main_think(display: &Display) -> VecDeque<u8> {
 	let rotated_pos0 =
 		current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
 	let (keycode, times) = if best_posx == 0 {
-		(b'H', 1)
+		(KeyType::LLeft, 1)
 	} else if best_posx
 		== 10 - BLOCK_WIDTH[(best_code * 4 + best_rotation) as usize]
 	{
-		(b'L', 1)
+		(KeyType::RRight, 1)
 	} else if rotated_pos0 > best_posx {
-		//left
-		(b'h', rotated_pos0 - best_posx)
+		(KeyType::Left, rotated_pos0 - best_posx)
 	} else {
-		(b'l', best_posx - rotated_pos0)
+		(KeyType::Right, best_posx - rotated_pos0)
 	};
 	if best_rotation == 1 {
-		ret.push_back(b'x');
+		ret.push_back(KeyType::Rotate);
 	} else if best_rotation == 3 {
-		ret.push_back(b'z');
+		ret.push_back(KeyType::RotateReverse);
 	} else if best_rotation == 2 {
-		ret.push_back(b'd');
+		ret.push_back(KeyType::RotateFlip);
 	}
 	for _ in 0..times {
-		ret.push_back(keycode);
+		ret.push_back(keycode.clone());
 	}
-	ret.push_back(b'k');
+	ret.push_back(KeyType::HardDrop);
 	ret
 }
 
@@ -167,43 +166,40 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 	let main_sleep = 10;
 
 	let mut state = 3;
-	let mut buf = [0; 1024];
 	let mut last_display: Option<Display> = None;
 	let mut moveflag = false;
-	let mut operation_queue: VecDeque<u8> = VecDeque::new();
+	let mut operation_queue: VecDeque<KeyType> = VecDeque::new();
 	loop {
 		std::thread::sleep(std::time::Duration::from_millis(main_sleep));
 		// read until last screen
-		while let Ok(amt) = client_socket.recv(&mut buf) {
-			if let Ok(server_msg) = ServerMsg::from_serialized(&buf[..amt]) {
-				match server_msg {
-					ServerMsg::Display(display) => {
-						if display.id == id {
-							last_display = Some(display.into_owned());
-						} else {
-							// strategy ai moves after user move
-							if strategy {
-								moveflag = true;
-							}
+		while let Ok(server_msg) = client_socket.recv() {
+			match server_msg {
+				ServerMsg::Display(display) => {
+					if display.id == id {
+						last_display = Some(display.into_owned());
+					} else {
+						// strategy ai moves after user move
+						if strategy {
+							moveflag = true;
 						}
-					},
-					ServerMsg::GameOver(_) => {
-						state = 1;
-					},
-					ServerMsg::Start(_) => {
-						state = 2;
 					}
-					ServerMsg::Request(id) => {
-						state = 2;
-						client_socket
-							.send(format!("accept {}", id).as_bytes())
-							.unwrap();
-					}
-					ServerMsg::Terminate => {
-						return;
-					}
-					_ => eprintln!("Skipping msg: {}", server_msg),
+				},
+				ServerMsg::GameOver(_) => {
+					state = 1;
+				},
+				ServerMsg::Start(_) => {
+					state = 2;
 				}
+				ServerMsg::Request(id) => {
+					state = 2;
+					client_socket
+						.send(ClientMsg::Accept(id))
+						.unwrap();
+				}
+				ServerMsg::Terminate => {
+					return;
+				}
+				_ => eprintln!("Skipping msg: {}", server_msg),
 			}
 		}
 		if strategy {
@@ -213,13 +209,7 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 						operation_queue = main_think(decoded);
 					}
 					client_socket
-						.send(
-							format!(
-								"key {}",
-								operation_queue.pop_front().unwrap() as char,
-							)
-							.as_bytes(),
-						)
+						.send(ClientMsg::KeyEvent(operation_queue.pop_front().unwrap()))
 						.unwrap();
 					moveflag = false;
 				}
@@ -228,9 +218,9 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 		} else if let Some(ref decoded) = last_display {
 			if state == 2 {
 				operation_queue = main_think(decoded);
-				while let Some(byte) = operation_queue.pop_front() {
+				while let Some(key_type) = operation_queue.pop_front() {
 					client_socket
-						.send(format!("key {}", byte as char).as_bytes())
+						.send(ClientMsg::KeyEvent(key_type))
 						.unwrap();
 					std::thread::sleep(std::time::Duration::from_millis(
 						sleep_millis,

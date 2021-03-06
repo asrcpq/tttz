@@ -3,7 +3,7 @@ extern crate tttz_ai;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
 use tttz_ai::ai1;
-use tttz_protocol::ServerMsg;
+use tttz_protocol::{AiType, ClientMsg, ServerMsg};
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 
@@ -67,10 +67,17 @@ impl Server {
 		client.send_display(&self.client_manager);
 	}
 
-	fn fetch_message(&mut self) -> Option<(Client, String, SocketAddr)> {
+	fn fetch_message(&mut self) -> Option<(Client, ClientMsg, SocketAddr)> {
 		// get or create client
 		let mut buf = [0; 1024];
 		let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
+		let client_msg = match ClientMsg::from_serialized(&buf[..amt]) {
+			Ok(client_msg) => client_msg,
+			Err(_) => {
+				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);
+				return None
+			},
+		};
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
 				id
@@ -80,10 +87,7 @@ impl Server {
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
-				if std::str::from_utf8(&buf[..amt])
-					.unwrap()
-					.starts_with("new client")
-				{
+				if client_msg == ClientMsg::NewClient{
 					let new_id = self.client_manager.new_client_by_addr(src);
 					self.client_manager.send_msg_by_id(
 						new_id,
@@ -97,7 +101,7 @@ impl Server {
 		};
 		Some((
 			client,
-			String::from(std::str::from_utf8(&buf[..amt]).unwrap()),
+			client_msg,
 			src,
 		))
 	}
@@ -159,51 +163,49 @@ impl Server {
 				x => x.unwrap(),
 			};
 			eprintln!("SERVER client {} send: {}", client.id, msg);
-			let words = msg.split_whitespace().collect::<Vec<&str>>();
-			if words[0] == "quit" {
-				eprintln!("Client {} quit", client.id);
-				self.die(&mut client, true);
-				assert!(self.client_manager.pop_by_id(client.id).is_none());
-				continue;
-			} else if words[0] == "suicide" {
-				self.die(&mut client, true);
-			} else if words[0] == "clients" {
-				self.send_clients(src);
-			} else if words[0] == "kick" {
-				let mut flag = true;
-				if let Some(w) = words.get(1) {
-					if let Ok(id) = w.parse::<i32>() {
-						if id != client.id {
-							if let Some(client) = self.client_manager.pop_by_id(id) {
-								client.send_msg(ServerMsg::Terminate);
-								flag = false;
-							}
+			match msg {
+				ClientMsg::Quit => {
+					eprintln!("Client {} quit", client.id);
+					self.die(&mut client, true);
+					assert!(self.client_manager.pop_by_id(client.id).is_none());
+					continue;
+				},
+				ClientMsg::Suicide => {
+					self.die(&mut client, true);
+				}
+				ClientMsg::GetClients => {
+					self.send_clients(src);
+				}
+				ClientMsg::Kick(id) => {
+					let mut flag = true;
+					if id != client.id {
+						if let Some(client) = self.client_manager.pop_by_id(id) {
+							client.send_msg(ServerMsg::Terminate);
+							flag = false;
 						}
 					}
-				}
-				if flag {
-					eprintln!("SERVER: kick failed.");
-				}
-			} else if words[0] == "view" {
-				let id = words[1].parse::<i32>().unwrap_or(0);
-				self.set_view(client.id, id);
-			} else if words[0] == "aispawn" {
-				let strategy: bool = words.get(1) == Some(&"strategy");
-				let sleep = match words.get(2) {
-					Some(t) => t.parse::<u64>().unwrap_or(240),
-					None => {
-						if strategy {
-							0
-						} else {
-							240
-						}
+					if flag {
+						eprintln!("SERVER: kick failed.");
 					}
-				};
-				self.ai_threads.push(std::thread::spawn(move || {
-					ai1::main("127.0.0.1:23124", sleep, strategy);
-				}));
-			} else if words[0] == "request" {
-				if let Ok(id) = words.get(1).unwrap_or(&"0").parse::<i32>() {
+				}
+				ClientMsg::View(id) => {
+					self.set_view(client.id, id);
+				}
+				ClientMsg::SpawnAi(ai_type) => {
+					match ai_type {
+						AiType::Strategy => {
+							self.ai_threads.push(std::thread::spawn(move || {
+								ai1::main("127.0.0.1:23124", 10, true);
+							}));
+						},
+						AiType::Speed(sleep) => {
+							self.ai_threads.push(std::thread::spawn(move || {
+								ai1::main("127.0.0.1:23124", sleep, false);
+							}));
+						}
+					} 
+				}
+				ClientMsg::Request(id) => {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
 							client.state = 3;
@@ -218,22 +220,22 @@ impl Server {
 						eprintln!("SERVER: request: cannot find client {}", id);
 					}
 				}
-			} else if words[0] == "restart" {
-				if let Some(opponent) =
-					self.client_manager.view_by_id(client.attack_target)
-				{
-					if opponent.state == 1 {
-						client.state = 3;
-						opponent.send_msg(ServerMsg::Request(client.id));
-					} else {
-						eprintln!(
-							"SERVER: request: invalid opponent state {}",
-							opponent.state
-						);
+				ClientMsg::Restart => {
+					if let Some(opponent) =
+						self.client_manager.view_by_id(client.attack_target)
+					{
+						if opponent.state == 1 {
+							client.state = 3;
+							opponent.send_msg(ServerMsg::Request(client.id));
+						} else {
+							eprintln!(
+								"SERVER: request: invalid opponent state {}",
+								opponent.state
+							);
+						}
 					}
 				}
-			} else if words[0] == "accept" {
-				if let Ok(id) = words[1].parse::<i32>() {
+				ClientMsg::Accept(id) => {
 					if let Some(mut opponent) =
 						self.client_manager.tmp_pop_by_id(id)
 					{
@@ -248,33 +250,33 @@ impl Server {
 						eprintln!("SERVER: accept: cannot find client {}", id);
 					}
 				}
-			} else if words[0] == "pair" {
-				client.state = 3;
-				self.client_manager.pair_attempt(&mut client);
-			} else {
-				let mut dieflag = false;
-				// msg that may cause board refresh
-				if words[0] == "free" {
-					// free mode, attacking nothing
+				ClientMsg::Pair => {
+					client.state = 3;
+					self.client_manager.pair_attempt(&mut client);
+				}
+				ClientMsg::PlaySingle => {
 					client.init_board();
 					client.state = 2;
 					client.attack_target = 0;
 					client.send_msg(ServerMsg::Start(0));
-				} else {
-					dieflag = client.handle_msg(&words);
+					self.post_operation(&mut client); // TODO look into this
 				}
-				// update_display should always be evaluated in this cycle
-				if client.display_update {
-					// display is included in after_operation
-					self.post_operation(&mut client);
+				ClientMsg::KeyEvent(key_type) => {
+					let dieflag = client.process_key(key_type);
+					// update_display should always be evaluated in this cycle
+					if client.display_update {
+						// display is included in after_operation
+						self.post_operation(&mut client);
+					}
+					// update display before die
+					if dieflag {
+						self.die(&mut client, true);
+					}
 				}
-				// update display before die
-				if dieflag {
-					self.die(&mut client, true);
-				}
+				ClientMsg::NewClient => { unreachable!() }
 			}
 			self.client_manager.tmp_push_by_id(client.id, client);
-			// Do not write anything here, note the continue in match branch
+			// Be aware of the continue above before writing anything here
 		}
 	}
 }
