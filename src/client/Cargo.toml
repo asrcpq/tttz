@@ -10,7 +10,6 @@ path = "src/client.rs"
 
 [dependencies]
 termion = "*"
-bincode = "*"
 lazy_static = "*"
 
 [dependencies.tttz-mpboard]

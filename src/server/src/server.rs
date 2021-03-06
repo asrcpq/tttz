@@ -259,7 +259,7 @@ impl Server {
 					client.state = 2;
 					client.attack_target = 0;
 					client.send_msg(ServerMsg::Start(0));
-					self.post_operation(&mut client); // TODO look into this
+					self.post_operation(&mut client);
 				}
 				ClientMsg::KeyEvent(key_type) => {
 					let dieflag = client.process_key(key_type);

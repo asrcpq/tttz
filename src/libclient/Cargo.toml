@@ -8,7 +8,6 @@ edition = "2018"
 
 [dependencies]
 termion = "*"
-bincode = "*"
 
 [dependencies.tttz-mpboard]
 path = "../mpboard"

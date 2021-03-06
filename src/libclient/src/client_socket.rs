@@ -1,4 +1,3 @@
-extern crate bincode;
 extern crate tttz_protocol;
 use tttz_protocol::{ClientMsg, ServerMsg};
 use std::net::UdpSocket;
@@ -32,14 +31,14 @@ impl ClientSocket {
 	}
 
 	pub fn send(&self, buf: ClientMsg) -> std::io::Result<()> {
-		self.socket.send_to(&bincode::serialize(&buf).unwrap(), self.addr)?;
+		self.socket.send_to(&buf.serialized(), self.addr)?;
 		Ok(())
 	}
 
 	pub fn recv<'a, 'b>(&'b self) -> Result<ServerMsg<'a>, ()> {
 		let mut buf = [0; 1024];
 		if let Ok(amt) = self.socket.recv(&mut buf) {
-			if let Ok(server_msg) = bincode::deserialize(&buf[..amt]) {
+			if let Ok(server_msg) = ServerMsg::from_serialized(&buf[..amt]) {
 				return Ok(server_msg)
 			}
 		}

@@ -47,7 +47,6 @@ pub enum ClientMsg {
 	KeyEvent(KeyType),
 }
 
-// TODO add a trait for this
 impl ClientMsg {
 	pub fn from_serialized(buf: &[u8]) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
@@ -75,7 +74,7 @@ pub enum ServerMsg<'a> {
 }
 
 impl ServerMsg<'_> {
-	pub fn from_serialized(buf: &[u8]) -> Result<ServerMsg, Box<bincode::ErrorKind>> {
+	pub fn from_serialized<'a>(buf: &[u8]) -> Result<ServerMsg<'a>, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
 	}
 

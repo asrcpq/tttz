@@ -1,5 +1,3 @@
-extern crate bincode;
-
 extern crate tttz_mpboard;
 extern crate tttz_protocol;
 use tttz_protocol::{KeyType, ServerMsg};
@@ -49,7 +47,7 @@ impl Client {
 	}
 
 	pub fn send_msg(&self, msg: ServerMsg) {
-		SOCKET.send_to(&bincode::serialize(&msg).unwrap(), self.addr).unwrap();
+		SOCKET.send_to(&msg.serialized(), self.addr).unwrap();
 	}
 
 	pub fn broadcast_msg(

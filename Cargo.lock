@@ -192,7 +192,6 @@ dependencies = [
 name = "tttz-ai"
 version = "0.2.0"
 dependencies = [
- "bincode",
  "tttz-libclient",
  "tttz-mpboard",
  "tttz-protocol",
@@ -202,7 +201,6 @@ dependencies = [
 name = "tttz-client"
 version = "0.2.0"
 dependencies = [
- "bincode",
  "lazy_static",
  "termion",
  "tttz-libclient",
@@ -214,7 +212,6 @@ dependencies = [
 name = "tttz-libclient"
 version = "0.2.0"
 dependencies = [
- "bincode",
  "termion",
  "tttz-mpboard",
  "tttz-protocol",
@@ -243,7 +240,6 @@ name = "tttz-server"
 version = "0.2.0"
 dependencies = [
  "bimap",
- "bincode",
  "lazy_static",
  "tttz-ai",
  "tttz-mpboard",

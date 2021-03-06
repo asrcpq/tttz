@@ -5,7 +5,6 @@ authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-bincode = "*"
 bimap = "*"
 lazy_static = "*"
 

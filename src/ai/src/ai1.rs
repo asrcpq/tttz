@@ -1,6 +1,5 @@
 // stupid ai, put block to make least holes and lowest height
 
-extern crate bincode;
 extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
 use tttz_mpboard::srs_data::*;
