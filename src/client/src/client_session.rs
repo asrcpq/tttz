@@ -9,7 +9,7 @@ use crate::client_socket::ClientSocket;
 extern crate tttz_mpboard;
 use tttz_mpboard::display::Display;
 extern crate tttz_protocol;
-use tttz_protocol::{AiType, ClientMsg, KeyType, ServerMsg};
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 use std::collections::HashMap;
 
@@ -59,29 +59,6 @@ impl ClientSession {
 		);
 	}
 
-	fn send_spawnai(&self, words: Vec<&str>) {
-		if let Some(keyword) = words.get(2) {
-			if keyword == &"strategy" {
-				self.client_socket
-					.send(ClientMsg::SpawnAi(AiType::Strategy))
-					.unwrap();
-				return;
-			} else if keyword == &"speed" {
-				if let Some(sleep) = words.get(3) {
-					if let Ok(sleep) = sleep.parse::<u64>() {
-						self.client_socket
-							.send(ClientMsg::SpawnAi(AiType::Speed(sleep)))
-							.unwrap();
-						return;
-					}
-				}
-			}
-		}
-		self.client_socket
-			.send(ClientMsg::SpawnAi(AiType::Speed(240)))
-			.unwrap();
-	}
-
 	// true quit
 	pub fn proc_line(&mut self, line: &str) -> bool {
 		let split: Vec<&str> = line.split_whitespace().collect();
@@ -113,29 +90,13 @@ impl ClientSession {
 			};
 			self.setpanel(panel, id);
 		} else {
-			match split[0] {
-				"spawnai" => {
-					self.send_spawnai(split);
+			match ClientMsg::from_str(line) {
+				Ok(client_msg) => {
+					self.client_socket.send(client_msg).unwrap();
 				}
-				"request" => {
-					if let Some(keyword) = split.get(1) {
-						if let Ok(id) = keyword.parse::<i32>() {
-							self.client_socket
-								.send(ClientMsg::Request(id))
-								.unwrap();
-						}
-					}
+				Err(_) => {
+					self.show_msg("Command failed");
 				}
-				"accept" => {
-					if let Some(keyword) = split.get(1) {
-						if let Ok(id) = keyword.parse::<i32>() {
-							self.client_socket
-								.send(ClientMsg::Accept(id))
-								.unwrap();
-						}
-					}
-				}
-				_ => {},
 			}
 		}
 		false

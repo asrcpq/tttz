@@ -10,11 +10,11 @@
 
 * SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
 
-* Event-based(instead of frame-based, details below)
+* Event-driven(instead of realtime, details below)
 
 * Garbage in same attack has a 30% probability to shift
 
-## Event-based features
+## Event-driven features
 
 * No gravity(blocks can move down), infinite hold swap
 

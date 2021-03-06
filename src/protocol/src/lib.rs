@@ -51,6 +51,69 @@ impl ClientMsg {
 	pub fn from_serialized(buf: &[u8]) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
 	}
+	
+	fn from_str_spawnai(words: Vec<&str>) -> Result<ClientMsg, ()> {
+		if let Some(keyword) = words.get(2) {
+			if keyword == &"strategy" {
+				return Ok(ClientMsg::SpawnAi(AiType::Strategy))
+			} else if keyword == &"speed" {
+				if let Some(sleep) = words.get(3) {
+					if let Ok(sleep) = sleep.parse::<u64>() {
+						return Ok(ClientMsg::SpawnAi(AiType::Speed(sleep)))
+					}
+				}
+			}
+		}
+		return Ok(ClientMsg::SpawnAi(AiType::Speed(240)))
+	}
+
+	pub fn from_str(input: &str) -> Result<ClientMsg, ()> {
+		let split = input.split_whitespace().collect::<Vec<&str>>();
+		match split[0] {
+			"clients" => {
+				return Ok(ClientMsg::GetClients)
+			}
+			"restart" => {
+				return Ok(ClientMsg::Restart)
+			}
+			"pair" => {
+				return Ok(ClientMsg::Pair)
+			}
+			"spawnai" => {
+				return Self::from_str_spawnai(split)
+			}
+			"request" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Request(id))
+					}
+				}
+			}
+			"accept" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Accept(id))
+					}
+				}
+			}
+			"view" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::View(id))
+					}
+				}
+			}
+			"kick" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Kick(id))
+					}
+				}
+			}
+			_ => {},
+		}
+		return Err(())
+	}
 
 	pub fn serialized(&self) -> Vec<u8> {
 		bincode::serialize(self).unwrap()
