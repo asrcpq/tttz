@@ -7,19 +7,16 @@ use std::collections::HashMap;
 
 fn soundmap_init() -> HashMap<SoundEffect, Sound> {
 	let mut soundmap = HashMap::new();
-	soundmap.insert(
-		SoundEffect::PlainDrop,
-		Sound::new("./resources/se/plaindrop.wav").expect("error"),
-	);
+	if let Ok(sound) = Sound::new("./resources/se/plaindrop.wav") {
+		soundmap.insert(SoundEffect::PlainDrop, sound);
+	}
 	for i in 1..=20 {
-		soundmap.insert(
-			SoundEffect::ClearDrop(i),
-			Sound::new(&format!("./resources/se/cleardrop{}.wav", i)).expect("error"),
-		);
-		soundmap.insert(
-			SoundEffect::AttackDrop(i),
-			Sound::new(&format!("./resources/se/attackdrop{}.wav", i)).expect("error"),
-		);
+		if let Ok(sound) = Sound::new(&format!("./resources/se/cleardrop{}.wav", i)) {
+			soundmap.insert(SoundEffect::ClearDrop(i), sound);
+		}
+		if let Ok(sound) = Sound::new(&format!("./resources/se/attackdrop{}.wav", i)) {
+			soundmap.insert(SoundEffect::AttackDrop(i), sound);
+		}
 	}
 	soundmap
 }
