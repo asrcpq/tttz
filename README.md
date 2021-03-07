@@ -56,7 +56,7 @@
 
 ## Commands:
 
-* `aispawn strategy` or `aispawn speed [sleep_millis]`
+* `spawnai strategy` or `spawnai speed [sleep_millis]`
 
 * `kick <id>`
 

@@ -1,10 +1,10 @@
 // stupid ai, put block to make least holes and lowest height
 
 extern crate tttz_mpboard;
-use tttz_mpboard::display::Display;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
 use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
+use tttz_protocol::display::Display;
 
 extern crate tttz_libclient;
 use tttz_libclient::client_socket::ClientSocket;

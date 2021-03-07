@@ -2,8 +2,9 @@ extern crate termion;
 use std::io::Write;
 
 extern crate tttz_mpboard;
-use tttz_mpboard::display::Display;
 use tttz_mpboard::srs_data::*;
+extern crate tttz_protocol;
+use tttz_protocol::display::Display;
 
 use std::collections::HashMap;
 

@@ -12,9 +12,6 @@ path = "src/client.rs"
 termion = "*"
 lazy_static = "*"
 
-[dependencies.tttz-mpboard]
-path = "../mpboard"
-
 [dependencies.tttz-libclient]
 path = "../libclient"
 

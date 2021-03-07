@@ -6,10 +6,9 @@ use termion::raw::IntoRawMode;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
-extern crate tttz_mpboard;
-use tttz_mpboard::display::Display;
 extern crate tttz_protocol;
 use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
+use tttz_protocol::display::Display;
 
 use std::collections::HashMap;
 

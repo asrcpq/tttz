@@ -3,7 +3,7 @@ extern crate tttz_ai;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
 use tttz_ai::ai1;
-use tttz_protocol::{AiType, ClientMsg, ServerMsg};
+use tttz_protocol::{AiType, ClientMsg, ServerMsg, BoardMsg, BoardReply};
 use std::net::UdpSocket;
 
 lazy_static::lazy_static! {
@@ -19,19 +19,23 @@ pub struct Server {
 impl Server {
 	// true: kill
 	fn send_attack(&mut self, id: i32, lines: u32) -> bool {
-		const MAX_GARBAGE_LEN: usize = 5;
 		// target id and attr
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
-		client_target.board.push_garbage(lines);
-		if client_target.board.display.garbages.len() > MAX_GARBAGE_LEN {
-			flag = client_target.flush_garbage(MAX_GARBAGE_LEN);
-			client_target.send_display(&self.client_manager);
-		} else {
-			client_target.broadcast_msg(
-				&self.client_manager,
-				&ServerMsg::Attack(client_target.id, lines),
-			);
+		match client_target.board.handle_msg(BoardMsg::Attacked(lines)) {
+			BoardReply::Ok => {
+				client_target.broadcast_msg(
+					&self.client_manager,
+					&ServerMsg::Attack(client_target.id, lines),
+				);
+			},
+			BoardReply::GarbageOverflow => {
+				client_target.send_display(&self.client_manager);
+			},
+			BoardReply::Die => {
+				client_target.send_display(&self.client_manager);
+				flag = true
+			},
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
 		flag

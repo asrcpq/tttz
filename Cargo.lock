@@ -204,7 +204,6 @@ dependencies = [
  "lazy_static",
  "termion",
  "tttz-libclient",
- "tttz-mpboard",
  "tttz-protocol",
 ]
 
@@ -224,6 +223,7 @@ dependencies = [
  "lazy_static",
  "rand",
  "serde",
+ "tttz-protocol",
 ]
 
 [[package]]
@@ -232,7 +232,6 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "serde",
- "tttz-mpboard",
 ]
 
 [[package]]

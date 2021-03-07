@@ -1,8 +1,9 @@
 extern crate bincode;
 extern crate serde;
 use serde::{Deserialize, Serialize};
-extern crate tttz_mpboard;
-use tttz_mpboard::display::Display;
+
+pub mod display;
+use display::Display;
 
 use std::borrow::Cow;
 
@@ -173,4 +174,15 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 		};
 		write!(f, "{}", string)
 	}
+}
+
+pub enum BoardMsg {
+	Attacked(u32),
+	KeyEvent(KeyType),
+}
+
+pub enum BoardReply {
+	Ok,
+	Die,
+	GarbageOverflow,
 }

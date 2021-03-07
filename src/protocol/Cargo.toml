@@ -7,6 +7,3 @@ edition = "2018"
 [dependencies]
 serde = "*"
 bincode = "*"
-
-[dependencies.tttz-mpboard]
-path = "../mpboard"

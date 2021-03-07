@@ -1,5 +1,8 @@
+extern crate tttz_protocol;
+use tttz_protocol::{BoardMsg, BoardReply, KeyType};
+use tttz_protocol::display::Display;
+
 use crate::block::Block;
-use crate::display::Display;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
 use rand::Rng;
@@ -70,6 +73,68 @@ impl Board {
 				}
 			}
 		}
+	}
+
+	// true = die
+	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
+		match board_msg {
+			BoardMsg::KeyEvent(key_type) => {
+				match key_type {
+					KeyType::Hold => {
+						self.hold();
+					}
+					KeyType::Left => {
+						self.move1(1);
+					}
+					KeyType::LLeft => {
+						self.move2(1);
+					}
+					KeyType::Right => {
+						self.move1(-1);
+					}
+					KeyType::RRight => {
+						self.move2(-1);
+					}
+					KeyType::HardDrop => {
+						if self.press_up() {
+							return BoardReply::Die;
+						}
+					}
+					KeyType::SoftDrop => {
+						if self.press_down() {
+							return BoardReply::Die;
+						}
+					}
+					KeyType::Down1 => {
+						self.slowdown(1);
+					}
+					KeyType::Down5 => {
+						self.slowdown(5);
+					}
+					KeyType::RotateReverse => {
+						self.rotate(-1);
+					}
+					KeyType::Rotate => {
+						self.rotate(1);
+					}
+					KeyType::RotateFlip => {
+						self.rotate(2);
+					}
+				}
+			}
+			BoardMsg::Attacked(amount) => {
+				self.push_garbage(amount);
+				const MAX_GARBAGE_LEN: usize = 5;
+				if self.display.garbages.len() > MAX_GARBAGE_LEN {
+					if self.flush_garbage(MAX_GARBAGE_LEN) {
+						return BoardReply::Die
+					} else {
+						return BoardReply::GarbageOverflow
+					}
+				}
+			}
+		}
+		BoardReply::Ok
 	}
 
 	pub fn move1(&mut self, dx: i32) -> bool {
@@ -206,6 +271,22 @@ impl Board {
 			return 2;
 		}
 		0
+	}
+
+	// true = death
+	pub fn flush_garbage(&mut self, max: usize) -> bool {
+		let mut flag = false;
+		self.generate_garbage(max);
+		if !self.calc_shadow() {
+			eprintln!("SERVER: garbage pop shadow death");
+			flag = true;
+		}
+		if self.height < 0 {
+			eprintln!("SERVER: Height overflow death {}", self.height);
+			flag = true;
+		}
+		self.update_display();
+		flag
 	}
 
 	// push a new attack into pending garbage queue

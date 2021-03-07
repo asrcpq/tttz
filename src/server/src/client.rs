@@ -1,6 +1,6 @@
 extern crate tttz_mpboard;
 extern crate tttz_protocol;
-use tttz_protocol::{KeyType, ServerMsg};
+use tttz_protocol::{KeyType, BoardMsg, ServerMsg};
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use tttz_mpboard::board::Board;
@@ -79,67 +79,10 @@ impl Client {
 		if self.state != 2 { // not playing
 			return false;
 		}
-		match key_type {
-			KeyType::Hold => {
-				self.board.hold();
-			}
-			KeyType::Left => {
-				self.board.move1(1);
-			}
-			KeyType::LLeft => {
-				self.board.move2(1);
-			}
-			KeyType::Right => {
-				self.board.move1(-1);
-			}
-			KeyType::RRight => {
-				self.board.move2(-1);
-			}
-			KeyType::HardDrop => {
-				if self.board.press_up() {
-					return true;
-				}
-			}
-			KeyType::SoftDrop => {
-				if self.board.press_down() {
-					return true;
-				}
-			}
-			KeyType::Down1 => {
-				self.board.slowdown(1);
-			}
-			KeyType::Down5 => {
-				self.board.slowdown(5);
-			}
-			KeyType::RotateReverse => {
-				self.board.rotate(-1);
-			}
-			KeyType::Rotate => {
-				self.board.rotate(1);
-			}
-			KeyType::RotateFlip => {
-				self.board.rotate(2);
-			}
-		}
+		self.board.handle_msg(BoardMsg::KeyEvent(key_type));
 		// return value ignored, only board change cause death
 		self.board.calc_shadow();
 		false
-	}
-
-	// true = death
-	pub fn flush_garbage(&mut self, max: usize) -> bool {
-		let mut flag = false;
-		self.board.generate_garbage(max);
-		if !self.board.calc_shadow() {
-			eprintln!("SERVER: garbage pop shadow death");
-			flag = true;
-		}
-		if self.board.height < 0 {
-			eprintln!("SERVER: Height overflow death {}", self.board.height);
-			flag = true;
-		}
-		self.board.update_display();
-		flag
 	}
 }
 
