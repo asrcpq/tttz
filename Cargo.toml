@@ -2,5 +2,5 @@
 members = [
 	"src/server",
 	"src/ai",
-	"src/client",
+	"src/tui",
 ]

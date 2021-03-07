@@ -1,11 +1,11 @@
 [package]
-name = "tttz-client"
+name = "tttz-tui"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
 
 [[bin]]
-name = "tttz-client"
+name = "tttz-tui"
 path = "src/client.rs"
 
 [dependencies]
@@ -17,3 +17,6 @@ path = "../libclient"
 
 [dependencies.tttz-protocol]
 path = "../protocol"
+
+[dependencies.tttz-mpboard]
+path = "../mpboard"

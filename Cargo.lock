@@ -310,16 +310,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tttz-client"
-version = "0.2.0"
-dependencies = [
- "lazy_static",
- "termion",
- "tttz-libclient",
- "tttz-protocol",
-]
-
-[[package]]
 name = "tttz-libclient"
 version = "0.2.0"
 dependencies = [
@@ -355,6 +345,17 @@ dependencies = [
  "bimap",
  "lazy_static",
  "tttz-ai",
+ "tttz-mpboard",
+ "tttz-protocol",
+]
+
+[[package]]
+name = "tttz-tui"
+version = "0.2.0"
+dependencies = [
+ "lazy_static",
+ "termion",
+ "tttz-libclient",
  "tttz-mpboard",
  "tttz-protocol",
 ]
