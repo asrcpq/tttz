@@ -3,6 +3,7 @@ use std::io::{stdout, Read, Write};
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
 
+use crate::sound_manager::SoundManager;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
@@ -13,6 +14,7 @@ use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 use std::collections::HashMap;
 
 pub struct ClientSession {
+	sound_manager: SoundManager,
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
 	state: i32,
@@ -27,6 +29,7 @@ impl ClientSession {
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let client_display = Default::default();
 		ClientSession {
+			sound_manager: Default::default(),
 			client_socket,
 			client_display,
 			state: 1,
@@ -127,6 +130,7 @@ impl ClientSession {
 
 	// handle recv without display
 	// true = exit
+	// early return to prevent message shown
 	fn handle_msg(&mut self, msg: ServerMsg) -> bool {
 		match msg {
 			ServerMsg::Terminate => return true,
@@ -148,8 +152,12 @@ impl ClientSession {
 			}
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
+			ServerMsg::SoundEffect(se) => {
+				self.sound_manager.play(se);
+				return false;
+			}
 			_ => {
-				eprintln!("Unknown message received!")
+				self.show_msg("Unknown message received!")
 			}
 		}
 		self.show_msg(&msg.to_string());

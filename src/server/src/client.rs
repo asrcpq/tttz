@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::board::Board;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg};
+use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg, SoundEffect};
 
 pub struct Client {
 	pub id: i32,
@@ -76,6 +76,11 @@ impl Client {
 			client_manager,
 			&ServerMsg::Display(Cow::Borrowed(&self.board.display)),
 		);
+		self.broadcast_msg(
+			client_manager,
+			&ServerMsg::SoundEffect(self.board.last_se.clone()),
+		);
+		self.board.last_se = SoundEffect::Silence;
 	}
 
 	// true = die

@@ -1,6 +1,6 @@
 extern crate tttz_protocol;
 use tttz_protocol::Display;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType};
+use tttz_protocol::{BoardMsg, BoardReply, KeyType, SoundEffect};
 
 use crate::block::Block;
 use crate::random_generator::RandomGenerator;
@@ -14,6 +14,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub display: Display,
 	pub attack_pool: u32,
+	pub last_se: SoundEffect,
 	pub height: i32,
 	pub replay: Replay,
 }
@@ -27,6 +28,7 @@ impl Board {
 			rg: Default::default(),
 			display: Display::new(id),
 			attack_pool: 0,
+			last_se: SoundEffect::Silence,
 			height: 40,
 			replay,
 		};
@@ -61,7 +63,7 @@ impl Board {
 		true
 	}
 
-	pub fn slowdown(&mut self, dy: u8) {
+	fn slowdown(&mut self, dy: u8) {
 		let first_visible = 21
 			- BLOCK_HEIGHT[(self.tmp_block.code * 4
 				+ self.tmp_block.rotation as u8) as usize];
@@ -85,6 +87,7 @@ impl Board {
 			BoardMsg::KeyEvent(key_type) => match key_type {
 				KeyType::Hold => {
 					self.hold();
+					self.last_se = SoundEffect::Hold;
 				}
 				KeyType::Left => {
 					self.move1(1);
@@ -139,7 +142,7 @@ impl Board {
 		BoardReply::Ok
 	}
 
-	pub fn move1(&mut self, dx: i32) -> bool {
+	fn move1(&mut self, dx: i32) -> bool {
 		self.tmp_block.pos.0 -= dx;
 		if !self.tmp_block.test(self) {
 			self.tmp_block.pos.0 += dx;
@@ -148,11 +151,11 @@ impl Board {
 		true
 	}
 
-	pub fn move2(&mut self, dx: i32) {
+	fn move2(&mut self, dx: i32) {
 		while self.move1(dx) {}
 	}
 
-	pub fn rotate(&mut self, dr: i8) -> bool {
+	fn rotate(&mut self, dr: i8) -> bool {
 		if self.tmp_block.code == 3 {
 			return false;
 		}
@@ -174,10 +177,16 @@ impl Board {
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 			if self.tmp_block.test(self) {
+				if self.test_tspin() > 0 {
+					self.last_se = SoundEffect::Rotate(2)
+				} else {
+					self.last_se = SoundEffect::Rotate(1)
+				}
 				return true;
 			}
 		}
 		self.tmp_block = revert_block;
+		self.last_se = SoundEffect::Rotate(0);
 		false
 	}
 
@@ -187,7 +196,7 @@ impl Board {
 		self.tmp_block = Block::new(code);
 	}
 
-	pub fn hold(&mut self) {
+	fn hold(&mut self) {
 		if self.display.hold == 7 {
 			self.display.hold = self.tmp_block.code;
 			self.spawn_block();
@@ -198,7 +207,7 @@ impl Board {
 		}
 	}
 
-	pub fn soft_drop(&mut self) -> bool {
+	fn soft_drop(&mut self) -> bool {
 		if self.shadow_block.pos.1 == self.tmp_block.pos.1 {
 			return false;
 		}
@@ -207,7 +216,7 @@ impl Board {
 	}
 
 	// return count of lines eliminated
-	pub fn checkline(&mut self, ln: Vec<usize>) -> u32 {
+	fn checkline(&mut self, ln: Vec<usize>) -> u32 {
 		let mut elims = Vec::new();
 		for each_ln in ln.iter() {
 			let mut flag = true;
@@ -248,24 +257,33 @@ impl Board {
 		movedown as u32
 	}
 
+	fn test_twist(&mut self) -> bool {
+		self.tmp_block.pos.0 -= 1;
+		if self.tmp_block.test(self) {
+			self.tmp_block.pos.0 += 1;
+			return false;
+		}
+		self.tmp_block.pos.0 += 2;
+		if self.tmp_block.test(self) {
+			self.tmp_block.pos.0 -= 1;
+			return false;
+		}
+		self.tmp_block.pos.0 -= 1;
+		self.tmp_block.pos.1 -= 1;
+		if self.tmp_block.test(self) {
+			self.tmp_block.pos.1 += 1;
+			return false;
+		}
+		self.tmp_block.pos.1 += 1;
+		true
+	}
+
 	// return 0: none, 1: mini, 2: regular
 	fn test_tspin(&mut self) -> u32 {
 		if self.tmp_block.code == 5 {
-			self.tmp_block.pos.0 -= 1;
-			if self.tmp_block.test(self) {
-				return 0;
+			if !self.test_twist() {
+				return 0
 			}
-			self.tmp_block.pos.0 += 2;
-			if self.tmp_block.test(self) {
-				return 0;
-			}
-			self.tmp_block.pos.0 -= 1;
-			self.tmp_block.pos.1 -= 1;
-			if self.tmp_block.test(self) {
-				return 0;
-			}
-			self.tmp_block.pos.1 += 1;
-
 			let offset = self.tmp_block.rotation as usize * 4;
 			for i in 0..2 {
 				let check_x =
@@ -405,15 +423,21 @@ impl Board {
 		} else {
 			unreachable!();
 		}
-		if tspin == 2 || line_count == 4 {
-			self.display.b2b = true;
-		}
 		self.display.combo += 1;
 		if self.display.combo > 20 {
 			self.display.combo = 20;
 		}
+		if self.attack_pool > 0 {
+			self.last_se = SoundEffect::AttackDrop(self.attack_pool);
+		} else {
+			self.last_se = SoundEffect::ClearDrop(self.display.combo);
+		} // pc will overwrite this
+		if tspin == 2 || line_count == 4 {
+			self.display.b2b = true;
+		}
 		if self.height == 40 {
 			self.attack_pool += ATK_AC[self.display.combo as usize];
+			self.last_se = SoundEffect::PerfectClear;
 		}
 	}
 
@@ -445,7 +469,6 @@ impl Board {
 			if flag {
 				lines_tocheck.push(py);
 			}
-
 			self.display.color[px + py * 10] = self.tmp_block.code;
 		}
 
@@ -454,14 +477,15 @@ impl Board {
 		if line_count > 0 {
 			self.height += line_count as i32;
 			if self.attack_pool != 0 {
-				eprintln!("Error! attack_pool not cleared.");
+				eprintln!("[41mSERVER[0m: attack_pool not cleared.");
 			}
 			let offset =
 				21 * (line_count - 1) as usize + self.display.combo as usize;
 			self.calc_tspin_b2b(tspin, offset, line_count);
 		} else {
 			// plain drop: attack execution
-			self.generate_garbage(0);
+			self.last_se = SoundEffect::PlainDrop;
+			self.generate_garbage(0); // drain garbage
 			if self.height < 0 {
 				return true;
 			}
