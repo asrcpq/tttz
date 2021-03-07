@@ -79,6 +79,9 @@ impl ClientMsg {
 			"pair" => {
 				return Ok(ClientMsg::Pair)
 			}
+			"free" => {
+				return Ok(ClientMsg::PlaySingle)
+			}
 			"spawnai" => {
 				return Self::from_str_spawnai(split)
 			}
@@ -128,6 +131,7 @@ impl std::fmt::Display for ClientMsg {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum ServerMsg<'a> {
 	AllocId(IdType), // response of new client
+	ClientList(Vec<i32>),
 	Attack(IdType, u32), // receiver, amount
 	Start(IdType), // opponent, or 0 in single player mode
 	Request(IdType), // sender
@@ -160,6 +164,9 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 			Self::Request(id) => {
 				format!("request {}", id)
 			},
+			Self::ClientList(list) => {
+				format!("Client list {:?}", list)
+			}
 			Self::GameOver(true) => "win".to_string(),
 			Self::GameOver(false) => "die".to_string(),
 			Self::Display(_) => "display".to_string(),

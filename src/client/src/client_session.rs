@@ -137,6 +137,7 @@ impl ClientSession {
 			ServerMsg::GameOver(_) => {
 				self.state = 1;
 			}
+			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
 			_ => { eprintln!("Unknown message received!") }
 		}

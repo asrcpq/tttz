@@ -4,7 +4,6 @@ use crate::client::Client;
 use crate::client_manager::ClientManager;
 use tttz_ai::ai1;
 use tttz_protocol::{AiType, ClientMsg, ServerMsg};
-use std::net::SocketAddr;
 use std::net::UdpSocket;
 
 lazy_static::lazy_static! {
@@ -67,7 +66,7 @@ impl Server {
 		client.send_display(&self.client_manager);
 	}
 
-	fn fetch_message(&mut self) -> Option<(Client, ClientMsg, SocketAddr)> {
+	fn fetch_message(&mut self) -> Option<(Client, ClientMsg)> {
 		// get or create client
 		let mut buf = [0; 1024];
 		let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
@@ -102,7 +101,6 @@ impl Server {
 		Some((
 			client,
 			client_msg,
-			src,
 		))
 	}
 
@@ -145,20 +143,9 @@ impl Server {
 		}
 	}
 
-	fn send_clients(&mut self, recipient_addr: SocketAddr) {
-		let mut return_msg = String::new();
-		for (key, _) in &self.client_manager.id_addr {
-			return_msg = format!("{}{} ", return_msg, key);
-		}
-		return_msg.pop();
-		SOCKET
-			.send_to(&return_msg.as_bytes(), recipient_addr)
-			.unwrap();
-	}
-
 	pub fn main_loop(&mut self) {
 		loop {
-			let (mut client, msg, src) = match self.fetch_message() {
+			let (mut client, msg) = match self.fetch_message() {
 				None => continue,
 				x => x.unwrap(),
 			};
@@ -174,7 +161,13 @@ impl Server {
 					self.die(&mut client, true);
 				}
 				ClientMsg::GetClients => {
-					self.send_clients(src);
+					let list = self.client_manager
+						.id_addr
+						.iter()
+						.map(|(x, _)| *x)
+						.skip_while(|x| *x == client.id)
+						.collect();
+					client.send_msg(ServerMsg::ClientList(list));
 				}
 				ClientMsg::Kick(id) => {
 					let mut flag = true;
