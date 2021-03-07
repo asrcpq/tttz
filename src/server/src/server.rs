@@ -2,9 +2,9 @@ extern crate lazy_static;
 extern crate tttz_ai;
 use crate::client::Client;
 use crate::client_manager::ClientManager;
-use tttz_ai::ai1;
-use tttz_protocol::{AiType, ClientMsg, ServerMsg, BoardMsg, BoardReply};
 use std::net::UdpSocket;
+use tttz_ai::ai1;
+use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
 lazy_static::lazy_static! {
 	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();
@@ -28,14 +28,14 @@ impl Server {
 					&self.client_manager,
 					&ServerMsg::Attack(client_target.id, lines),
 				);
-			},
+			}
 			BoardReply::GarbageOverflow => {
 				client_target.send_display(&self.client_manager);
-			},
+			}
 			BoardReply::Die => {
 				client_target.send_display(&self.client_manager);
 				flag = true
-			},
+			}
 		}
 		self.client_manager.tmp_push_by_id(id, client_target);
 		flag
@@ -78,8 +78,8 @@ impl Server {
 			Ok(client_msg) => client_msg,
 			Err(_) => {
 				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);
-				return None
-			},
+				return None;
+			}
 		};
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
@@ -90,22 +90,17 @@ impl Server {
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
-				if client_msg == ClientMsg::NewClient{
+				if client_msg == ClientMsg::NewClient {
 					let new_id = self.client_manager.new_client_by_addr(src);
-					self.client_manager.send_msg_by_id(
-						new_id,
-						ServerMsg::AllocId(new_id),
-					);
+					self.client_manager
+						.send_msg_by_id(new_id, ServerMsg::AllocId(new_id));
 				} else {
 					eprintln!("Unknown client: {:?}", src);
 				}
 				return None;
 			}
 		};
-		Some((
-			client,
-			client_msg,
-		))
+		Some((client, client_msg))
 	}
 
 	pub fn die(&mut self, client: &mut Client, die: bool) {
@@ -117,7 +112,11 @@ impl Server {
 			return;
 		}
 		// calc win by attack target works only in pair match mode
-		if self.client_manager.get_addr_by_id(client.attack_target).is_some() {
+		if self
+			.client_manager
+			.get_addr_by_id(client.attack_target)
+			.is_some()
+		{
 			let mut opponent = self
 				.client_manager
 				.tmp_pop_by_id(client.attack_target)
@@ -160,12 +159,13 @@ impl Server {
 					self.die(&mut client, true);
 					assert!(self.client_manager.pop_by_id(client.id).is_none());
 					continue;
-				},
+				}
 				ClientMsg::Suicide => {
 					self.die(&mut client, true);
 				}
 				ClientMsg::GetClients => {
-					let list = self.client_manager
+					let list = self
+						.client_manager
 						.id_addr
 						.iter()
 						.map(|(x, _)| *x)
@@ -177,7 +177,8 @@ impl Server {
 				ClientMsg::Kick(id) => {
 					let mut flag = true;
 					if id != client.id {
-						if let Some(client) = self.client_manager.pop_by_id(id) {
+						if let Some(client) = self.client_manager.pop_by_id(id)
+						{
 							client.send_msg(ServerMsg::Terminate);
 							flag = false;
 						}
@@ -189,20 +190,18 @@ impl Server {
 				ClientMsg::View(id) => {
 					self.set_view(client.id, id);
 				}
-				ClientMsg::SpawnAi(ai_type) => {
-					match ai_type {
-						AiType::Strategy => {
-							self.ai_threads.push(std::thread::spawn(move || {
-								ai1::main("127.0.0.1:23124", 10, true);
-							}));
-						},
-						AiType::Speed(sleep) => {
-							self.ai_threads.push(std::thread::spawn(move || {
-								ai1::main("127.0.0.1:23124", sleep, false);
-							}));
-						}
-					} 
-				}
+				ClientMsg::SpawnAi(ai_type) => match ai_type {
+					AiType::Strategy => {
+						self.ai_threads.push(std::thread::spawn(move || {
+							ai1::main("127.0.0.1:23124", 10, true);
+						}));
+					}
+					AiType::Speed(sleep) => {
+						self.ai_threads.push(std::thread::spawn(move || {
+							ai1::main("127.0.0.1:23124", sleep, false);
+						}));
+					}
+				},
 				ClientMsg::Request(id) => {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {
@@ -271,7 +270,9 @@ impl Server {
 						self.die(&mut client, true);
 					}
 				}
-				ClientMsg::NewClient => { unreachable!() }
+				ClientMsg::NewClient => {
+					unreachable!()
+				}
 			}
 			self.client_manager.tmp_push_by_id(client.id, client);
 			// Be aware of the continue above before writing anything here

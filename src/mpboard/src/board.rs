@@ -1,6 +1,6 @@
 extern crate tttz_protocol;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType};
 use tttz_protocol::display::Display;
+use tttz_protocol::{BoardMsg, BoardReply, KeyType};
 
 use crate::block::Block;
 use crate::random_generator::RandomGenerator;
@@ -58,10 +58,9 @@ impl Board {
 	}
 
 	pub fn slowdown(&mut self, dy: u8) {
-		let first_visible = 21 - BLOCK_HEIGHT[
-			(self.tmp_block.code * 4
-			+ self.tmp_block.rotation as u8) as usize
-		];
+		let first_visible = 21
+			- BLOCK_HEIGHT[(self.tmp_block.code * 4
+				+ self.tmp_block.rotation as u8) as usize];
 		if self.tmp_block.pos.1 < first_visible {
 			for _ in self.tmp_block.pos.1..first_visible {
 				self.movedown1_nohard();
@@ -78,58 +77,56 @@ impl Board {
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		match board_msg {
-			BoardMsg::KeyEvent(key_type) => {
-				match key_type {
-					KeyType::Hold => {
-						self.hold();
-					}
-					KeyType::Left => {
-						self.move1(1);
-					}
-					KeyType::LLeft => {
-						self.move2(1);
-					}
-					KeyType::Right => {
-						self.move1(-1);
-					}
-					KeyType::RRight => {
-						self.move2(-1);
-					}
-					KeyType::HardDrop => {
-						if self.press_up() {
-							return BoardReply::Die;
-						}
-					}
-					KeyType::SoftDrop => {
-						if self.press_down() {
-							return BoardReply::Die;
-						}
-					}
-					KeyType::Down1 => {
-						self.slowdown(1);
-					}
-					KeyType::Down5 => {
-						self.slowdown(5);
-					}
-					KeyType::RotateReverse => {
-						self.rotate(-1);
-					}
-					KeyType::Rotate => {
-						self.rotate(1);
-					}
-					KeyType::RotateFlip => {
-						self.rotate(2);
+			BoardMsg::KeyEvent(key_type) => match key_type {
+				KeyType::Hold => {
+					self.hold();
+				}
+				KeyType::Left => {
+					self.move1(1);
+				}
+				KeyType::LLeft => {
+					self.move2(1);
+				}
+				KeyType::Right => {
+					self.move1(-1);
+				}
+				KeyType::RRight => {
+					self.move2(-1);
+				}
+				KeyType::HardDrop => {
+					if self.press_up() {
+						return BoardReply::Die;
 					}
 				}
-			}
+				KeyType::SoftDrop => {
+					if self.press_down() {
+						return BoardReply::Die;
+					}
+				}
+				KeyType::Down1 => {
+					self.slowdown(1);
+				}
+				KeyType::Down5 => {
+					self.slowdown(5);
+				}
+				KeyType::RotateReverse => {
+					self.rotate(-1);
+				}
+				KeyType::Rotate => {
+					self.rotate(1);
+				}
+				KeyType::RotateFlip => {
+					self.rotate(2);
+				}
+			},
 			BoardMsg::Attacked(amount) => {
 				self.push_garbage(amount);
 				const MAX_GARBAGE_LEN: usize = 5;
 				if self.display.garbages.len() > MAX_GARBAGE_LEN {
 					if self.flush_garbage(MAX_GARBAGE_LEN) {
-						return BoardReply::Die
+						return BoardReply::Die;
 					} else {
-						return BoardReply::GarbageOverflow
+						return BoardReply::GarbageOverflow;
 					}
 				}
 			}
@@ -489,7 +486,10 @@ impl Board {
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 -= 1;
 				if self.shadow_block.bottom_pos() < 20 {
-					eprintln!("SERVER: shadow_block bottom {}", self.shadow_block.bottom_pos());
+					eprintln!(
+						"SERVER: shadow_block bottom {}",
+						self.shadow_block.bottom_pos()
+					);
 					return false;
 				} else {
 					return true;

@@ -3,8 +3,8 @@
 extern crate tttz_mpboard;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 use tttz_protocol::display::Display;
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 extern crate tttz_libclient;
 use tttz_libclient::client_socket::ClientSocket;
@@ -182,18 +182,16 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 							moveflag = true;
 						}
 					}
-				},
+				}
 				ServerMsg::GameOver(_) => {
 					state = 1;
-				},
+				}
 				ServerMsg::Start(_) => {
 					state = 2;
 				}
 				ServerMsg::Request(id) => {
 					state = 2;
-					client_socket
-						.send(ClientMsg::Accept(id))
-						.unwrap();
+					client_socket.send(ClientMsg::Accept(id)).unwrap();
 				}
 				ServerMsg::Terminate => {
 					return;
@@ -208,7 +206,9 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 						operation_queue = main_think(decoded);
 					}
 					client_socket
-						.send(ClientMsg::KeyEvent(operation_queue.pop_front().unwrap()))
+						.send(ClientMsg::KeyEvent(
+							operation_queue.pop_front().unwrap(),
+						))
 						.unwrap();
 					moveflag = false;
 				}
@@ -218,9 +218,7 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 			if state == 2 {
 				operation_queue = main_think(decoded);
 				while let Some(key_type) = operation_queue.pop_front() {
-					client_socket
-						.send(ClientMsg::KeyEvent(key_type))
-						.unwrap();
+					client_socket.send(ClientMsg::KeyEvent(key_type)).unwrap();
 					std::thread::sleep(std::time::Duration::from_millis(
 						sleep_millis,
 					));

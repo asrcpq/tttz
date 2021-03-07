@@ -7,8 +7,8 @@ use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
 extern crate tttz_protocol;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 use tttz_protocol::display::Display;
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 use std::collections::HashMap;
 
@@ -92,6 +92,7 @@ impl ClientSession {
 			};
 			self.setpanel(panel, id);
 		} else {
+			use std::str::FromStr;
 			match ClientMsg::from_str(line) {
 				Ok(client_msg) => {
 					self.client_socket.send(client_msg).unwrap();
@@ -128,27 +129,28 @@ impl ClientSession {
 	// true = exit
 	fn handle_msg(&mut self, msg: ServerMsg) -> bool {
 		match msg {
-			ServerMsg::Terminate => {
-				return true
-			} ServerMsg::Start(id) => {
+			ServerMsg::Terminate => return true,
+			ServerMsg::Start(id) => {
 				self.setpanel(0, self.id);
 				self.setpanel(1, id);
 				self.modeswitch(1);
 				self.state = 2;
-			},
+			}
 			ServerMsg::Attack(id, amount) => {
 				if let Some(mut display) = self.last_display.remove(&id) {
 					display.garbages.push_back(amount);
 					self.client_display.disp_atk_by_id(&display);
 					self.last_display.insert(id, display);
 				}
-			},
+			}
 			ServerMsg::GameOver(_) => {
 				self.state = 1;
 			}
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
-			_ => { eprintln!("Unknown message received!") }
+			_ => {
+				eprintln!("Unknown message received!")
+			}
 		}
 		self.show_msg(&msg.to_string());
 		false
@@ -204,23 +206,21 @@ impl ClientSession {
 			_ => {
 				if self.state == 2 {
 					self.client_socket
-						.send(ClientMsg::KeyEvent(
-							match byte {
-								b'h' => {KeyType::Left},
-								b'H' => {KeyType::LLeft},
-								b'l' => {KeyType::Right},
-								b'L' => {KeyType::RRight},
-								b' ' => {KeyType::Hold},
-								b'j' => {KeyType::SoftDrop},
-								b'k' => {KeyType::HardDrop},
-								b'J' => {KeyType::Down1},
-								b'K' => {KeyType::Down5},
-								b'x' => {KeyType::Rotate},
-								b'z' => {KeyType::RotateReverse},
-								b'd' => {KeyType::RotateFlip},
-								_ => return false,
-							}
-						))
+						.send(ClientMsg::KeyEvent(match byte {
+							b'h' => KeyType::Left,
+							b'H' => KeyType::LLeft,
+							b'l' => KeyType::Right,
+							b'L' => KeyType::RRight,
+							b' ' => KeyType::Hold,
+							b'j' => KeyType::SoftDrop,
+							b'k' => KeyType::HardDrop,
+							b'J' => KeyType::Down1,
+							b'K' => KeyType::Down5,
+							b'x' => KeyType::Rotate,
+							b'z' => KeyType::RotateReverse,
+							b'd' => KeyType::RotateFlip,
+							_ => return false,
+						}))
 						.unwrap();
 				}
 			}
@@ -235,20 +235,24 @@ impl ClientSession {
 				ServerMsg::Display(display) => {
 					if self.last_display.remove(&display.id).is_some() {
 						self.client_display.disp_by_id(&display);
-						self.last_display.insert(display.id, display.into_owned());
+						self.last_display
+							.insert(display.id, display.into_owned());
 					} else {
-						eprintln!("Received display of unknown id {}", display.id);
+						eprintln!(
+							"Received display of unknown id {}",
+							display.id
+						);
 					}
-				},
+				}
 				x => {
 					if self.handle_msg(x) {
-						return true
+						return true;
 					}
-				},
+				}
 			}
 			stdout().flush().unwrap();
 		}
-		return false
+		false
 	}
 
 	pub fn main_loop(&mut self) {
@@ -262,7 +266,9 @@ impl ClientSession {
 			if self.mode == 1 {
 				self.client_display.set_offset();
 			}
-			if self.recv_phase() { break }
+			if self.recv_phase() {
+				break;
+			}
 			if let Some(Ok(byte)) = stdin.next() {
 				if self.byte_handle(byte) {
 					break;

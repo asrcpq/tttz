@@ -1,12 +1,12 @@
 extern crate tttz_mpboard;
 extern crate tttz_protocol;
-use tttz_protocol::{KeyType, BoardMsg, BoardReply, ServerMsg};
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
-use tttz_mpboard::board::Board;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::SocketAddr;
+use tttz_mpboard::board::Board;
+use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg};
 
 pub struct Client {
 	pub id: i32,
@@ -54,7 +54,8 @@ impl Client {
 		&self,
 		client_manager: &ClientManager,
 		msg: &ServerMsg,
-	) { // TODO maintain the view list in client, when exit do cleaning
+	) {
+		// TODO maintain the view list in client, when exit do cleaning
 		for dc_id in self.dc_ids.iter() {
 			let dc_addr =
 				if let Some(addr) = client_manager.get_addr_by_id(*dc_id) {
@@ -71,15 +72,21 @@ impl Client {
 	}
 
 	pub fn send_display(&mut self, client_manager: &ClientManager) {
-		self.broadcast_msg(client_manager, &ServerMsg::Display(Cow::Borrowed(&self.board.display)));
+		self.broadcast_msg(
+			client_manager,
+			&ServerMsg::Display(Cow::Borrowed(&self.board.display)),
+		);
 	}
 
 	// true = die
 	pub fn process_key(&mut self, key_type: KeyType) -> bool {
-		if self.state != 2 { // not playing
+		if self.state != 2 {
+			// not playing
 			return false;
 		}
-		if BoardReply::Die == self.board.handle_msg(BoardMsg::KeyEvent(key_type)) {
+		if BoardReply::Die
+			== self.board.handle_msg(BoardMsg::KeyEvent(key_type))
+		{
 			return true;
 		}
 		// return value ignored, only board change cause death

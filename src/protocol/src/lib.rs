@@ -49,80 +49,78 @@ pub enum ClientMsg {
 }
 
 impl ClientMsg {
-	pub fn from_serialized(buf: &[u8]) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
+	pub fn from_serialized(
+		buf: &[u8],
+	) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
 	}
-	
-	fn from_str_spawnai(words: Vec<&str>) -> Result<ClientMsg, ()> {
+
+	fn from_str_spawnai(words: Vec<&str>) -> ClientMsg {
 		if let Some(keyword) = words.get(2) {
 			if keyword == &"strategy" {
-				return Ok(ClientMsg::SpawnAi(AiType::Strategy))
+				return ClientMsg::SpawnAi(AiType::Strategy);
 			} else if keyword == &"speed" {
 				if let Some(sleep) = words.get(3) {
 					if let Ok(sleep) = sleep.parse::<u64>() {
-						return Ok(ClientMsg::SpawnAi(AiType::Speed(sleep)))
+						return ClientMsg::SpawnAi(AiType::Speed(sleep));
 					}
 				}
 			}
 		}
-		return Ok(ClientMsg::SpawnAi(AiType::Speed(240)))
-	}
-
-	pub fn from_str(input: &str) -> Result<ClientMsg, ()> {
-		let split = input.split_whitespace().collect::<Vec<&str>>();
-		match split[0] {
-			"clients" => {
-				return Ok(ClientMsg::GetClients)
-			}
-			"restart" => {
-				return Ok(ClientMsg::Restart)
-			}
-			"pair" => {
-				return Ok(ClientMsg::Pair)
-			}
-			"free" => {
-				return Ok(ClientMsg::PlaySingle)
-			}
-			"spawnai" => {
-				return Self::from_str_spawnai(split)
-			}
-			"request" => {
-				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
-						return Ok(ClientMsg::Request(id))
-					}
-				}
-			}
-			"accept" => {
-				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
-						return Ok(ClientMsg::Accept(id))
-					}
-				}
-			}
-			"view" => {
-				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
-						return Ok(ClientMsg::View(id))
-					}
-				}
-			}
-			"kick" => {
-				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
-						return Ok(ClientMsg::Kick(id))
-					}
-				}
-			}
-			_ => {},
-		}
-		return Err(())
+		ClientMsg::SpawnAi(AiType::Speed(240))
 	}
 
 	pub fn serialized(&self) -> Vec<u8> {
 		bincode::serialize(self).unwrap()
 	}
 }
+
+use std::str::FromStr;
+impl FromStr for ClientMsg {
+	type Err = ();
+
+	fn from_str(input: &str) -> Result<Self, Self::Err> {
+		let split = input.split_whitespace().collect::<Vec<&str>>();
+		match split[0] {
+			"clients" => return Ok(ClientMsg::GetClients),
+			"restart" => return Ok(ClientMsg::Restart),
+			"pair" => return Ok(ClientMsg::Pair),
+			"free" => return Ok(ClientMsg::PlaySingle),
+			"spawnai" => return Ok(Self::from_str_spawnai(split)),
+			"request" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Request(id));
+					}
+				}
+			}
+			"accept" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Accept(id));
+					}
+				}
+			}
+			"view" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::View(id));
+					}
+				}
+			}
+			"kick" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::Kick(id));
+					}
+				}
+			}
+			_ => {}
+		}
+		Err(())
+	}
+}
+
 impl std::fmt::Display for ClientMsg {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{:?}", self) // just use debug
@@ -133,16 +131,18 @@ impl std::fmt::Display for ClientMsg {
 pub enum ServerMsg<'a> {
 	AllocId(IdType), // response of new client
 	ClientList(Vec<i32>),
-	Attack(IdType, u32), // receiver, amount
-	Start(IdType), // opponent, or 0 in single player mode
-	Request(IdType), // sender
-	GameOver(bool), // true = win
-	Terminate, // kicked
+	Attack(IdType, u32),       // receiver, amount
+	Start(IdType),             // opponent, or 0 in single player mode
+	Request(IdType),           // sender
+	GameOver(bool),            // true = win
+	Terminate,                 // kicked
 	Display(Cow<'a, Display>), // hope this can be optimized
 }
 
 impl ServerMsg<'_> {
-	pub fn from_serialized<'a>(buf: &[u8]) -> Result<ServerMsg<'a>, Box<bincode::ErrorKind>> {
+	pub fn from_serialized<'a>(
+		buf: &[u8],
+	) -> Result<ServerMsg<'a>, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
 	}
 
@@ -157,14 +157,14 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 			Self::AllocId(id) => format!("Ok {}", id),
 			Self::Attack(id, amount) => {
 				format!("sigatk {} {}", id, amount)
-			},
+			}
 			Self::Start(id) => {
 				format!("startvs {}", id)
-			},
+			}
 			Self::Terminate => "kicked".to_string(),
 			Self::Request(id) => {
 				format!("request {}", id)
-			},
+			}
 			Self::ClientList(list) => {
 				format!("Client list {:?}", list)
 			}

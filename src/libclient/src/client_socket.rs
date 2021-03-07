@@ -1,7 +1,7 @@
 extern crate tttz_protocol;
-use tttz_protocol::{ClientMsg, ServerMsg};
 use std::net::UdpSocket;
 use std::net::{SocketAddr, ToSocketAddrs};
+use tttz_protocol::{ClientMsg, ServerMsg};
 
 pub struct ClientSocket {
 	pub socket: UdpSocket,
@@ -35,14 +35,13 @@ impl ClientSocket {
 		Ok(())
 	}
 
-	pub fn recv<'a, 'b>(&'b self) -> Result<ServerMsg<'a>, ()> {
+	pub fn recv<'a, 'b>(
+		&'b self,
+	) -> Result<ServerMsg<'a>, Box<dyn std::error::Error>> {
 		let mut buf = [0; 1024];
-		if let Ok(amt) = self.socket.recv(&mut buf) {
-			if let Ok(server_msg) = ServerMsg::from_serialized(&buf[..amt]) {
-				return Ok(server_msg)
-			}
-		}
-		Err(())
+		let amt = self.socket.recv(&mut buf)?;
+		let server_msg = ServerMsg::from_serialized(&buf[..amt])?;
+		Ok(server_msg)
 	}
 }
 
