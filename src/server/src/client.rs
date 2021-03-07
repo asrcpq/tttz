@@ -142,3 +142,9 @@ impl Client {
 		flag
 	}
 }
+
+impl Drop for Client {
+	fn drop(&mut self) {
+		self.send_msg(ServerMsg::Terminate);
+	}
+}

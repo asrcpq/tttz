@@ -42,21 +42,24 @@ impl ClientSession {
 		self.mode = new;
 		if new == 0 {
 			self.client_display.deactivate();
+			self.print_prompt();
 		} else {
 			self.client_display.activate();
 		}
 	}
 
 	fn textmode_print(&self, msg: &str) {
-		print!(
-			"{}{}{}{}{}{}",
-			termion::cursor::Hide,
-			termion::cursor::Goto(1, 2),
-			termion::clear::CurrentLine,
-			msg,
-			termion::cursor::Show,
-			termion::cursor::Goto(1, 1),
-		);
+		print!("\r{}{}\n{}", termion::clear::CurrentLine, msg, 13 as char);
+		self.print_prompt();
+		// print!(
+		// 	"{}{}{}{}{}{}",
+		// 	termion::cursor::Hide,
+		// 	termion::cursor::Goto(1, 2),
+		// 	termion::clear::CurrentLine,
+		// 	msg,
+		// 	termion::cursor::Show,
+		// 	termion::cursor::Goto(1, 1),
+		// );
 	}
 
 	// true quit
@@ -118,10 +121,17 @@ impl ClientSession {
 		}
 	}
 
+	fn print_prompt(&self) {
+		print!("{}[36m> [0m", 13 as char);
+	}
+
 	// handle recv without display
-	fn handle_msg(&mut self, msg: ServerMsg) {
+	// true = exit
+	fn handle_msg(&mut self, msg: ServerMsg) -> bool {
 		match msg {
-			ServerMsg::Start(id) => {
+			ServerMsg::Terminate => {
+				return true
+			} ServerMsg::Start(id) => {
 				self.setpanel(0, self.id);
 				self.setpanel(1, id);
 				self.modeswitch(1);
@@ -142,6 +152,7 @@ impl ClientSession {
 			_ => { eprintln!("Unknown message received!") }
 		}
 		self.show_msg(&msg.to_string());
+		false
 	}
 
 	fn byte_handle(&mut self, byte: u8) -> bool {
@@ -149,6 +160,7 @@ impl ClientSession {
 		if self.mode == 0 {
 			if byte == 23 {
 				while let Some(ch) = self.textbuffer.pop() {
+					print!("{} {}", 8 as char, 8 as char);
 					if ch.is_whitespace() {
 						break;
 					}
@@ -157,20 +169,19 @@ impl ClientSession {
 				self.textbuffer = String::new();
 			} else if byte == 127 {
 				self.textbuffer.pop();
+				print!("{} {}", 8 as char, 8 as char);
 			} else if byte == b'\r' {
+				print!("\n\r");
 				if self.proc_line(&self.textbuffer.clone()) {
 					return true;
 				}
 				self.textbuffer = String::new();
+				self.print_prompt();
 			} else {
-				self.textbuffer.push(byte as char);
+				let byte = byte as char;
+				self.textbuffer.push(byte);
+				print!("{}", byte);
 			}
-			print!(
-				"{}{}{}",
-				termion::cursor::Goto(1, 1),
-				termion::clear::CurrentLine,
-				self.textbuffer,
-			);
 			return false;
 		}
 
@@ -189,7 +200,6 @@ impl ClientSession {
 				}
 			}
 			b'/' => {
-				self.client_display.deactivate();
 				self.modeswitch(0);
 			}
 			_ => {
@@ -219,7 +229,8 @@ impl ClientSession {
 		false
 	}
 
-	fn recv_phase(&mut self) {
+	// true = exit
+	fn recv_phase(&mut self) -> bool {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
 				ServerMsg::Display(display) => {
@@ -230,11 +241,15 @@ impl ClientSession {
 						eprintln!("Received display of unknown id {}", display.id);
 					}
 				},
-				x => {self.handle_msg(x) },
+				x => {
+					if self.handle_msg(x) {
+						return true
+					}
+				},
 			}
 			stdout().flush().unwrap();
-			return
 		}
+		return false
 	}
 
 	pub fn main_loop(&mut self) {
@@ -242,11 +257,13 @@ impl ClientSession {
 		let stdout = stdout();
 		let mut stdout = stdout.lock().into_raw_mode().unwrap();
 		self.client_socket.socket.set_nonblocking(true).unwrap();
+		self.modeswitch(0);
+		stdout.flush().unwrap();
 		loop {
 			if self.mode == 1 {
 				self.client_display.set_offset();
 			}
-			self.recv_phase();
+			if self.recv_phase() { break }
 			if let Some(Ok(byte)) = stdin.next() {
 				if self.byte_handle(byte) {
 					break;

@@ -104,7 +104,7 @@ impl Server {
 		))
 	}
 
-	pub fn die(&mut self, mut client: &mut Client, die: bool) {
+	pub fn die(&mut self, client: &mut Client, die: bool) {
 		client.state = 1;
 		eprintln!("SERVER client {} gameover", client.id);
 		client.send_msg(ServerMsg::GameOver(!die));
@@ -165,8 +165,9 @@ impl Server {
 						.id_addr
 						.iter()
 						.map(|(x, _)| *x)
-						.skip_while(|x| *x == client.id)
+						.filter(|x| *x != client.id)
 						.collect();
+					eprintln!("{:?} {}", list, client.id);
 					client.send_msg(ServerMsg::ClientList(list));
 				}
 				ClientMsg::Kick(id) => {
