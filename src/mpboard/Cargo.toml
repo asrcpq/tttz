@@ -7,6 +7,8 @@ edition = "2018"
 [dependencies]
 rand = "*"
 lazy_static = "*"
+bincode = "*"
+directories = "*"
 
 [dependencies.serde]
 version = "1.0"

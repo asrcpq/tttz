@@ -15,15 +15,15 @@ pub struct Board {
 	pub display: Display,
 	pub attack_pool: u32,
 	pub height: i32,
-	replay: Replay,
+	pub replay: Replay,
 }
 
 impl Board {
 	pub fn new(id: i32) -> Board {
 		let replay = Default::default();
 		let mut board = Board {
-			tmp_block: Block::new(7),
-			shadow_block: Block::new(7), // immediately overwritten
+			tmp_block: Block::new(0), // immediately overwritten
+			shadow_block: Block::new(0), // immediately overwritten
 			rg: Default::default(),
 			display: Display::new(id),
 			attack_pool: 0,

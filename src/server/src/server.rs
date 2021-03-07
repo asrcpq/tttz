@@ -104,23 +104,25 @@ impl Server {
 	}
 
 	pub fn die(&mut self, client: &mut Client, die: bool) {
+		eprintln!("SERVER: client {} gameover", client.id);
 		client.state = 1;
-		eprintln!("SERVER client {} gameover", client.id);
+		match client.board.replay.save(&format!("{}", client.id)) {
+			Ok(true) => {},
+			Ok(false) => {
+				eprintln!("[32mSERVER[0m: cannot find path to write replay!");
+			}
+			Err(_) => {
+				eprintln!("[32mSERVER[0m: write replay failed!");
+			}
+		}
 		client.send_msg(ServerMsg::GameOver(!die));
 
 		if client.attack_target == 0 {
 			return;
 		}
 		// calc win by attack target works only in pair match mode
-		if self
-			.client_manager
-			.get_addr_by_id(client.attack_target)
-			.is_some()
-		{
-			let mut opponent = self
-				.client_manager
-				.tmp_pop_by_id(client.attack_target)
-				.unwrap();
+		if let Some(mut opponent) = self.client_manager
+			.tmp_pop_by_id(client.attack_target) {
 			opponent.send_msg(ServerMsg::GameOver(die));
 			opponent.state = 1;
 			opponent.dc_ids.remove(&client.id);
