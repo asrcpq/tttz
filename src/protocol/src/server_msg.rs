@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::IdType;
 use crate::Display;
+use crate::SoundEffect;
 
 use std::borrow::Cow;
 
@@ -17,6 +18,7 @@ pub enum ServerMsg<'a> {
 	GameOver(bool),            // true = win
 	Terminate,                 // kicked
 	Display(Cow<'a, Display>), // hope this can be optimized
+	SoundEffect(SoundEffect),
 }
 
 impl ServerMsg<'_> {
@@ -50,6 +52,7 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 			}
 			Self::GameOver(true) => "win".to_string(),
 			Self::GameOver(false) => "die".to_string(),
+			Self::SoundEffect(se) => format!("se {:?}", se),
 			Self::Display(_) => "display".to_string(),
 		};
 		write!(f, "{}", string)

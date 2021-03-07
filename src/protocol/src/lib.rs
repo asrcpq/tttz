@@ -8,6 +8,8 @@ mod key_type;
 pub use key_type::KeyType;
 mod ai_type;
 pub use ai_type::AiType;
+mod sound_effect;
+pub use sound_effect::SoundEffect;
 
 mod display;
 pub use display::Display;
