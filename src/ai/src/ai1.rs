@@ -3,7 +3,7 @@
 extern crate tttz_mpboard;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
-use tttz_protocol::display::Display;
+use tttz_protocol::Display;
 use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 extern crate tttz_libclient;

@@ -4,7 +4,7 @@ use std::io::Write;
 extern crate tttz_mpboard;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
-use tttz_protocol::display::Display;
+use tttz_protocol::Display;
 
 use std::collections::HashMap;
 

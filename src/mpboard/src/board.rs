@@ -1,5 +1,5 @@
 extern crate tttz_protocol;
-use tttz_protocol::display::Display;
+use tttz_protocol::Display;
 use tttz_protocol::{BoardMsg, BoardReply, KeyType};
 
 use crate::block::Block;

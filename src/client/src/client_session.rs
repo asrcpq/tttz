@@ -7,7 +7,7 @@ use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
 extern crate tttz_protocol;
-use tttz_protocol::display::Display;
+use tttz_protocol::Display;
 use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
 
 use std::collections::HashMap;
