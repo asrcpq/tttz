@@ -8,13 +8,23 @@
 
 ## Features
 
+* TUI, cross-platform(maybe)
+
+* Replay automatically saved(working)
+
+* A greedy search AI, also support strategy mode(moves in turn)
+
+## Special Rules
+
 * SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
+
+* Garbage in same attack has a 30%(or 40%) probability to shift
 
 * Event-driven(instead of realtime, details below)
 
-* Garbage in same attack has a 30% probability to shift
+### Event-driven features
 
-## Event-driven features
+* Zero delay, operations are applied as fast as possible.
 
 * No gravity(blocks can move down), infinite hold swap
 
@@ -64,10 +74,14 @@
 
 * `myid`
 
+* `free` enter single play mode
+
 * `request <id>` send battle request to id(ai will immediately accept)
 
 * `accept <id>` accept battle request from id
 
 * `pair` start pairing
+
+* \<Enter\> exit cmd mode
 
 * `quit`
