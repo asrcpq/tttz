@@ -1,6 +1,6 @@
 extern crate tttz_mpboard;
 extern crate tttz_protocol;
-use tttz_protocol::{KeyType, BoardMsg, ServerMsg};
+use tttz_protocol::{KeyType, BoardMsg, BoardReply, ServerMsg};
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use tttz_mpboard::board::Board;
@@ -79,7 +79,9 @@ impl Client {
 		if self.state != 2 { // not playing
 			return false;
 		}
-		self.board.handle_msg(BoardMsg::KeyEvent(key_type));
+		if BoardReply::Die == self.board.handle_msg(BoardMsg::KeyEvent(key_type)) {
+			return true;
+		}
 		// return value ignored, only board change cause death
 		self.board.calc_shadow();
 		false
