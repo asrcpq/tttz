@@ -168,6 +168,9 @@ impl ClientSession {
 				}
 			} else if byte == 3 {
 				self.textbuffer = String::new();
+			} else if byte == 4 {
+				self.textbuffer = String::new();
+				self.modeswitch(1);
 			} else if byte == 127 {
 				self.textbuffer.pop();
 				print!("{} {}", 8 as char, 8 as char);

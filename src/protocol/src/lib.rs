@@ -176,7 +176,7 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 	}
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum BoardMsg {
 	Attacked(u32),
 	KeyEvent(KeyType),

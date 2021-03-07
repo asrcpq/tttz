@@ -5,6 +5,7 @@ use tttz_protocol::{BoardMsg, BoardReply, KeyType};
 use crate::block::Block;
 use crate::random_generator::RandomGenerator;
 use crate::srs_data::*;
+use crate::replay::Replay;
 use rand::Rng;
 
 pub struct Board {
@@ -14,19 +15,22 @@ pub struct Board {
 	pub display: Display,
 	pub attack_pool: u32,
 	pub height: i32,
+	replay: Replay,
 }
 
 impl Board {
 	pub fn new(id: i32) -> Board {
-		let mut rg: RandomGenerator = Default::default();
+		let replay = Default::default();
 		let mut board = Board {
-			tmp_block: Block::new(rg.get()),
-			shadow_block: Block::new(0),
-			rg,
+			tmp_block: Block::new(7),
+			shadow_block: Block::new(7), // immediately overwritten
+			rg: Default::default(),
 			display: Display::new(id),
 			attack_pool: 0,
 			height: 40,
+			replay,
 		};
+		board.spawn_block();
 		board.calc_shadow();
 		board
 	}
@@ -76,6 +80,7 @@ impl Board {
 
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
+		self.replay.push_operation(board_msg.clone());
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
 				KeyType::Hold => {
@@ -176,10 +181,16 @@ impl Board {
 		false
 	}
 
+	fn spawn_block(&mut self) {
+		let code = self.rg.get();
+		self.replay.push_block(code);
+		self.tmp_block = Block::new(code);
+	}
+
 	pub fn hold(&mut self) {
 		if self.display.hold == 7 {
 			self.display.hold = self.tmp_block.code;
-			self.tmp_block = Block::new(self.rg.get());
+			self.spawn_block();
 		} else {
 			let tmp = self.display.hold;
 			self.display.hold = self.tmp_block.code;
@@ -457,7 +468,7 @@ impl Board {
 		}
 
 		// new block
-		self.tmp_block = Block::new(self.rg.get());
+		self.spawn_block();
 		if !self.calc_shadow() {
 			return true;
 		}
