@@ -1,6 +1,6 @@
 extern crate rodio;
 use rodio::source::Buffered;
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, Sink, Source};
 extern crate tttz_protocol;
 use tttz_protocol::SoundEffect;
 
@@ -82,7 +82,7 @@ impl Default for SoundManager {
 	fn default() -> SoundManager {
 		let (send, recv) = channel();
 		std::thread::spawn(move || {
-			let (stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+			let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
 			let sink = Sink::try_new(&stream_handle).unwrap();
 			sink.append(Mixer {
 				playing: Vec::new(),
@@ -101,7 +101,7 @@ impl Default for SoundManager {
 impl SoundManager {
 	pub fn play(&mut self, se: SoundEffect) {
 		if let Some(buf) = self.soundmap.get(&se) {
-			self.send.send(buf.clone());
+			self.send.send(buf.clone()).unwrap();
 		}
 	}
 }

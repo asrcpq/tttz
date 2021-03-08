@@ -8,7 +8,7 @@
 
 ## Features
 
-* TUI, cross-platform(maybe)
+* TUI, cross-platform(works needed)
 
 * Replay automatically saved(working)
 
@@ -24,7 +24,7 @@
 
 * Garbage in same attack has a 30%(or 40%) probability to shift
 
-### Speical attack table
+### Speical attack table(working)
 
 * All twists are rewarded(with different weight)
 
