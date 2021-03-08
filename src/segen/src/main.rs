@@ -35,16 +35,17 @@ fn main() {
 	));
 
 	let sample = &make_samples(0.1, 44_100, |t|
-		0.5 * square_wave(50.)(t) * (1. - t * 10.)
+		1.5 * sawtooth_wave(50.)(t) * (1. - t * 10.)
 	);
-	let pass = lowpass_filter(
-		cutoff_from_frequency(400.0, 44_100),
+	let pass = bandpass_filter(
+		cutoff_from_frequency(30.0, 44_100),
+		cutoff_from_frequency(200.0, 44_100),
 		0.01
 	);
 	write_sound!("plain_drop", &convolve(&pass, &sample));
 
 	let sample = make_samples(0.05, 44_100, |t|
-		0.9 * square_wave(10550.)(t) * (
+		1.2 * square_wave(10550.)(t) * (
 			if t > 0.01 {
 				1. - (t - 0.01) * 20.
 			} else {
@@ -53,8 +54,8 @@ fn main() {
 		)
 	);
 	let pass = bandpass_filter(
-		cutoff_from_frequency(5000.0, 44_100),
-		cutoff_from_frequency(8000.0, 44_100),
+		cutoff_from_frequency(3000.0, 44_100),
+		cutoff_from_frequency(4000.0, 44_100),
 		0.01
 	);
 	write_sound!("rotate_regular", &convolve(&pass, &sample));

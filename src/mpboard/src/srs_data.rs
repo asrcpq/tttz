@@ -1,5 +1,13 @@
 extern crate lazy_static;
 
+pub const ATTACK_B2B_INC: f32 = 0.5;
+pub const ATTACK_COMBO_INC: f32 = 0.2;
+pub const ATTACK_BASE: [f32; 4] = [0.5, 1.0, 2.0, 4.0];
+pub const ATTACK_BASE_TWIST_MULTIPLIER: [f32; 14] = [
+	1.0, 1.5, 1.5, 1.0, 2.0, 2.0, 2.0, // mini
+	1.5, 2.0, 2.0, 1.0, 3.0, 3.0, 3.0, // regular
+];
+
 lazy_static::lazy_static! {
 pub static ref ID_TO_CHAR: Vec<char> = vec![
 	'i', 'j', 'l', 'o', 's', 't', 'z', ' ',
@@ -29,12 +37,15 @@ pub static ref INITIAL_POS: Vec<i32> = vec![
 	3, 3, 3, 4, 3, 3, 3
 ];
 
-// each line has two pairs of points of tspin check
-pub static ref TSPIN_MINI_CHECK: Vec<i32> = vec![
-	0, 0, 2, 0,
-	1, 0, 1, 2,
-	0, 1, 2, 1,
-	0, 0, 0, 2,
+// each line has four groups of two pairs of points of twist check
+pub static ref TWIST_MINI_CHECK: Vec<i32> = vec![
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // I spin does not have mini type
+	1, 0, 2, 0, 1, 1, 1, 2, 0, 1, 1, 1, 0, 0, 0, 1,
+	0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 2, 1, 0, 1, 0, 2,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // O cannot spin
+	0, 0, 2, 1, 1, 0, 0, 2, 0, 0, 2, 1, 1, 0, 0, 2,
+	0, 0, 2, 0, 1, 0, 1, 2, 0, 1, 2, 1, 0, 0, 0, 2,
+	2, 0, 0, 1, 0, 0, 1, 2, 2, 0, 0, 1, 0, 0, 1, 2,
 ];
 
 pub static ref BLOCK_HEIGHT: Vec<i32> = vec![
@@ -104,40 +115,4 @@ pub static ref FWKD: Vec<i32> = vec![
 	0, 0, 0,  1, -1,  1,  1,  1, -1,  0,  1,  0,
 	0, 0, -1, 0, -1, -2, -1, -1,  0, -2,  0, -1,
 ];
-
-// attack table
-pub static ref ATK_NORMAL: Vec<u32> = vec![
-	0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3,
-	1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
-	2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,
-	4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-];
-pub static ref ATK_TSPIN_MINI: Vec<u32> = vec![
-	0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
-	1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, // mini double = double
-];
-
-pub static ref ATK_TSPIN_REGULAR: Vec<u32> = vec![
-	2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,
-	4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-	6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22, 24, 25, 27, 28, 30, 31, 33, 34, 36,
-];
-
-pub static ref ATK_B2B_QUAD: Vec<u32> = vec![
-	5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 20, 21, 22, 23, 25, 26, 27, 28, 30,
-];
-
-pub static ref ATK_B2B_TSPIN_MINI: Vec<u32> = vec![
-	1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
-	2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,
-];
-
-pub static ref ATK_B2B_TSPIN_REGULAR: Vec<u32> = vec![
-	3, 3, 4, 5, 6, 6, 7, 8, 9, 9, 10, 11, 12, 12, 13, 14, 15, 15, 16, 17, 18,
-	5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 20, 21, 22, 23, 25, 26, 27, 28, 30,
-	7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29, 31, 33, 35, 36, 38, 40, 42,
-];
-
-pub static ref ATK_AC: Vec<u32> = vec![10; 21];
-
 }

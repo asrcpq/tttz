@@ -163,21 +163,21 @@ impl Board {
 		self.tmp_block.rotate(dr);
 		let std_pos = self.tmp_block.pos;
 		let len = if dr == 2 { 6 } else { 5 };
+		let wkd: &Vec<i32> = if dr == 2 {
+			&FWKD
+		} else if revert_block.code == 0 {
+			&IWKD
+		} else {
+			&WKD
+		};
 		for wkid in 0..len {
 			let left_offset = (dr == -1) as i8 * 40;
 			let idx = (revert_block.rotation * len * 2 + left_offset + wkid * 2)
 				as usize;
-			let wkd: &Vec<i32> = if dr == 2 {
-				&FWKD
-			} else if revert_block.code == 0 {
-				&IWKD
-			} else {
-				&WKD
-			};
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 			if self.tmp_block.test(self) {
-				if self.test_twist() {
+				if self.test_twist() > 0 {
 					self.last_se = SoundEffect::Rotate(2)
 				} else {
 					self.last_se = SoundEffect::Rotate(1)
@@ -230,7 +230,10 @@ impl Board {
 			}
 		}
 		if elims.is_empty() {
-			self.display.combo = 0;
+			self.display.combo_multiplier = 0.0;
+			if self.display.b2b_multiplier > 0.0 {
+				self.display.b2b_multiplier = ATTACK_B2B_INC;
+			}
 			return 0;
 		}
 		let mut movedown = 0;
@@ -257,7 +260,8 @@ impl Board {
 		movedown as u32
 	}
 
-	fn test_twist(&mut self) -> bool {
+	// moving test
+	fn test_twist2(&mut self) -> bool {
 		self.tmp_block.pos.0 -= 1;
 		if self.tmp_block.test(self) {
 			self.tmp_block.pos.0 += 1;
@@ -278,25 +282,31 @@ impl Board {
 		true
 	}
 
+	// test all types of twists
 	// return 0: none, 1: mini, 2: regular
-	fn test_tspin(&mut self) -> u32 {
-		if self.tmp_block.code == 5 {
-			if !self.test_twist() {
-				return 0
-			}
-			let offset = self.tmp_block.rotation as usize * 4;
-			for i in 0..2 {
-				let check_x =
-					self.tmp_block.pos.0 + TSPIN_MINI_CHECK[offset + i * 2];
-				let check_y =
-					self.tmp_block.pos.1 + TSPIN_MINI_CHECK[offset + i * 2 + 1];
-				if self.display.color[(check_x + check_y * 10) as usize] == 7 {
-					return 1;
-				}
-			}
-			return 2;
+	fn test_twist(&mut self) -> u32 {
+		// No o spin
+		if self.tmp_block.code == 3 {
+			return 0
 		}
-		0
+		if !self.test_twist2() {
+			return 0;
+		}
+		// No mini i spin
+		if self.tmp_block.code == 0 {
+			return 1;
+		}
+		let offset = self.tmp_block.rotation as usize * 4;
+		for i in 0..2 {
+			let check_x =
+				self.tmp_block.pos.0 + TWIST_MINI_CHECK[offset + i * 2];
+			let check_y =
+				self.tmp_block.pos.1 + TWIST_MINI_CHECK[offset + i * 2 + 1];
+			if self.display.color[(check_x + check_y * 10) as usize] == 7 {
+				return 1;
+			}
+		}
+		return 2;
 	}
 
 	// true = death
@@ -392,51 +402,32 @@ impl Board {
 
 	// providing whether tspin, shape offset and cleared lines
 	// change self b2b and attack_pool
-	fn calc_tspin_b2b(&mut self, tspin: u32, offset: usize, line_count: u32) {
-		if self.display.b2b {
-			if tspin == 2 {
-				self.attack_pool = ATK_B2B_TSPIN_REGULAR[offset];
-			} else if tspin == 1 {
-				self.attack_pool = ATK_B2B_TSPIN_MINI[offset];
-			} else if tspin == 0 {
-				if line_count == 4 {
-					self.attack_pool =
-						ATK_B2B_QUAD[self.display.combo as usize];
-				} else {
-					self.attack_pool = ATK_NORMAL[offset];
-					self.display.b2b = false;
-				}
-			} else {
-				unreachable!();
-			}
-		} else if tspin == 2 {
-			self.attack_pool = ATK_TSPIN_REGULAR[offset];
-			self.display.b2b = true;
-		} else if tspin == 1 {
-			self.attack_pool = ATK_TSPIN_MINI[offset];
-			self.display.b2b = true;
-		} else if tspin == 0 {
-			if line_count == 4 {
-				self.display.b2b = true;
-			}
-			self.attack_pool = ATK_NORMAL[offset];
+	fn calc_attack(&mut self, tspin: u32, line_count: u32) {
+		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
+		let twist_mult = if tspin > 0 {
+			ATTACK_BASE_TWIST_MULTIPLIER[
+				((tspin - 1) * 7 + self.tmp_block.code as u32)
+			as usize]
 		} else {
-			unreachable!();
+			1.0
+		};
+		let mut total_mult = 1f32;
+		total_mult += self.display.combo_multiplier;
+		self.display.combo_multiplier += ATTACK_COMBO_INC;
+		if tspin > 0 || line_count == 4 {
+			total_mult += self.display.b2b_multiplier;
+			self.display.b2b_multiplier += ATTACK_B2B_INC;
+		} else {
+			self.display.b2b_multiplier = 0.0;
 		}
-		self.display.combo += 1;
-		if self.display.combo > 20 {
-			self.display.combo = 20;
-		}
+		self.attack_pool = (base_atk * twist_mult * total_mult) as u32;
 		if self.attack_pool > 0 {
 			self.last_se = SoundEffect::AttackDrop;
 		} else {
 			self.last_se = SoundEffect::ClearDrop;
 		} // pc will overwrite this
-		if tspin == 2 || line_count == 4 {
-			self.display.b2b = true;
-		}
 		if self.height == 40 {
-			self.attack_pool += ATK_AC[self.display.combo as usize];
+			self.attack_pool += 10;
 			self.last_se = SoundEffect::PerfectClear;
 		}
 	}
@@ -446,9 +437,9 @@ impl Board {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color
-		let tspin = self.test_tspin();
+		let tspin = self.test_twist();
 		if tspin > 0 {
-			eprintln!("{} just did a {}-tspin", self.display.id, tspin);
+			eprintln!("{} just did a {}-twist", self.display.id, tspin);
 		}
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
@@ -479,9 +470,7 @@ impl Board {
 			if self.attack_pool != 0 {
 				eprintln!("[41mSERVER[0m: attack_pool not cleared.");
 			}
-			let offset =
-				21 * (line_count - 1) as usize + self.display.combo as usize;
-			self.calc_tspin_b2b(tspin, offset, line_count);
+			self.calc_attack(tspin, line_count);
 		} else {
 			// plain drop: attack execution
 			self.last_se = SoundEffect::PlainDrop;
@@ -565,6 +554,18 @@ mod test {
 			}
 		}
 		display
+	}
+
+	#[test]
+	fn test_test_twist() {
+		let mut board = Board::new(1);
+		board.tmp_block = Block::new(1); // █▄▄
+		board.display = generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
+		board.display.color[391] = 7; // sdp: (1, 0)
+		board.tmp_block.pos.0 = 1;
+		board.tmp_block.pos.1 = 37;
+		board.tmp_block.rotation = 3;
+		assert!(board.test_twist());
 	}
 
 	#[test]
