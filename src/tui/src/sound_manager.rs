@@ -1,42 +1,69 @@
-extern crate ears;
-use ears::{Sound, AudioController};
+extern crate rodio;
+use rodio::source::Buffered;
+use rodio::{Decoder, OutputStream, Sink, Source};
 extern crate tttz_protocol;
 use tttz_protocol::SoundEffect;
 
 use std::collections::HashMap;
+use std::io::{BufReader, Cursor};
 
-fn soundmap_init() -> HashMap<SoundEffect, Sound> {
-	let mut soundmap = HashMap::new();
-	if let Ok(sound) = Sound::new("./resources/se/plaindrop.wav") {
-		soundmap.insert(SoundEffect::PlainDrop, sound);
-	}
-	for i in 1..=20 {
-		if let Ok(sound) = Sound::new(&format!("./resources/se/cleardrop{}.wav", i)) {
-			soundmap.insert(SoundEffect::ClearDrop(i), sound);
+type SoundMap = HashMap<SoundEffect, Buffered<Decoder<BufReader<Cursor<Vec<u8>>>>>>;
+
+fn soundmap_init() -> SoundMap {
+	let mut soundmap: SoundMap = HashMap::new();
+	macro_rules! load_se {
+		($prefix: expr, $mapped_se: expr) => {
+			// TODO: windows build
+			let sound = include_bytes!(concat!("se/", $prefix, ".wav")).to_vec();
+			soundmap.insert($mapped_se,
+				Decoder::new(BufReader::new(Cursor::new(sound)))
+				.unwrap()
+				.buffered()
+			);
 		}
-		if let Ok(sound) = Sound::new(&format!("./resources/se/attackdrop{}.wav", i)) {
-			soundmap.insert(SoundEffect::AttackDrop(i), sound);
-		}
 	}
+	load_se!("plaindrop", SoundEffect::PlainDrop);
+	load_se!("cleardrop", SoundEffect::ClearDrop);
+	load_se!("attackdrop", SoundEffect::AttackDrop);
 	soundmap
 }
 
+// should not drop stream or no sound
+#[allow(dead_code)]
 pub struct SoundManager {
-	soundmap: HashMap<SoundEffect, Sound>,
+	sink: Sink,
+	stream: OutputStream,
+	soundmap: SoundMap,
 }
 
 impl Default for SoundManager {
 	fn default() -> SoundManager {
+		let (stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+		let sink = Sink::try_new(&stream_handle).unwrap();
 		SoundManager {
+			sink, 
+			stream,
 			soundmap: soundmap_init(),
 		}
 	}
 }
 
 impl SoundManager {
-	pub fn play(&mut self, se: SoundEffect) {
-		if let Some(snd2) = self.soundmap.get_mut(&se) {
-			snd2.play();
+	pub fn play(&self, se: SoundEffect) {
+		if let Some(buf) = self.soundmap.get(&se) {
+			self.sink.append(buf.clone());
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_sound() {
+		let sm: SoundManager = Default::default();
+		sm.play(SoundEffect::ClearDrop);
+		std::thread::sleep(std::time::Duration::from_millis(200));
 	}
 }

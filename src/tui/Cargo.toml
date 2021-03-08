@@ -11,7 +11,7 @@ path = "src/client.rs"
 [dependencies]
 termion = "*"
 lazy_static = "*"
-ears = "*"
+rodio = "*"
 
 [dependencies.tttz-libclient]
 path = "../libclient"

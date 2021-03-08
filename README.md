@@ -12,23 +12,29 @@
 
 * Replay automatically saved(working)
 
-* A greedy search AI, also support strategy mode(moves in turn)
+* Dummy AI, support strategy mode(moves in turn)
 
 ## Special Rules
 
-* SRS kick table(with 180 degree kick), with tspin, b2b and pc implemented.
+* Special keys: move left/right until fail(=long press in other implements)
+
+	Because terminals don't have keydown event.
+
+* SRS kick table(with 180 degree kick)
 
 * Garbage in same attack has a 30%(or 40%) probability to shift
 
-* Event-driven(instead of realtime, details below)
+### Speical attack table
 
-### Event-driven features
+* All twists are rewarded(with different weight)
+
+* Combos, b2b, pc bonus are calculated as multipliers.
+
+### Event-driven(instead of realtime)
 
 * Zero delay, operations are applied as fast as possible.
 
 * No gravity(blocks can move down), infinite hold swap
-
-	This means the board won't change when there's no input.
 
 * Pending Attack won't apply until
 

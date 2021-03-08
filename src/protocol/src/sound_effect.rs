@@ -11,8 +11,8 @@ pub enum SoundEffect {
 	SoftDrop,
 	Hold,
 	PlainDrop,
-	ClearDrop(u32), // combo
-	AttackDrop(u32), // amount
+	ClearDrop, // combo
+	AttackDrop, // amount
 	PerfectClear,
 	GarbageOverflow,
 	AttackReceived,

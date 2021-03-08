@@ -428,9 +428,9 @@ impl Board {
 			self.display.combo = 20;
 		}
 		if self.attack_pool > 0 {
-			self.last_se = SoundEffect::AttackDrop(self.attack_pool);
+			self.last_se = SoundEffect::AttackDrop;
 		} else {
-			self.last_se = SoundEffect::ClearDrop(self.display.combo);
+			self.last_se = SoundEffect::ClearDrop;
 		} // pc will overwrite this
 		if tspin == 2 || line_count == 4 {
 			self.display.b2b = true;

@@ -1,6 +1,9 @@
+- use anyhow to handle error
+- new attack table
 - better sound effects
 - cmd history
 - id system(for replay)
 - load and play replay file
 - replay statistic
+- optimize board code
 - Client computation for quick SE and graphic
