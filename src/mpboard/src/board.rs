@@ -495,6 +495,8 @@ impl Board {
 	pub fn press_down(&mut self) -> bool {
 		if !self.soft_drop() {
 			return self.hard_drop();
+		} else {
+			self.last_se = SoundEffect::SoftDrop;
 		}
 		false
 	}

@@ -64,9 +64,11 @@ fn soundmap_init() -> SoundMap {
 			);
 		}
 	}
+	load_se!("soft_drop", SoundEffect::SoftDrop);
 	load_se!("plain_drop", SoundEffect::PlainDrop);
 	load_se!("clear_drop", SoundEffect::ClearDrop);
 	load_se!("attack_drop", SoundEffect::AttackDrop);
+	load_se!("attack_drop_2", SoundEffect::AttackDrop2);
 	load_se!("rotate_fail", SoundEffect::Rotate(0));
 	load_se!("rotate_regular", SoundEffect::Rotate(1));
 	load_se!("rotate_twist", SoundEffect::Rotate(2));

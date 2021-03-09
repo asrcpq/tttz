@@ -14,15 +14,21 @@ fn main() {
 		}
 	}
 
-	let sample = &make_samples(0.1, 44_100, |t|
-		2.0 * (t * (100. * (80. * t).sin()) * 2.0 * 3.14159).sin()
+	let sample = make_samples(0.05, 44_100, |t|
+		1.5 * square_wave(10550.)(t) * (
+			if t > 0.01 {
+				1. - (t - 0.01) * 20.
+			} else {
+				100. * t
+			}
+		)
 	);
 	let pass = bandpass_filter(
-		cutoff_from_frequency(1000.0, 44_100),
-		cutoff_from_frequency(3000.0, 44_100),
+		cutoff_from_frequency(400.0, 44_100),
+		cutoff_from_frequency(700.0, 44_100),
 		0.01
 	);
-	write_sound!("clear_drop", &convolve(&pass, &sample));
+	write_sound!("rotate_regular", &convolve(&pass, &sample));
 
 	write_sound!("rotate_fail", &make_samples(0.1, 44_100, |t|
 		0.5 * ((
@@ -42,7 +48,7 @@ fn main() {
 		cutoff_from_frequency(200.0, 44_100),
 		0.01
 	);
-	write_sound!("plain_drop", &convolve(&pass, &sample));
+	write_sound!("soft_drop", &convolve(&pass, &sample));
 
 	let sample = make_samples(0.05, 44_100, |t|
 		1.2 * square_wave(10550.)(t) * (
@@ -58,7 +64,7 @@ fn main() {
 		cutoff_from_frequency(4000.0, 44_100),
 		0.01
 	);
-	write_sound!("rotate_regular", &convolve(&pass, &sample));
+	write_sound!("clear_drop", &convolve(&pass, &sample));
 
 	write_sound!("attack_drop", &make_samples(0.1, 44_100, |t|
 		if t > 0.05 {
@@ -67,4 +73,24 @@ fn main() {
 			0.3 * sawtooth_wave(3200.)(t) * (1. - t * 10.)
 		}
 	));
+
+	write_sound!("attack_drop_2", &make_samples(0.15, 44_100, |t|
+		if t < 0.05 {
+			0.3 * sawtooth_wave(3200.)(t) * (1. - t * 20.)
+		} else if t < 0.1 {
+			0.3 * sawtooth_wave(3600.)(t) * (1.5 - t * 10.)
+		} else {
+			0.3 * sawtooth_wave(3900.)(t) * (2. - t * 10.)
+		}
+	));
+
+	let sample = &make_samples(0.1, 44_100, |t|
+		2.0 * (t * (100. * (80. * t).sin()) * 2.0 * 3.14159).sin()
+	);
+	let pass = bandpass_filter(
+		cutoff_from_frequency(1000.0, 44_100),
+		cutoff_from_frequency(3000.0, 44_100),
+		0.01
+	);
+	write_sound!("plain_drop", &convolve(&pass, &sample));
 }
