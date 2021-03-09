@@ -7,9 +7,11 @@ use crate::sound_manager::SoundManager;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
+extern crate tttz_mpboard; // local simulation
+use tttz_mpboard::board::Board;
 extern crate tttz_protocol;
 use tttz_protocol::Display;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg};
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg};
 
 use std::collections::HashMap;
 
@@ -22,6 +24,7 @@ pub struct ClientSession {
 	mode: i32,
 	textbuffer: String,
 	last_display: HashMap<i32, Display>,
+	board: Board, // local simulate
 }
 
 impl ClientSession {
@@ -37,6 +40,7 @@ impl ClientSession {
 			mode: 0,
 			textbuffer: String::new(),
 			last_display: HashMap::new(),
+			board: Board::new(id),
 		}
 	}
 
@@ -135,6 +139,7 @@ impl ClientSession {
 		match msg {
 			ServerMsg::Terminate => return true,
 			ServerMsg::Start(id) => {
+				self.board = Board::new(self.id);
 				self.setpanel(0, self.id);
 				self.setpanel(1, id);
 				self.modeswitch(1);
@@ -152,10 +157,7 @@ impl ClientSession {
 			}
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
-			ServerMsg::SoundEffect(se) => {
-				self.sound_manager.play(se);
-				return false;
-			}
+			ServerMsg::SoundEffect(_) => {}
 			_ => {
 				self.show_msg("Unknown message received!")
 			}
@@ -216,22 +218,25 @@ impl ClientSession {
 			}
 			_ => {
 				if self.state == 2 {
+					let key_event = match byte {
+						b'h' => KeyType::Left,
+						b'H' => KeyType::LLeft,
+						b'l' => KeyType::Right,
+						b'L' => KeyType::RRight,
+						b' ' => KeyType::Hold,
+						b'j' => KeyType::SoftDrop,
+						b'k' => KeyType::HardDrop,
+						b'J' => KeyType::Down1,
+						b'K' => KeyType::Down5,
+						b'x' => KeyType::Rotate,
+						b'z' => KeyType::RotateReverse,
+						b'd' => KeyType::RotateFlip,
+						_ => return false,
+					};
+					self.board.handle_msg(BoardMsg::KeyEvent(key_event.clone()));
+					self.sound_manager.play(&self.board.last_se);
 					self.client_socket
-						.send(ClientMsg::KeyEvent(match byte {
-							b'h' => KeyType::Left,
-							b'H' => KeyType::LLeft,
-							b'l' => KeyType::Right,
-							b'L' => KeyType::RRight,
-							b' ' => KeyType::Hold,
-							b'j' => KeyType::SoftDrop,
-							b'k' => KeyType::HardDrop,
-							b'J' => KeyType::Down1,
-							b'K' => KeyType::Down5,
-							b'x' => KeyType::Rotate,
-							b'z' => KeyType::RotateReverse,
-							b'd' => KeyType::RotateFlip,
-							_ => return false,
-						}))
+						.send(ClientMsg::KeyEvent(key_event.clone()))
 						.unwrap();
 				}
 			}

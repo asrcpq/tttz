@@ -423,7 +423,11 @@ impl Board {
 		self.attack_pool = (base_atk * twist_mult * total_mult).round() as u32;
 		eprintln!("SERVER: T: {} M: {} A: {}", tspin, total_mult, self.attack_pool);
 		if self.attack_pool > 0 {
-			self.last_se = SoundEffect::AttackDrop;
+			if self.display.b2b_multiplier > 0.0 {
+				self.last_se = SoundEffect::AttackDrop;
+			} else {
+				self.last_se = SoundEffect::AttackDrop2;
+			}
 		} else {
 			self.last_se = SoundEffect::ClearDrop;
 		} // pc will overwrite this
@@ -521,10 +525,8 @@ impl Board {
 	}
 
 	pub fn update_display(&mut self) {
-		self.display.shadow_pos = self.shadow_block.getpos();
-		self.display.shadow_code = self.shadow_block.code;
-		self.display.tmp_pos = self.tmp_block.getpos();
-		self.display.tmp_code = self.tmp_block.code;
+		self.display.shadow_block = self.shadow_block.compress();
+		self.display.tmp_block = self.tmp_block.compress();
 		for i in 0..6 {
 			self.display.bag_preview[i] = self.rg.bag[i];
 		}

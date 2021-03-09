@@ -2,6 +2,7 @@ extern crate termion;
 use std::io::Write;
 
 extern crate tttz_mpboard;
+use tttz_mpboard::block::Block;
 use tttz_mpboard::srs_data::*;
 extern crate tttz_protocol;
 use tttz_protocol::Display;
@@ -248,29 +249,33 @@ impl ClientDisplay {
 				);
 			}
 		}
+		let shadow_block = Block::decompress(&display.shadow_block);
+		let tmp_block = Block::decompress(&display.tmp_block);
+		let shadow_pos = shadow_block.getpos();
 		// show shadow_block first
 		print!("[0m");
 		for i in 0..4 {
-			let x = display.shadow_pos[i * 2] as u16;
-			let y = display.shadow_pos[i * 2 + 1] as u16;
+			let x = shadow_pos[i * 2] as u16;
+			let y = shadow_pos[i * 2 + 1] as u16;
 			if y >= 20 {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + y - 20,
-					display.tmp_code,
+					tmp_block.code,
 					1,
 				);
 			}
 		}
 		print!("[30m");
+		let tmp_pos = tmp_block.getpos();
 		for i in 0..4 {
-			let x = display.tmp_pos[i * 2] as u16;
-			let y = display.tmp_pos[i * 2 + 1] as u16;
+			let x = tmp_pos[i * 2] as u16;
+			let y = tmp_pos[i * 2 + 1] as u16;
 			if y >= 20 {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + y - 20,
-					display.tmp_code,
+					tmp_block.code,
 					0,
 				);
 			}

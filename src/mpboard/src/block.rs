@@ -27,6 +27,23 @@ impl Block {
 		self.pos.1 += SRP[idx + 1];
 	}
 
+	pub fn compress(&self) -> [u8; 4] {
+		let mut ret = [0u8; 4];
+		ret[0] = self.pos.0 as u8;
+		ret[1] = self.pos.1 as u8;
+		ret[2] = self.code;
+		ret[3] = self.rotation as u8;
+		ret
+	}
+
+	pub fn decompress(data: &[u8]) -> Self {
+		Block {
+			code: data[2],
+			pos: (data[0] as i32, data[1] as i32),
+			rotation: data[3] as i8,
+		}
+	}
+
 	pub fn new(code: u8) -> Block {
 		Block {
 			code,

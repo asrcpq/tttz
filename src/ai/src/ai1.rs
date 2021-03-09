@@ -51,7 +51,7 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 	let mut best_rotation = 0;
 	let mut best_posx = 0;
 	let mut best_id = 0;
-	for (id, option_code) in [display.tmp_code, display.hold].iter().enumerate()
+	for (id, option_code) in [display.tmp_block[2], display.hold].iter().enumerate()
 	{
 		for rot in 0..4 {
 			let mut dx = 0;
@@ -125,7 +125,7 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 	}
 
 	let best_code = if best_id == 0 {
-		display.tmp_code
+		display.tmp_block[2]
 	} else {
 		// best solution is from the hold block
 		ret.push_back(KeyType::Hold);

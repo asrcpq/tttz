@@ -7,10 +7,8 @@ use std::collections::VecDeque;
 pub struct Display {
 	pub id: i32,
 	pub color: Vec<u8>,
-	pub shadow_pos: [u8; 8],
-	pub shadow_code: u8,
-	pub tmp_pos: [u8; 8],
-	pub tmp_code: u8,
+	pub shadow_block: [u8; 4], // posx, posy, code, rotation
+	pub tmp_block: [u8; 4],
 	pub hold: u8,
 	pub bag_preview: [u8; 6],
 	pub combo_multiplier: f32,
@@ -23,10 +21,8 @@ impl Display {
 		Display {
 			id,
 			color: vec![7; 10 * 40],
-			shadow_pos: [0; 8],
-			shadow_code: 0,
-			tmp_pos: [0; 8],
-			tmp_code: 0,
+			shadow_block: [0; 4],
+			tmp_block: [0; 4],
 			hold: 7,
 			bag_preview: [0; 6],
 			combo_multiplier: 0.0,

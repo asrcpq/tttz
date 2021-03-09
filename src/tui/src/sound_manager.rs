@@ -99,8 +99,8 @@ impl Default for SoundManager {
 }
 
 impl SoundManager {
-	pub fn play(&mut self, se: SoundEffect) {
-		if let Some(buf) = self.soundmap.get(&se) {
+	pub fn play(&mut self, se: &SoundEffect) {
+		if let Some(buf) = self.soundmap.get(se) {
 			self.send.send(buf.clone()).unwrap();
 		}
 	}
