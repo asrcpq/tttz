@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
+pub const BOARD_WIDTH: usize = 10;
+
 // interface between server and client
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Display {
 	pub id: i32,
-	pub color: Vec<u8>,
+	pub color: Vec<[u8; BOARD_WIDTH]>,
 	pub shadow_block: [u8; 4], // posx, posy, code, rotation
 	pub tmp_block: [u8; 4],
 	pub hold: u8,
@@ -19,7 +21,7 @@ impl Display {
 	pub fn new(id: i32) -> Display {
 		Display {
 			id,
-			color: vec![7; 10 * 40],
+			color: vec![[7; BOARD_WIDTH]; 40],
 			shadow_block: [0; 4],
 			tmp_block: [0; 4],
 			hold: 7,

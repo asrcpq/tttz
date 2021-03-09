@@ -1,8 +1,6 @@
-- use anyhow to handle error
 - complete sound effects
 - cmd history
 - id system(for replay)
 - load and play replay file
 - replay statistic
-- optimize board code
 - Client computation for graphic

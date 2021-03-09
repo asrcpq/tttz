@@ -19,18 +19,18 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 
 	// calc height
 	let mut highest_hole = 40;
-	let mut highest_hole_x = -1;
+	let mut highest_hole_x: i32 = -1;
 	for i in 0..10 {
-		let mut j: i32 = 0;
+		let mut j: usize = 0;
 		let mut state = 0;
 		loop {
-			if display.color[(i + j * 10) as usize] == 7 {
+			if display.color[j][i] == 7 {
 				if state == 1 {
 					break;
 				}
 			} else if state == 0 {
 				state = 1;
-				heights[i as usize] = j as u8 - 1;
+				heights[i as usize] = j as u8;
 			}
 			j += 1;
 			if j == 40 {
@@ -39,7 +39,7 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 		}
 		if j > highest_hole {
 			highest_hole = j;
-			highest_hole_x = i;
+			highest_hole_x = i as i32;
 		}
 	}
 

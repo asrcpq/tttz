@@ -238,7 +238,7 @@ impl ClientDisplay {
 				self.blockp(
 					offsetx + i * 2,
 					offsety + j - 20,
-					display.color[i as usize + j as usize * 10],
+					display.color[j as usize][i as usize],
 					0,
 				);
 			}

@@ -50,7 +50,7 @@ impl Board {
 		if !self.is_pos_inside(pos) {
 			return false;
 		}
-		self.display.color[pos.0 as usize + pos.1 as usize * 10] == 7
+		self.display.color[pos.1 as usize][pos.0 as usize] == 7
 	}
 
 	fn movedown1_nohard(&mut self) -> bool {
@@ -219,8 +219,8 @@ impl Board {
 		let mut elims = Vec::new();
 		for each_ln in ln.iter() {
 			let mut flag = true;
-			for i in each_ln * 10..(each_ln + 1) * 10 {
-				if self.display.color[i] == 7 {
+			for x in 0..10 {
+				if self.display.color[*each_ln][x] == 7 {
 					flag = false;
 				}
 			}
@@ -251,10 +251,7 @@ impl Board {
 			if movedown == 0 {
 				continue;
 			}
-			for j in 0..10 {
-				self.display.color[(i + movedown) * 10 + j] =
-					self.display.color[i * 10 + j];
-			}
+			self.display.color[i + movedown] = self.display.color[i];
 		}
 		movedown as u32
 	}
@@ -301,7 +298,7 @@ impl Board {
 				self.tmp_block.pos.0 + TWIST_MINI_CHECK[offset + i * 2];
 			let check_y =
 				self.tmp_block.pos.1 + TWIST_MINI_CHECK[offset + i * 2 + 1];
-			if self.display.color[(check_x + check_y * 10) as usize] == 7 {
+			if self.display.color[check_y as usize][check_x as usize] == 7 {
 				return 1;
 			}
 		}
@@ -341,7 +338,7 @@ impl Board {
 			let mut count = match self.display.garbages.pop_front() {
 				Some(x) => x,
 				None => break,
-			};
+			} as usize;
 			self.height -= count as i32;
 			let mut slot = self.rg.rng.gen_range(0..10);
 			// assert!(count != 0);
@@ -349,28 +346,28 @@ impl Board {
 				count = 40;
 			}
 			ret += count;
-			for y in 0..(40 - count as usize) {
+			for y in 0..(40 - count) {
 				for x in 0..10 {
-					self.display.color[y * 10 + x] =
-						self.display.color[(y + count as usize) * 10 + x];
+					self.display.color[y][x] =
+						self.display.color[y + count][x];
 				}
 			}
-			for y in 0..(count as usize) {
+			for y in 0..count {
 				let same = self.rg.rng.gen::<f32>();
 				if same >= SAME_LINE {
 					slot = self.rg.rng.gen_range(0..10);
 				}
 				let yy = 39 - y;
 				for x in 0..10 {
-					self.display.color[yy * 10 + x] = 2; // L = white
+					self.display.color[yy][x] = 2; // L = white
 				}
-				self.display.color[yy * 10 + slot] = 7;
+				self.display.color[yy][slot] = 7;
 				if !self.tmp_block.test(self) {
 					self.tmp_block.pos.1 -= 1;
 				}
 			}
 		}
-		ret
+		ret as u32
 	}
 
 	// should only called when attack_pool > 0
@@ -454,7 +451,7 @@ impl Board {
 			if flag {
 				lines_tocheck.push(py);
 			}
-			self.display.color[px + py * 10] = self.tmp_block.code;
+			self.display.color[py][px] = self.tmp_block.code;
 		}
 
 		let line_count = self.checkline(lines_tocheck);
