@@ -20,6 +20,7 @@ pub struct ClientSession {
 	id: i32,
 	mode: i32,
 	textbuffer: String,
+	bytebuf: Vec<u8>,
 	last_board: HashMap<i32, Board>,
 }
 
@@ -35,6 +36,7 @@ impl ClientSession {
 			id,
 			mode: 0,
 			textbuffer: String::new(),
+			bytebuf: Vec::new(),
 			last_board: HashMap::new(),
 		}
 	}
@@ -46,6 +48,9 @@ impl ClientSession {
 			self.print_prompt();
 		} else {
 			self.client_display.activate();
+			for (_id, board) in &self.last_board {
+				self.client_display.disp_by_id(&board.display);
+			}
 		}
 	}
 
@@ -158,32 +163,53 @@ impl ClientSession {
 	fn byte_handle(&mut self, byte: u8) -> bool {
 		// mode == 0
 		if self.mode == 0 {
-			if byte == 23 {
-				while let Some(ch) = self.textbuffer.pop() {
-					print!("{} {}", 8 as char, 8 as char);
-					if ch.is_whitespace() {
-						break;
+			if !self.bytebuf.is_empty() {
+				match byte {
+					b'[' => { return false },
+					_ => {},
+				}
+				self.bytebuf.drain(..);
+				return false
+			}
+			match byte {
+				b'' => { // esc
+					self.bytebuf.push(byte);
+				}
+				23 => { // ctrl-w
+					while let Some(ch) = self.textbuffer.pop() {
+						print!("{} {}", 8 as char, 8 as char);
+						if ch.is_whitespace() {
+							break;
+						}
 					}
 				}
-			} else if byte == 3 {
-				self.textbuffer = String::new();
-			} else if byte == 4 {
-				self.textbuffer = String::new();
-				self.modeswitch(1);
-			} else if byte == 127 {
-				self.textbuffer.pop();
-				print!("{} {}", 8 as char, 8 as char);
-			} else if byte == b'\r' {
-				print!("\n\r");
-				if self.proc_line(&self.textbuffer.clone()) {
-					return true;
+				3 => { // ctrl-c
+					self.textbuffer = String::new();
+				} 
+				4 => { // eof
+					self.textbuffer = String::new();
+					self.modeswitch(1);
 				}
-				self.textbuffer = String::new();
-				self.print_prompt();
-			} else {
-				let byte = byte as char;
-				self.textbuffer.push(byte);
-				print!("{}", byte);
+				127 => { // bs
+					self.textbuffer.pop();
+					print!("{} {}", 8 as char, 8 as char);
+				}
+				b'\r' => { // carriage return
+					print!("\n\r");
+					if self.proc_line(&self.textbuffer.clone()) {
+						return true;
+					}
+					self.textbuffer = String::new();
+					// when proc_line switch mode, prompt should not be printed
+					if self.mode == 0 {
+						self.print_prompt();
+					}
+				} 
+				byte => {
+					let byte = byte as char;
+					self.textbuffer.push(byte);
+					print!("{}", byte);
+				}
 			}
 			return false;
 		}
@@ -244,7 +270,9 @@ impl ClientSession {
 				ServerMsg::Display(display) => {
 					let id = display.id;
 					if let Some(mut board) = self.last_board.remove(&id) {
-						self.client_display.disp_by_id(&display);
+						if self.mode == 1 {
+							self.client_display.disp_by_id(&display);
+						}
 						board.tmp_block = Block::decompress(&display.tmp_block);
 						board.shadow_block = Block::decompress(&display.shadow_block);
 						board.rg.bag = display.bag_preview.iter().map(|x| *x).collect();

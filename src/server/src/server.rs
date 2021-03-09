@@ -253,6 +253,10 @@ impl Server {
 					self.client_manager.pair_attempt(&mut client);
 				}
 				ClientMsg::PlaySingle => {
+					// terminate current game
+					if client.state == 2 {
+						self.die(&mut client, true);
+					}
 					client.init_board();
 					client.state = 2;
 					client.attack_target = 0;
