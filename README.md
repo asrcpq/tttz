@@ -8,7 +8,7 @@
 
 ## Features
 
-* TUI, cross-platform(maybe)
+* TUI with sound, cross-platform(maybe)
 
 * Replay automatically saved(working)
 
@@ -16,9 +16,7 @@
 
 ## Special Rules
 
-* Special keys: move left/right until fail(=long press in other implements)
-
-	Because terminals don't have keydown event.
+* Special keys: move left/right until fail(=long press in gui)
 
 * SRS kick table(with 180 degree kick)
 
@@ -61,7 +59,7 @@
 
 * Zero delay, operations are applied as fast as possible.
 
-* No gravity(blocks can move down), infinite hold swap
+* No gravity, infinite hold swap at any time
 
 * Pending Attack won't apply until
 
@@ -86,10 +84,6 @@
 * k: hard drop
 
 * j: soft drop
-
-* K: move down 5
-
-* J: move down 1
 
 * Space: hold
 

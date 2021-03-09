@@ -53,32 +53,6 @@ impl Board {
 		self.display.color[pos.1 as usize][pos.0 as usize] == 7
 	}
 
-	fn movedown1_nohard(&mut self) -> bool {
-		self.tmp_block.pos.1 += 1;
-		if !self.tmp_block.test(self) {
-			self.tmp_block.pos.1 -= 1;
-			return false;
-		}
-		true
-	}
-
-	fn slowdown(&mut self, dy: u8) {
-		let first_visible = 21
-			- BLOCK_HEIGHT[(self.tmp_block.code * 4
-				+ self.tmp_block.rotation as u8) as usize];
-		if self.tmp_block.pos.1 < first_visible {
-			for _ in self.tmp_block.pos.1..first_visible {
-				self.movedown1_nohard();
-			}
-		} else {
-			for _ in 0..dy {
-				if !self.movedown1_nohard() {
-					break;
-				}
-			}
-		}
-	}
-
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		self.replay.push_operation(board_msg.clone());
@@ -109,12 +83,6 @@ impl Board {
 					if self.press_down() {
 						return BoardReply::Die;
 					}
-				}
-				KeyType::Down1 => {
-					self.slowdown(1);
-				}
-				KeyType::Down5 => {
-					self.slowdown(5);
 				}
 				KeyType::RotateReverse => {
 					self.rotate(-1);

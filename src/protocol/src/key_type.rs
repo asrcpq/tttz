@@ -6,8 +6,6 @@ pub enum KeyType {
 	Right,
 	LLeft,
 	RRight,
-	Down1,
-	Down5,
 	SoftDrop,
 	HardDrop,
 	Hold,

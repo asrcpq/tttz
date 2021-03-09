@@ -241,8 +241,6 @@ impl ClientSession {
 						b' ' => KeyType::Hold,
 						b'j' => KeyType::SoftDrop,
 						b'k' => KeyType::HardDrop,
-						b'J' => KeyType::Down1,
-						b'K' => KeyType::Down5,
 						b'x' => KeyType::Rotate,
 						b'z' => KeyType::RotateReverse,
 						b'd' => KeyType::RotateFlip,

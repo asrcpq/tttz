@@ -147,6 +147,14 @@ impl Server {
 		}
 	}
 
+	fn start_single(&mut self, mut client: &mut Client) {
+		client.init_board();
+		client.state = 2;
+		client.attack_target = 0;
+		client.send_msg(ServerMsg::Start(0));
+		self.post_operation(&mut client);
+	}
+
 	pub fn main_loop(&mut self) {
 		loop {
 			let (mut client, msg) = match self.fetch_message() {
@@ -219,7 +227,9 @@ impl Server {
 					}
 				}
 				ClientMsg::Restart => {
-					if let Some(opponent) =
+					if client.attack_target == 0 {
+						self.start_single(&mut client);
+					} else if let Some(opponent) =
 						self.client_manager.view_by_id(client.attack_target)
 					{
 						if opponent.state == 1 {
@@ -257,11 +267,7 @@ impl Server {
 					if client.state == 2 {
 						self.die(&mut client, true);
 					}
-					client.init_board();
-					client.state = 2;
-					client.attack_target = 0;
-					client.send_msg(ServerMsg::Start(0));
-					self.post_operation(&mut client);
+					self.start_single(&mut client);
 				}
 				ClientMsg::KeyEvent(key_type) => {
 					let dieflag = client.process_key(key_type);

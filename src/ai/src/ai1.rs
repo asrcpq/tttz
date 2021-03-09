@@ -42,7 +42,6 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 			highest_hole_x = i as i32;
 		}
 	}
-	eprintln!("{:?} {} {}", heights, highest_hole, highest_hole_x);
 
 	let mut best_score: f32 = 0.0;
 	let mut best_rotation = 0;
