@@ -24,11 +24,11 @@
 
 * Garbage in same attack has a 30%(or 40%) probability to shift
 
-### Speical attack table(working)
+### Special attack table(working)
 
 * All twists are rewarded(with different weight)
 
-* Combos, b2b, pc bonus are calculated as multipliers.
+* Combo and b2b bonus are calculated as multipliers.
 
 ### Event-driven(instead of realtime)
 

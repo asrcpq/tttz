@@ -296,7 +296,7 @@ impl Board {
 		if self.tmp_block.code == 0 {
 			return 1;
 		}
-		let offset = self.tmp_block.rotation as usize * 4;
+		let offset = self.tmp_block.code as usize * 16 + self.tmp_block.rotation as usize * 4;
 		for i in 0..2 {
 			let check_x =
 				self.tmp_block.pos.0 + TWIST_MINI_CHECK[offset + i * 2];
@@ -420,7 +420,8 @@ impl Board {
 		} else {
 			self.display.b2b_multiplier = 0.0;
 		}
-		self.attack_pool = (base_atk * twist_mult * total_mult) as u32;
+		self.attack_pool = (base_atk * twist_mult * total_mult).round() as u32;
+		eprintln!("SERVER: T: {} M: {} A: {}", tspin, total_mult, self.attack_pool);
 		if self.attack_pool > 0 {
 			self.last_se = SoundEffect::AttackDrop;
 		} else {
@@ -438,9 +439,6 @@ impl Board {
 		let mut lines_tocheck = Vec::new();
 		// check tspin before setting color
 		let tspin = self.test_twist();
-		if tspin > 0 {
-			eprintln!("{} just did a {}-twist", self.display.id, tspin);
-		}
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;

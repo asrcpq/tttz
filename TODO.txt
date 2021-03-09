@@ -1,6 +1,5 @@
 - use anyhow to handle error
-- new attack table
-- better sound effects
+- complete sound effects
 - cmd history
 - id system(for replay)
 - load and play replay file

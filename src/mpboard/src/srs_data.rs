@@ -2,7 +2,7 @@ extern crate lazy_static;
 
 pub const ATTACK_B2B_INC: f32 = 0.5;
 pub const ATTACK_COMBO_INC: f32 = 0.2;
-pub const ATTACK_BASE: [f32; 4] = [0.5, 1.0, 2.0, 4.0];
+pub const ATTACK_BASE: [f32; 4] = [0.4, 1.0, 2.0, 4.0];
 pub const ATTACK_BASE_TWIST_MULTIPLIER: [f32; 14] = [
 	1.0, 1.5, 1.5, 1.0, 2.0, 2.0, 2.0, // mini
 	1.5, 2.0, 2.0, 1.0, 3.0, 3.0, 3.0, // regular
