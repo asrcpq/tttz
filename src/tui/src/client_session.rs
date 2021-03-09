@@ -1,19 +1,16 @@
-extern crate termion;
-use std::io::{stdout, Read, Write};
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
+
+use tttz_mpboard::Board;
+use tttz_mpboard::Block;
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg, SoundEffect};
 
 use crate::sound_manager::SoundManager;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 
-extern crate tttz_mpboard; // local simulation
-use tttz_mpboard::board::Board;
-use tttz_mpboard::block::Block;
-extern crate tttz_protocol;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg, SoundEffect};
-
 use std::collections::HashMap;
+use std::io::{stdout, Read, Write};
 
 pub struct ClientSession {
 	sound_manager: SoundManager,

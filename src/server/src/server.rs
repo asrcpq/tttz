@@ -1,10 +1,9 @@
-extern crate lazy_static;
-extern crate tttz_ai;
-use crate::client::Client;
-use crate::client_manager::ClientManager;
-use std::net::UdpSocket;
 use tttz_ai::ai1;
 use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
+use crate::client::Client;
+use crate::client_manager::ClientManager;
+
+use std::net::UdpSocket;
 
 lazy_static::lazy_static! {
 	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();

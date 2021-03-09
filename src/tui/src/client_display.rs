@@ -1,13 +1,9 @@
-extern crate termion;
-use std::io::Write;
-
-extern crate tttz_mpboard;
-use tttz_mpboard::block::Block;
+use tttz_mpboard::Block;
 use tttz_mpboard::srs_data::*;
-extern crate tttz_protocol;
 use tttz_protocol::Display;
 
 use std::collections::HashMap;
+use std::io::Write;
 
 const DRAW_SIZE: (u16, u16) = (63, 24);
 

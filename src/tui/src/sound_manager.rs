@@ -1,7 +1,6 @@
-extern crate rodio;
 use rodio::source::Buffered;
 use rodio::{Decoder, Sink, Source};
-extern crate tttz_protocol;
+
 use tttz_protocol::SoundEffect;
 
 use std::collections::HashMap;

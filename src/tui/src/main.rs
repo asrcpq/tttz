@@ -1,4 +1,3 @@
-extern crate tttz_libclient;
 use tttz_libclient::client_socket;
 
 mod client_session;

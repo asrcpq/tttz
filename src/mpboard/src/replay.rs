@@ -1,10 +1,5 @@
-extern crate directories;
 use directories::ProjectDirs;
-
-extern crate bincode;
-extern crate serde;
 use serde::{Serialize, Deserialize};
-extern crate tttz_protocol;
 use tttz_protocol::BoardMsg;
 
 use std::time::{SystemTime, UNIX_EPOCH};

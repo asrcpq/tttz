@@ -5,4 +5,4 @@
 - load and play replay file
 - replay statistic
 - optimize board code
-- Client computation for quick SE and graphic
+- Client computation for graphic

@@ -1,9 +1,8 @@
-extern crate tttz_protocol;
-use tttz_protocol::ServerMsg;
-
-extern crate bimap;
-use crate::client::Client;
 use bimap::BiMap;
+
+use tttz_protocol::ServerMsg;
+use crate::client::Client;
+
 use std::collections::HashMap;
 use std::net::SocketAddr;
 

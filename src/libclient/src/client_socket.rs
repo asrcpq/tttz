@@ -1,4 +1,3 @@
-extern crate tttz_protocol;
 use std::net::UdpSocket;
 use std::net::{SocketAddr, ToSocketAddrs};
 use tttz_protocol::{ClientMsg, ServerMsg};

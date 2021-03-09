@@ -1,4 +1,3 @@
-extern crate synthrs;
 
 use synthrs::synthesizer::{ make_samples, quantize_samples };
 use synthrs::filter::*;

@@ -1,5 +1,3 @@
-extern crate bincode;
-extern crate serde;
 use serde::{Deserialize, Serialize};
 
 use crate::AiType;

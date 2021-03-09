@@ -1,4 +1,3 @@
-extern crate lazy_static;
 
 pub const ATTACK_B2B_INC: f32 = 0.5;
 pub const ATTACK_COMBO_INC: f32 = 0.2;

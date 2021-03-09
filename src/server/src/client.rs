@@ -1,11 +1,9 @@
-extern crate tttz_mpboard;
-extern crate tttz_protocol;
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::SocketAddr;
-use tttz_mpboard::board::Board;
+use tttz_mpboard::Board;
 use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg, SoundEffect};
 
 pub struct Client {
