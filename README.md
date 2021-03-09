@@ -115,6 +115,6 @@
 
 * `pair` start pairing
 
-* \<Enter\> exit cmd mode
+* \<Enter\> or \<EOF\> exit cmd mode
 
 * `quit`

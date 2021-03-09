@@ -1,12 +1,12 @@
 #!/bin/sh
 trap exittrap EXIT
 exittrap() {
-	pkill mypuzzle
+	pkill tttz
 }
-cargo run --release --bin tttz-server 2>/dev/null &
+cargo run --release --bin tttz-server 2>server.log &
 sleep 1
-cargo run --release --bin tttz-client \
-execute "aispawn" \
+cargo run --release --bin tttz-tui \
+execute "spawnai strategy" \
 execute "sleep 1000" \
 execute "request 2" \
-2>/dev/null
+2>client.log

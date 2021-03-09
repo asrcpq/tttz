@@ -1,3 +1,4 @@
+- better AI
 - complete sound effects
 - cmd history
 - id system(for replay)
