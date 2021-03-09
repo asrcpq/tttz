@@ -313,11 +313,9 @@ impl Board {
 		let mut flag = false;
 		self.generate_garbage(max);
 		if !self.calc_shadow() {
-			eprintln!("SERVER: garbage pop shadow death");
 			flag = true;
 		}
 		if self.height < 0 {
-			eprintln!("SERVER: Height overflow death {}", self.height);
 			flag = true;
 		}
 		self.update_display();
@@ -346,10 +344,7 @@ impl Board {
 			};
 			self.height -= count as i32;
 			let mut slot = self.rg.rng.gen_range(0..10);
-			if count == 0 {
-				eprintln!("Bug: zero in garbage");
-				continue;
-			}
+			// assert!(count != 0);
 			if count > 40 {
 				count = 40;
 			}
@@ -420,7 +415,6 @@ impl Board {
 			self.display.b2b_multiplier = 0.0;
 		}
 		self.attack_pool = (base_atk * twist_mult * total_mult).round() as u32;
-		eprintln!("SERVER: T: {} M: {} A: {}", tspin, total_mult, self.attack_pool);
 		if self.attack_pool > 0 {
 			if self.display.b2b_multiplier == 0.0 {
 				self.last_se = SoundEffect::AttackDrop;
@@ -445,8 +439,6 @@ impl Board {
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
-			// eprintln!("{} {}", px, py);
-
 			// tmp is higher, update height
 			if py < self.height as usize {
 				self.height = py as i32;
@@ -469,9 +461,7 @@ impl Board {
 		// put attack amount into pool
 		if line_count > 0 {
 			self.height += line_count as i32;
-			if self.attack_pool != 0 {
-				eprintln!("[41mSERVER[0m: attack_pool not cleared.");
-			}
+			// assert!(self.attack_pool != 0)
 			self.calc_attack(tspin, line_count);
 		} else {
 			// plain drop: attack execution
@@ -514,10 +504,6 @@ impl Board {
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 -= 1;
 				if self.shadow_block.bottom_pos() < 20 {
-					eprintln!(
-						"SERVER: shadow_block bottom {}",
-						self.shadow_block.bottom_pos()
-					);
 					return false;
 				} else {
 					return true;

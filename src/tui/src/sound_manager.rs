@@ -50,6 +50,12 @@ impl Source for Mixer {
 	}
 }
 
+#[cfg(features = "nosound")]
+fn soundmap_init() -> SoundMap {
+	HashMap::new()
+}
+
+#[cfg(not(features = "nosound"))]
 fn soundmap_init() -> SoundMap {
 	let mut soundmap: SoundMap = HashMap::new();
 	macro_rules! load_se {
