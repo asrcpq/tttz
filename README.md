@@ -26,9 +26,36 @@
 
 ### Special attack table(working)
 
-* All twists are rewarded(with different weight)
+* All twists are rewarded(in different base attack), with mini-twists
 
-* Combo and b2b bonus are calculated as multipliers.
+* Combos are calculated as multipliers.
+
+	single combos are extremely weakened(e.g, attack always 1 for 3-14 combo)
+
+* b2b becomes twist combo multiplier(tcm)
+
+	* A plain drop will reset twist combo(tc) to 1x(if it was not 0x)
+
+	* A twist drop will increase tc
+
+	* A regular clear will reset tc to 0x
+
+* Attack Calculation
+
+	```
+	b = base_attack[cleared_lines] = [0.4, 1.0, 2.0, 4.0]
+	tb = twist_bonus[mini|regular][cleared_lines]
+	cm = 1 + combo * COMBO_INC=0.2
+	tcm = 1 + tcm * TWIST_COMBO_INC=0.5
+	atk = round(b * tb * (cm + tcm))
+	```
+
+	Value of `twist_bonus`
+
+	Block | S/Z/T | L/J | I
+	--- | --- | --- | ---
+	mini | 2 | 1.5 | N/A
+	regular | 3 | 2 | 1.5
 
 ### Event-driven(instead of realtime)
 
