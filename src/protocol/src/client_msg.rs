@@ -29,11 +29,11 @@ impl ClientMsg {
 	}
 
 	fn from_str_spawnai(words: Vec<&str>) -> ClientMsg {
-		if let Some(keyword) = words.get(2) {
+		if let Some(keyword) = words.get(1) {
 			if keyword == &"strategy" {
 				return ClientMsg::SpawnAi(AiType::Strategy);
 			} else if keyword == &"speed" {
-				if let Some(sleep) = words.get(3) {
+				if let Some(sleep) = words.get(2) {
 					if let Ok(sleep) = sleep.parse::<u64>() {
 						return ClientMsg::SpawnAi(AiType::Speed(sleep));
 					}

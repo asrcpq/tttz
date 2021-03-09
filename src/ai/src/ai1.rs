@@ -8,7 +8,7 @@ use tttz_libclient::client_socket::ClientSocket;
 use std::collections::VecDeque;
 
 fn main_think(display: &Display) -> VecDeque<KeyType> {
-	let mut heights = [39u8; 10];
+	let mut heights = [40u8; 10];
 
 	let mut ret = VecDeque::new();
 
@@ -42,6 +42,7 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 			highest_hole_x = i as i32;
 		}
 	}
+	eprintln!("{:?} {} {}", heights, highest_hole, highest_hole_x);
 
 	let mut best_score: f32 = 0.0;
 	let mut best_rotation = 0;
@@ -114,7 +115,7 @@ fn main_think(display: &Display) -> VecDeque<KeyType> {
 					best_rotation = rot;
 					best_posx = dx;
 					best_id = id;
-				}
+				} 
 				dx += 1;
 			}
 		}
@@ -207,8 +208,8 @@ pub fn main(addr: &str, sleep_millis: u64, strategy: bool) {
 						))
 						.unwrap();
 					moveflag = false;
+					last_display = None;
 				}
-				last_display = None;
 			}
 		} else if let Some(ref decoded) = last_display {
 			if state == 2 {
