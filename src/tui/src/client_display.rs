@@ -112,10 +112,10 @@ impl ClientDisplay {
 		offsetx += 0;
 		offsety += 20;
 		let mut infostring = format!("id: {}", display.id);
-		if display.combo_multiplier > 0.0 {
+		if display.combo_multiplier > 0 {
 			infostring = format!("{}, c: {}", infostring, display.combo_multiplier);
 		}
-		if display.b2b_multiplier > 0.0 {
+		if display.b2b_multiplier > 0 {
 			infostring = format!("{}, b: {}", infostring, display.b2b_multiplier);
 		}
 		let infostring = infostring.into_bytes();

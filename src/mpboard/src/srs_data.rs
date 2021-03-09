@@ -1,10 +1,10 @@
-
-pub const ATTACK_B2B_INC: f32 = 0.5;
-pub const ATTACK_COMBO_INC: f32 = 0.2;
-pub const ATTACK_BASE: [f32; 4] = [0.4, 1.0, 2.0, 4.0];
-pub const ATTACK_BASE_TWIST_MULTIPLIER: [f32; 14] = [
-	1.0, 1.5, 1.5, 1.0, 2.0, 2.0, 2.0, // mini
-	1.5, 2.0, 2.0, 1.0, 3.0, 3.0, 3.0, // regular
+// attacks 10x
+pub const ATTACK_B2B_INC: u32 = 5;
+pub const ATTACK_COMBO_INC: u32 = 2;
+pub const ATTACK_BASE: [u32; 4] = [5, 10, 20, 40];
+pub const ATTACK_BASE_TWIST_MULTIPLIER: [u32; 14] = [
+	10, 15, 15, 10, 20, 20, 20, // mini
+	15, 20, 20, 10, 30, 30, 30, // regular
 ];
 
 lazy_static::lazy_static! {

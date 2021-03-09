@@ -229,8 +229,8 @@ impl Board {
 			}
 		}
 		if elims.is_empty() {
-			self.display.combo_multiplier = 0.0;
-			if self.display.b2b_multiplier > 0.0 {
+			self.display.combo_multiplier = 0;
+			if self.display.b2b_multiplier > 0 {
 				self.display.b2b_multiplier = ATTACK_B2B_INC;
 			}
 			return 0;
@@ -400,20 +400,20 @@ impl Board {
 				((tspin - 1) * 7 + self.tmp_block.code as u32)
 			as usize]
 		} else {
-			1.0
+			10
 		};
-		let mut total_mult = 1f32;
+		let mut total_mult = 10;
 		total_mult += self.display.combo_multiplier;
 		self.display.combo_multiplier += ATTACK_COMBO_INC;
 		if tspin > 0 || line_count == 4 {
 			total_mult += self.display.b2b_multiplier;
 			self.display.b2b_multiplier += ATTACK_B2B_INC;
 		} else {
-			self.display.b2b_multiplier = 0.0;
+			self.display.b2b_multiplier = 0;
 		}
-		self.attack_pool = (base_atk * twist_mult * total_mult).round() as u32;
+		self.attack_pool = base_atk * twist_mult * total_mult / 1000;
 		if self.attack_pool > 0 {
-			if self.display.b2b_multiplier == 0.0 {
+			if self.display.b2b_multiplier == 0 {
 				self.last_se = SoundEffect::AttackDrop;
 			} else {
 				self.last_se = SoundEffect::AttackDrop2;

@@ -60,8 +60,8 @@ fn soundmap_init() -> SoundMap {
 	let mut soundmap: SoundMap = HashMap::new();
 	macro_rules! load_se {
 		($prefix: expr, $mapped_se: expr) => {
-			// TODO: windows build
-			let sound = include_bytes!(concat!("se/", $prefix, ".wav")).to_vec();
+			// todo windows build
+			let sound = include_bytes!(concat!(env!("OUT_DIR"), "/", $prefix, ".wav")).to_vec();
 			soundmap.insert($mapped_se,
 				Decoder::new(BufReader::new(Cursor::new(sound)))
 				.unwrap()
@@ -108,7 +108,7 @@ impl Default for SoundManager {
 impl SoundManager {
 	pub fn play(&mut self, se: &SoundEffect) {
 		if let Some(buf) = self.soundmap.get(se) {
-			self.send.send(buf.clone()).unwrap();
+			let _result = self.send.send(buf.clone());
 		}
 	}
 }

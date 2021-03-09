@@ -3,9 +3,13 @@ name = "tttz-tui"
 version = "0.3.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
+build = "build.rs"
 
 [features]
 nosound = []
+
+[build-dependencies.tttz-segen]
+path = "../segen"
 
 [dependencies]
 termion = "*"

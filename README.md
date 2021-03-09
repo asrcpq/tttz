@@ -8,7 +8,7 @@
 
 ## Features
 
-* TUI, cross-platform(works needed)
+* TUI, cross-platform(maybe)
 
 * Replay automatically saved(working)
 
@@ -24,7 +24,7 @@
 
 * Garbage in same attack has a 30%(or 40%) probability to shift
 
-### Special attack table(working)
+### Special Attack Table(working)
 
 * All twists are rewarded(in different base attack), with mini-twists
 
@@ -43,14 +43,14 @@
 * Attack Computation
 
 	```
-	b = base_attack[cleared_lines] = [0.4, 1.0, 2.0, 4.0]
+	b = base_attack[cleared_lines] = [0.5, 1.0, 2.0, 4.0]
 	tb = twist_bonus[mini|regular][block_type]
 	cm = 1 + combo * COMBO_INC=0.2
 	tcm = 1 + tcm * TWIST_COMBO_INC=0.5
-	atk = round(b * tb * (cm + tcm))
+	atk = floor(b * tb * (cm + tcm))
 	```
 
-	Value of `twist_bonus`
+	`twist_bonus` table
 
 	Block | S/Z/T | L/J | I
 	--- | --- | --- | ---

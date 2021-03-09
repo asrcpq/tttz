@@ -1,15 +1,20 @@
-
 use synthrs::synthesizer::{ make_samples, quantize_samples };
 use synthrs::filter::*;
 use synthrs::wave::{sawtooth_wave, square_wave};
 use synthrs::writer::write_wav_file;
 
-fn main() {
+use std::path::PathBuf;
+
+pub fn segen(path: PathBuf) {
 	macro_rules! write_sound {
 		($name: expr, $sample: expr) => {
-			write_wav_file(concat!("src/tui/src/se/", $name, ".wav"), 44_100,
-				&quantize_samples::<i16>($sample)
-			).expect("failed to write to file");
+			let mut path = path.clone();
+			path.push(concat!($name, ".wav"));
+			if let Some(string) = path.to_str() {
+				write_wav_file(&string, 44_100,
+					&quantize_samples::<i16>($sample)
+				).expect("failed to write to file");
+			}
 		}
 	}
 

@@ -3,5 +3,4 @@ members = [
 	"src/server",
 	"src/ai",
 	"src/tui",
-	"src/segen",
 ]
