@@ -76,10 +76,6 @@ impl Client {
 			client_manager,
 			&ServerMsg::Display(Cow::Borrowed(&self.board.display)),
 		);
-		self.broadcast_msg(
-			client_manager,
-			&ServerMsg::SoundEffect(self.board.last_se.clone()),
-		);
 		self.board.last_se = SoundEffect::Silence;
 	}
 

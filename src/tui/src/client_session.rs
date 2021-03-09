@@ -9,9 +9,9 @@ use crate::client_socket::ClientSocket;
 
 extern crate tttz_mpboard; // local simulation
 use tttz_mpboard::board::Board;
+use tttz_mpboard::block::Block;
 extern crate tttz_protocol;
-use tttz_protocol::Display;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg};
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg, SoundEffect};
 
 use std::collections::HashMap;
 
@@ -23,8 +23,7 @@ pub struct ClientSession {
 	id: i32,
 	mode: i32,
 	textbuffer: String,
-	last_display: HashMap<i32, Display>,
-	board: Board, // local simulate
+	last_board: HashMap<i32, Board>,
 }
 
 impl ClientSession {
@@ -39,8 +38,7 @@ impl ClientSession {
 			id,
 			mode: 0,
 			textbuffer: String::new(),
-			last_display: HashMap::new(),
-			board: Board::new(id),
+			last_board: HashMap::new(),
 		}
 	}
 
@@ -57,15 +55,6 @@ impl ClientSession {
 	fn textmode_print(&self, msg: &str) {
 		print!("\r{}{}\n{}", termion::clear::CurrentLine, msg, 13 as char);
 		self.print_prompt();
-		// print!(
-		// 	"{}{}{}{}{}{}",
-		// 	termion::cursor::Hide,
-		// 	termion::cursor::Goto(1, 2),
-		// 	termion::clear::CurrentLine,
-		// 	msg,
-		// 	termion::cursor::Show,
-		// 	termion::cursor::Goto(1, 1),
-		// );
 	}
 
 	// true quit
@@ -113,7 +102,7 @@ impl ClientSession {
 	}
 
 	fn setpanel(&mut self, panel: usize, id: i32) {
-		self.last_display.insert(id, Display::new(id));
+		self.last_board.insert(id, Board::new(id));
 		self.client_display.setpanel(panel, id);
 	}
 
@@ -139,17 +128,16 @@ impl ClientSession {
 		match msg {
 			ServerMsg::Terminate => return true,
 			ServerMsg::Start(id) => {
-				self.board = Board::new(self.id);
 				self.setpanel(0, self.id);
 				self.setpanel(1, id);
 				self.modeswitch(1);
 				self.state = 2;
 			}
 			ServerMsg::Attack(id, amount) => {
-				if let Some(mut display) = self.last_display.remove(&id) {
-					display.garbages.push_back(amount);
-					self.client_display.disp_atk_by_id(&display);
-					self.last_display.insert(id, display);
+				if let Some(mut board) = self.last_board.remove(&id) {
+					board.display.garbages.push_back(amount);
+					self.client_display.disp_atk_by_id(&board.display);
+					self.last_board.insert(id, board);
 				}
 			}
 			ServerMsg::GameOver(_) => {
@@ -233,8 +221,12 @@ impl ClientSession {
 						b'd' => KeyType::RotateFlip,
 						_ => return false,
 					};
-					self.board.handle_msg(BoardMsg::KeyEvent(key_event.clone()));
-					self.sound_manager.play(&self.board.last_se);
+					if let Some(self_board) = self.last_board.get_mut(&self.id) {
+						self_board.handle_msg(BoardMsg::KeyEvent(key_event.clone()));
+						self.client_display.disp_by_id(&self_board.display);
+						self.sound_manager.play(&self_board.last_se);
+						self_board.last_se = SoundEffect::Silence;
+					}
 					self.client_socket
 						.send(ClientMsg::KeyEvent(key_event.clone()))
 						.unwrap();
@@ -249,14 +241,18 @@ impl ClientSession {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
 				ServerMsg::Display(display) => {
-					if self.last_display.remove(&display.id).is_some() {
+					let id = display.id;
+					if let Some(mut board) = self.last_board.remove(&id) {
 						self.client_display.disp_by_id(&display);
-						self.last_display
-							.insert(display.id, display.into_owned());
+						board.tmp_block = Block::decompress(&display.tmp_block);
+						board.shadow_block = Block::decompress(&display.shadow_block);
+						board.rg.bag = display.bag_preview.iter().map(|x| *x).collect();
+						board.display = display.into_owned();
+						self.last_board.insert(id, board);
 					} else {
 						eprintln!(
 							"Received display of unknown id {}",
-							display.id
+							id
 						);
 					}
 				}

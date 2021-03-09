@@ -423,7 +423,7 @@ impl Board {
 		self.attack_pool = (base_atk * twist_mult * total_mult).round() as u32;
 		eprintln!("SERVER: T: {} M: {} A: {}", tspin, total_mult, self.attack_pool);
 		if self.attack_pool > 0 {
-			if self.display.b2b_multiplier > 0.0 {
+			if self.display.b2b_multiplier == 0.0 {
 				self.last_se = SoundEffect::AttackDrop;
 			} else {
 				self.last_se = SoundEffect::AttackDrop2;
@@ -446,6 +446,7 @@ impl Board {
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
+			// eprintln!("{} {}", px, py);
 
 			// tmp is higher, update height
 			if py < self.height as usize {
