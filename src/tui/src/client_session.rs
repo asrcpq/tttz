@@ -111,7 +111,6 @@ impl ClientSession {
 		// show msg
 		if self.mode == 1 {
 			self.client_display.disp_msg(&msg);
-			self.client_display.disp_msg(&msg);
 		} else {
 			self.textmode_print(&msg);
 		}
@@ -145,7 +144,12 @@ impl ClientSession {
 			}
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
-			ServerMsg::SoundEffect(_) => {}
+			ServerMsg::SoundEffect(id, ref se) => {
+				if id != self.id {
+					self.sound_manager.play(se);
+				}
+				return false //  early return
+			}
 			_ => {
 				self.show_msg("Unknown message received!")
 			}

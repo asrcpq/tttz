@@ -76,7 +76,11 @@ impl Client {
 			client_manager,
 			&ServerMsg::Display(Cow::Borrowed(&self.board.display)),
 		);
-		self.board.last_se = SoundEffect::Silence;
+		let last_se = std::mem::replace(&mut self.board.last_se, SoundEffect::Silence);
+		self.broadcast_msg(
+			client_manager,
+			&ServerMsg::SoundEffect(self.id, last_se),
+		);
 	}
 
 	// true = die

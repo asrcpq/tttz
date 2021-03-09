@@ -105,9 +105,7 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[0] as u16 + 1;
 		let offsety = self.offset_y[0] as u16 + 21;
 		print!(
-			"{}{}{}{}",
-			termion::cursor::Goto(offsetx, offsety),
-			" ".repeat(16),
+			"{}{:<32}",
 			termion::cursor::Goto(offsetx, offsety),
 			msg
 		);

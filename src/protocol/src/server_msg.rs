@@ -18,7 +18,7 @@ pub enum ServerMsg<'a> {
 	GameOver(bool),            // true = win
 	Terminate,                 // kicked
 	Display(Cow<'a, Display>), // hope this can be optimized
-	SoundEffect(SoundEffect),
+	SoundEffect(IdType, SoundEffect),
 }
 
 impl ServerMsg<'_> {
@@ -52,7 +52,7 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 			}
 			Self::GameOver(true) => "win".to_string(),
 			Self::GameOver(false) => "die".to_string(),
-			Self::SoundEffect(se) => format!("se {:?}", se),
+			Self::SoundEffect(id, se) => format!("se of {}, {:?}", id, se),
 			Self::Display(_) => "display".to_string(),
 		};
 		write!(f, "{}", string)
