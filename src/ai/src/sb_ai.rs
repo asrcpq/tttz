@@ -20,8 +20,8 @@ pub struct SbAi {
 	attack_weight: f32,
 }
 
-impl SbAi {
-	pub fn new() -> Self {
+impl Default for SbAi {
+	fn default() -> Self {
 		SbAi {
 			test_board: Board::new(0),
 			heights: [40u8; 10],
@@ -30,10 +30,12 @@ impl SbAi {
 
 			hole_weight: 1.0,
 			height_weight: 1.0,
-			attack_weight: 0.0,
+			attack_weight: 0.1,
 		}
 	}
+}
 
+impl SbAi {
 	// think2 is called for the given first block
 	// return value
 	fn think2(
@@ -46,15 +48,18 @@ impl SbAi {
 		let mut block_count = [0; 4];
 		let dx = block.pos.0;
 		let height = block.pos.1;
+
+		let mut hole: i32 = 0;
 		for block in 0..4 {
-			let dh = self.heights[dx as usize + self.posx[block] as usize] as u8
-				- self.posy[block] - height as u8;
+			let dh = self.heights[dx as usize + self.posx[block] as usize] as i8
+				- self.posy[block] as i8 - height as i8;
 			block_count[self.posx[block] as usize] += 1;
-			if dh > delta_heights[self.posx[block] as usize] {
+			if dh < 0 {
+				hole -= 1;
+			} else if dh > delta_heights[self.posx[block] as usize] {
 				delta_heights[self.posx[block] as usize] = dh;
 			}
 		}
-		let mut hole: i32 = 0;
 		for block in 0..4 {
 			if delta_heights[block] > block_count[block] {
 				hole += 1;
@@ -217,5 +222,27 @@ impl Thinker for SbAi {
 		}
 		let gkp = self.think1(display);
 		generate_keys(gkp)
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_obvious_tspin() {
+		let mut display = Display::generate_solidlines([3, 3, 0, 1, 3, 6, 7, 8, 9, 10]);
+		display.color[38][1] = 7;
+		display.tmp_block = Block::new(5).compress();
+		display.hold = 5;
+		display.bag_preview = [5; 6];
+		let mut sb_ai: SbAi = Default::default();
+		let mut ops = sb_ai.main_think(display);
+		println!("{:?}", ops);
+		ops.pop_back();
+		let x = ops.pop_back().unwrap();
+		assert_eq!(x, KeyType::Rotate);
+		let x = ops.pop_back().unwrap();
+		assert_eq!(x, KeyType::SoftDrop);
 	}
 }

@@ -31,4 +31,14 @@ impl Display {
 			garbages: VecDeque::new(),
 		}
 	}
+
+	pub fn generate_solidlines(heights: [usize; 10]) -> Display {
+		let mut display = Display::new(1);
+		for i in 0..10 {
+			for j in 0..heights[i] {
+				display.color[39 - j][i] = 1;
+			}
+		}
+		display
+	}
 }

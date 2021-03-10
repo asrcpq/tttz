@@ -207,7 +207,7 @@ impl Server {
 					match algo.as_ref() {
 						"sbai" => {
 							self.ai_threads.push(std::thread::spawn(move || {
-								let mut sbai = SbAi::new();
+								let mut sbai: SbAi = Default::default();
 								sbai.main_loop("127.0.0.1:23124", sleep, strategy);
 							}));
 						}
