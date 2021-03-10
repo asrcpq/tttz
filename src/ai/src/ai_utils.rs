@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 pub fn generate_keys(
 	hold_swap: bool,
 	code: u8,
-	rotation: u8,
+	rotation: i8,
 	post_key: KeyType,
 	dx: i32,
 ) -> VecDeque<KeyType> {
@@ -44,7 +44,7 @@ pub fn generate_keys(
 }
 
 // return a list of possible drop pos
-pub fn convolve_height(heights: &[u8], code: u8, rot: u8) ->
+pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
 	(Vec<(u8, u8)>, [u8; 4], [u8; 4])
 {
 	let mut ret = Vec::new();

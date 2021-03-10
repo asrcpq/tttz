@@ -30,9 +30,8 @@ impl BasicAi {
 
 impl Thinker for BasicAi {
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
-		let mut ret = VecDeque::new();
-
 		if display.hold == 7 {
+			let mut ret = VecDeque::new();
 			ret.push_back(KeyType::Hold);
 			return ret;
 		}
@@ -78,10 +77,10 @@ impl Thinker for BasicAi {
 						hole as f32 * self.hole_weight -
 						cover as f32 * self.cover_weight;
 					if score > best_score {
-						eprintln!(
-							"{} {} {} = {} overtake {} at dx: {}, rot: {}",
-							height, hole, cover, score, best_score, dx, rot,
-						);
+						// eprintln!(
+						// 	"{} {} {} = {} overtake {} at dx: {}, rot: {}",
+						// 	height, hole, cover, score, best_score, dx, rot,
+						// );
 						best_score = score;
 						best_rotation = rot;
 						best_posx = dx;

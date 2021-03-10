@@ -6,10 +6,10 @@ exittrap() {
 cargo run --release --bin tttz-server 2>server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo basic_cover speed 30" \
-execute "sleep 100" \
-execute "spawnai speed 30" \
-execute "sleep 1000" \
+execute "spawnai algo basic_cover speed 100" \
+execute "sleep 50" \
+execute "spawnai algo sbai speed 100" \
+execute "sleep 300" \
 execute "invite 2 3" \
 execute "view 2" \
 execute "panel 0 2" \
