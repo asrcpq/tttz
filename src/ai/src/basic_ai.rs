@@ -46,44 +46,16 @@ impl Thinker for BasicAi {
 		for (id, option_code) in [display.tmp_block[2], display.hold].iter().enumerate()
 		{
 			for rot in 0..4 {
-				let mut dx = 0;
-				loop {
-					if dx + BLOCK_WIDTH[*option_code as usize][rot as usize]
-						> 10
-					{
-						break;
-					}
-
-					let mut posx = [0; 4];
-					let mut posy = [0; 4];
-					for block in 0..4 {
-						let tmp = BPT[*option_code as usize][rot as usize][block as usize];
-						posx[block as usize] = tmp.0;
-						posy[block as usize] = tmp.1;
-					}
-					let mut posy_sum = 0;
-					for each_posy in posy.iter() {
-						posy_sum += each_posy;
-					}
-					let mut height = 0;
-					'movedown_check: loop {
-						for block in 0..4 {
-							if posy[block] + height
-								== (heights[dx as usize + posx[block] as usize])
-									as i32
-							{
-								height -= 1;
-								break 'movedown_check;
-							}
-						}
-						height += 1;
-					}
+				let (possible_pos, posx, posy) = convolve_height(&heights, *option_code, rot);
+				for (dx, height) in possible_pos
+					.iter()
+					.map(|(x, y)| (*x as i32, *y as i32)){
 
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
 					for block in 0..4 {
-						let dh = heights[dx as usize + posx[block] as usize] as i32
-							- posy[block] - height;
+						let dh = heights[dx as usize + posx[block] as usize] as u8
+							- posy[block] - height as u8;
 						block_count[posx[block] as usize] += 1;
 						if dh > delta_heights[posx[block] as usize] {
 							delta_heights[posx[block] as usize] = dh;
@@ -115,7 +87,6 @@ impl Thinker for BasicAi {
 						best_posx = dx;
 						best_id = id;
 					} 
-					dx += 1;
 				}
 			}
 		}

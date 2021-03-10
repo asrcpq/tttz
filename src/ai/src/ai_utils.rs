@@ -2,21 +2,25 @@ use tttz_protocol::Display;
 use tttz_ruleset::*;
 
 // return a list of possible drop pos
-pub fn convolve_height(heights: &[u8], code: u8, rot: u8) -> Vec<(u8, u8)> {
+pub fn convolve_height(heights: &[u8], code: u8, rot: u8) ->
+	(Vec<(u8, u8)>, [u8; 4], [u8; 4])
+{
 	let mut ret = Vec::new();
 	let mut dx = 0;
+	let mut posx = [0; 4];
+	let mut posy = [0; 4];
+	for block in 0..4usize {
+		let tmp = BPT[code as usize][rot as usize][block];
+		posx[block] = tmp.0 as u8;
+		posy[block] = tmp.1 as u8;
+	}
 	loop {
 		if dx + BLOCK_WIDTH[code as usize][rot as usize] as u8 > 10 {
-			break ret
+			break (ret, posx, posy)
 		}
 
 		let mut highest = 40;
-		let mut posx = [0; 4];
-		let mut posy = [0; 4];
 		for block in 0..4usize {
-			let tmp = BPT[code as usize][rot as usize][block];
-			posx[block] = tmp.0 as u8;
-			posy[block] = tmp.1 as u8;
 			let height = (heights[dx as usize + posx[block] as usize]) - posy[block] - 1;
 			if height < highest {
 				highest = height;
