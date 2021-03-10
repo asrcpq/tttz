@@ -50,10 +50,10 @@
 
 	`twist_bonus` table
 
-	Block | S/Z/T | L/J | I
-	--- | --- | --- | ---
-	mini | 2 | 1.5 | N/A
-	regular | 3 | 2 | 1.5
+	Block | T | S/Z | L/J | I
+	--- | --- | --- | --- | ---
+	mini | 2 | 2 | 1.5 | N/A
+	regular | 3 | 2.5 | 2 | 1.5
 
 ### Event-driven(instead of realtime)
 

@@ -122,39 +122,48 @@ impl Board {
 		while self.move1(dx) {}
 	}
 
-	fn rotate(&mut self, dr: i8) -> bool {
-		if self.tmp_block.code == 3 {
+	fn rotate2(&mut self, dr: i8) -> bool {
+		let code = self.tmp_block.code;
+		let rotation = self.tmp_block.rotation;
+		if code == 3 {
 			return false;
 		}
-		let revert_block = self.tmp_block.clone();
 		self.tmp_block.rotate(dr);
 		let std_pos = self.tmp_block.pos;
 		let len = if dr == 2 { 6 } else { 5 };
 		let wkd: &Vec<i32> = if dr == 2 {
 			&FWKD
-		} else if revert_block.code == 0 {
+		} else if code == 0 {
 			&IWKD
 		} else {
 			&WKD
 		};
 		for wkid in 0..len {
 			let left_offset = (dr == -1) as i8 * 40;
-			let idx = (revert_block.rotation * len * 2 + left_offset + wkid * 2)
+			let idx = (rotation * len * 2 + left_offset + wkid * 2)
 				as usize;
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 			if self.tmp_block.test(self) {
-				if self.test_twist() > 0 {
-					self.last_se = SoundEffect::Rotate(2)
-				} else {
-					self.last_se = SoundEffect::Rotate(1)
-				}
 				return true;
 			}
 		}
-		self.tmp_block = revert_block;
-		self.last_se = SoundEffect::Rotate(0);
 		false
+	}
+
+	// rotate2 is extracted for AI
+	fn rotate(&mut self, dr: i8) {
+		let revert_block = self.tmp_block.clone();
+		if self.rotate2(dr) {
+			if self.test_twist() > 0 {
+				self.last_se = SoundEffect::Rotate(2)
+			} else {
+				self.last_se = SoundEffect::Rotate(1)
+			}
+		} else {
+			self.tmp_block = revert_block;
+			self.last_se = SoundEffect::Rotate(0);
+		}
 	}
 
 	fn spawn_block(&mut self) {

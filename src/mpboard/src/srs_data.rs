@@ -4,7 +4,7 @@ pub const ATTACK_COMBO_INC: u32 = 2;
 pub const ATTACK_BASE: [u32; 4] = [5, 10, 20, 40];
 pub const ATTACK_BASE_TWIST_MULTIPLIER: [u32; 14] = [
 	10, 15, 15, 10, 20, 20, 20, // mini
-	15, 20, 20, 10, 30, 30, 30, // regular
+	15, 20, 20, 10, 25, 30, 25, // regular
 ];
 
 lazy_static::lazy_static! {
