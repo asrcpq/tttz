@@ -1,7 +1,8 @@
 - better AI
-- complete sound effects
-- cmd history
+- better sound effects
+- better readline
 - id system(for replay)
 - load and play replay file
 - replay statistic
-- Client computation for graphic
+- support 256 color mode
+- write a gui

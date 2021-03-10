@@ -6,7 +6,7 @@
 
 * Garbage in same attack has a 30%(or 40%) probability to shift
 
-## Special Attack Table(working)
+## Special Attack Table
 
 * All twists are rewarded(in different base attack), with mini-twists
 
