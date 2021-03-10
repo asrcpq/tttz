@@ -69,25 +69,14 @@ impl SbAi {
 		self.test_board.attack_pool as f32 * self.attack_weight;
 		score
 	}
-}
 
-impl Thinker for SbAi {
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
-		if display.hold == 7 {
-			let mut ret = VecDeque::new();
-			ret.push_back(KeyType::Hold);
-			return ret
-		}
-
+	fn think1(&mut self, display: Display) -> GenerateKeyParam {
 		self.heights = get_height_and_hole(&display).0;
 		self.test_board.rg.bag = display.bag_preview.iter().map(|x| *x).collect();
 		self.test_board.display = display;
 
 		let mut max_value: f32 = f32::NEG_INFINITY;
-		let mut best_id: u8 = 0;
-		let mut best_rotation_before_drop: i8 = 0;
-		let mut best_dx: i32 = -1;
-		let mut best_key_after_drop: KeyType = KeyType::Nothing;
+		let mut gkp: GenerateKeyParam = Default::default();
 		// we should not really optimize first block since
 		// possible twists can be filtered out easily
 		for (id, option_code) in [
@@ -198,10 +187,15 @@ impl Thinker for SbAi {
 									rot,
 								);
 								max_value = value;
-								best_id = id as u8;
-								best_rotation_before_drop = rot;
-								best_dx = dx;
-								best_key_after_drop = *key_type;
+								if id == 0 {
+									gkp.hold_swap = false
+								} else {
+									gkp.hold_swap = true
+								}
+								gkp.code = option_code;
+								gkp.rotation = rot;
+								gkp.dx = dx;
+								gkp.post_key = *key_type;
 							}
 						} else {
 							self.test_board.tmp_block = revert_block.clone();
@@ -210,20 +204,18 @@ impl Thinker for SbAi {
 				}
 			}
 		}
-		let best_code = if best_id == 0 {
-			self.test_board.display.tmp_block[2]
-		} else {
-			self.test_board.display.hold
-		};
-		if best_key_after_drop != KeyType::Nothing {
-			eprintln!("Surprise! {} {} {} {:?} {}", best_id, best_code, best_rotation_before_drop, best_key_after_drop, best_dx);
+		gkp
+	}
+}
+
+impl Thinker for SbAi {
+	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
+		if display.hold == 7 {
+			let mut ret = VecDeque::new();
+			ret.push_back(KeyType::Hold);
+			return ret
 		}
-		generate_keys(
-			best_id != 0,
-			best_code,
-			best_rotation_before_drop,
-			best_key_after_drop,
-			best_dx,
-		)
+		let gkp = self.think1(display);
+		generate_keys(gkp)
 	}
 }

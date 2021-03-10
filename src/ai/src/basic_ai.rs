@@ -96,6 +96,12 @@ impl Thinker for BasicAi {
 			display.hold
 		};
 		// perform action
-		generate_keys(best_id != 0, best_code, best_rotation, KeyType::Nothing, best_posx)
+		generate_keys(GenerateKeyParam {
+			hold_swap: best_id != 0,
+			code: best_code,
+			rotation: best_rotation,
+			post_key: KeyType::Nothing,
+			dx: best_posx
+		})
 	}
 }

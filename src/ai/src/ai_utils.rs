@@ -3,41 +3,55 @@ use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
-pub fn generate_keys(
-	hold_swap: bool,
-	code: u8,
-	rotation: i8,
-	post_key: KeyType,
-	dx: i32,
-) -> VecDeque<KeyType> {
+pub struct GenerateKeyParam {
+	pub hold_swap: bool,
+	pub code: u8,
+	pub rotation: i8,
+	pub post_key: KeyType,
+	pub dx: i32,
+}
+
+impl Default for GenerateKeyParam {
+	fn default() -> GenerateKeyParam {
+		GenerateKeyParam {
+			hold_swap: false,
+			code: 7,
+			rotation: -1,
+			post_key: KeyType::Nothing,
+			dx: -1,
+		}
+	}
+}
+
+pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 	let mut ret = VecDeque::new();
-	if hold_swap { ret.push_back(KeyType::Hold); }
-	let current_posx = INITIAL_POS[code as usize];
+	if gkp.hold_swap { ret.push_back(KeyType::Hold); }
+	let current_posx = INITIAL_POS[gkp.code as usize];
 	let rotated_pos0 =
-		current_posx + SRP[code as usize][rotation as usize].0;
-	let (keycode, times) = if dx == 0 {
+		current_posx + SRP[gkp.code as usize][gkp.rotation as usize].0;
+	let (keycode, times) = if gkp.dx == 0 {
 		(KeyType::LLeft, 1)
-	} else if dx
-		== 10 - BLOCK_WIDTH[code as usize][rotation as usize]
+	} else if gkp.dx
+		== 10 - BLOCK_WIDTH[gkp.code as usize][gkp.rotation as usize]
 	{
 		(KeyType::RRight, 1)
-	} else if rotated_pos0 > dx {
-		(KeyType::Left, rotated_pos0 - dx)
+	} else if rotated_pos0 > gkp.dx {
+		(KeyType::Left, rotated_pos0 - gkp.dx)
 	} else {
-		(KeyType::Right, dx - rotated_pos0)
+		(KeyType::Right, gkp.dx - rotated_pos0)
 	};
-	if rotation == 1 {
+	if gkp.rotation == 1 {
 		ret.push_back(KeyType::Rotate);
-	} else if rotation == 3 {
+	} else if gkp.rotation == 3 {
 		ret.push_back(KeyType::RotateReverse);
-	} else if rotation == 2 {
+	} else if gkp.rotation == 2 {
 		ret.push_back(KeyType::RotateFlip);
 	}
 	for _ in 0..times {
 		ret.push_back(keycode.clone());
 	}
-	if post_key != KeyType::Nothing {
-		ret.push_back(post_key);
+	if gkp.post_key != KeyType::Nothing {
+		ret.push_back(gkp.post_key);
 	}
 	ret.push_back(KeyType::HardDrop);
 	ret
