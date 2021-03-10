@@ -122,11 +122,11 @@ impl Board {
 		while self.move1(dx) {}
 	}
 
-	fn rotate2(&mut self, dr: i8) -> bool {
+	fn rotate2(&mut self, dr: i8) -> u8 {
 		let code = self.tmp_block.code;
 		let rotation = self.tmp_block.rotation;
 		if code == 3 {
-			return false;
+			return 0;
 		}
 		self.tmp_block.rotate(dr);
 		let std_pos = self.tmp_block.pos;
@@ -145,25 +145,24 @@ impl Board {
 			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
 			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
 			if self.tmp_block.test(self) {
-				return true;
+				if self.test_twist() > 0 {
+					return 2
+				} else {
+					return 1
+				}
 			}
 		}
-		false
+		return 0
 	}
 
 	// rotate2 is extracted for AI
 	fn rotate(&mut self, dr: i8) {
 		let revert_block = self.tmp_block.clone();
-		if self.rotate2(dr) {
-			if self.test_twist() > 0 {
-				self.last_se = SoundEffect::Rotate(2)
-			} else {
-				self.last_se = SoundEffect::Rotate(1)
-			}
-		} else {
+		let ret = self.rotate2(dr);
+		if ret == 0 {
 			self.tmp_block = revert_block;
-			self.last_se = SoundEffect::Rotate(0);
 		}
+		self.last_se = SoundEffect::Rotate(ret);
 	}
 
 	fn spawn_block(&mut self) {
