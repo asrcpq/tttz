@@ -6,7 +6,7 @@
 
 * a VT100 compatible terminal
 
-## Features
+## Functions
 
 * TUI with sound, cross-platform(maybe)
 
@@ -14,21 +14,19 @@
 
 * Dummy AI, support strategy mode(moves in turn)
 
-## Rules
+## Features
 
-The design of rules follow several principles:
+* focus on 1v1 combat
 
-1. focus on 1v1 combat
+* can be manually played on console
 
-2. can be manually played on console
-
-3. responsive(network delay is handled) and minimalist.
+* responsive(network delay is handled) and minimalist.
 Zero-gravity and no timer.
 
-4. heavily modified rules to encourage fancy attack patterns,
+* heavily modified rules to encourage fancy attack patterns,
 making stupid AI harder to win.
 
-See readme/rule.md for details
+See doc/rule.md for more
 
 ## Default Keybind
 
