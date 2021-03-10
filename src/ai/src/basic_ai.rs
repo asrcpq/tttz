@@ -8,11 +8,23 @@ use crate::ai::Thinker;
 
 use std::collections::VecDeque;
 
-pub struct BasicAi {}
+// A hole is a group of vertical continuous blank blocks
+pub struct BasicAi {
+	// how bad it is to put a block on the highest hole
+	pub cover_weight: f32,
+	// how bad it is to create a new hole
+	pub hole_weight: f32,
+	// how bad it is to increase height
+	pub height_weight: f32,
+}
 
 impl BasicAi {
 	pub fn new() -> Self {
-		BasicAi {}
+		BasicAi {
+			cover_weight: 2.0,
+			hole_weight: 1.0,
+			height_weight: 1.0,
+		}
 	}
 }
 
@@ -87,8 +99,10 @@ impl Thinker for BasicAi {
 						&& dx
 							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
-					let score = height as f32 + posy_sum as f32 * 0.25 // mass center height
-						- hole as f32 - cover as f32 * 2.0;
+					let score = (height as f32 + posy_sum as f32 * 0.25) // mass center height
+							* self.height_weight
+						- hole as f32 * self.hole_weight
+						- cover as f32 * self.cover_weight;
 					if score > best_score {
 						eprintln!(
 							"{} {} {} = {} overtake {} at dx: {}, rot: {}",

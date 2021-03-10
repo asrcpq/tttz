@@ -199,18 +199,29 @@ impl Server {
 				ClientMsg::View(id) => {
 					self.set_view(client.id, id);
 				}
-				ClientMsg::SpawnAi(ai_type) => match ai_type {
-					AiType::Strategy => {
-						self.ai_threads.push(std::thread::spawn(move || {
-							let mut basic_ai = BasicAi::new();
-							basic_ai.main_loop("127.0.0.1:23124", 10, true);
-						}));
-					}
-					AiType::Speed(sleep) => {
-						self.ai_threads.push(std::thread::spawn(move || {
-							let mut basic_ai = BasicAi::new();
-							basic_ai.main_loop("127.0.0.1:23124", sleep, false);
-						}));
+				ClientMsg::SpawnAi(algo, ai_type) => {
+					let (sleep, strategy) = match ai_type {
+						AiType::Strategy => (10, true),
+						AiType::Speed(sleep) => (sleep, false),
+					};
+					match algo.as_ref() {
+						"basic" => {
+							self.ai_threads.push(std::thread::spawn(move || {
+								let mut basic_ai = BasicAi::new();
+								basic_ai.cover_weight = 1.0;
+								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+							}));
+						}
+						"basic_nocover" => {
+							self.ai_threads.push(std::thread::spawn(move || {
+								let mut basic_ai = BasicAi::new();
+								basic_ai.cover_weight = 0.0;
+								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+							}));
+						}
+						_ => {
+							eprintln!("SERVER: Unknown algorithm {}", algo);
+						}
 					}
 				},
 				ClientMsg::Invite(id1, id2) => {

@@ -13,7 +13,7 @@ pub enum ClientMsg {
 	PlaySingle,
 	Kick(IdType),
 	View(IdType),
-	SpawnAi(AiType),
+	SpawnAi(String, AiType), // kind
 	Request(IdType),
 	Invite(IdType, IdType),
 	Restart,
@@ -30,18 +30,30 @@ impl ClientMsg {
 	}
 
 	fn from_str_spawnai(words: Vec<&str>) -> ClientMsg {
-		if let Some(keyword) = words.get(1) {
-			if keyword == &"strategy" {
-				return ClientMsg::SpawnAi(AiType::Strategy);
-			} else if keyword == &"speed" {
-				if let Some(sleep) = words.get(2) {
-					if let Ok(sleep) = sleep.parse::<u64>() {
-						return ClientMsg::SpawnAi(AiType::Speed(sleep));
+		let mut iter = words.iter();
+		let mut ai_type = AiType::Speed(240);
+		let mut algorithm = "basic".to_string();
+		while let Some(word) = iter.next() {
+			match *word {
+				"strategy" => {
+					ai_type = AiType::Strategy;
+				},
+				"speed" => {
+					if let Some(word) = iter.next() {
+						if let Ok(sleep) = word.parse::<u64>() {
+							ai_type = AiType::Speed(sleep);
+						}
+					}
+				},
+				"algo" => {
+					if let Some(word) = iter.next() {
+						algorithm = word.to_string();
 					}
 				}
+				_ => {},
 			}
 		}
-		ClientMsg::SpawnAi(AiType::Speed(240))
+		ClientMsg::SpawnAi(algorithm, ai_type)
 	}
 
 	pub fn serialized(&self) -> Vec<u8> {
