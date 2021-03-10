@@ -19,12 +19,12 @@ impl Block {
 		while self.rotation >= 4 {
 			self.rotation -= 4;
 		}
-		let idx_old = (self.code * 8 + old_rot as u8 * 2) as usize;
-		let idx = (self.code * 8 + self.rotation as u8 * 2) as usize;
-		self.pos.0 -= SRP[idx_old];
-		self.pos.1 -= SRP[idx_old + 1];
-		self.pos.0 += SRP[idx];
-		self.pos.1 += SRP[idx + 1];
+		let tmp_old = SRP[self.code as usize][old_rot as usize];
+		let tmp = SRP[self.code as usize][self.rotation as usize];
+		self.pos.0 -= tmp_old.0;
+		self.pos.1 -= tmp_old.1;
+		self.pos.0 += tmp.0;
+		self.pos.1 += tmp.1;
 	}
 
 	pub fn compress(&self) -> [u8; 4] {
@@ -55,9 +55,9 @@ impl Block {
 	pub fn getpos(&self) -> [u8; 8] {
 		let mut ret = [0u8; 8];
 		for block_id in 0..4 {
-			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;
-			let px = self.pos.0 + BPT[tmp as usize];
-			let py = self.pos.1 + BPT[tmp as usize + 1];
+			let tmp = BPT[self.code as usize][self.rotation as usize][block_id as usize];
+			let px = self.pos.0 + tmp.0;
+			let py = self.pos.1 + tmp.1;
 			ret[block_id as usize * 2] = px as u8;
 			ret[block_id as usize * 2 + 1] = py as u8;
 		}
@@ -66,15 +66,15 @@ impl Block {
 
 	pub fn bottom_pos(&self) -> i32 {
 		self.pos.1
-			+ BLOCK_HEIGHT[(self.code * 4 + self.rotation as u8) as usize]
+			+ BLOCK_HEIGHT[self.code as usize][self.rotation as usize]
 			- 1
 	}
 
 	pub fn test(&self, board: &Board) -> bool {
 		for block_id in 0..4 {
-			let tmp = self.code * 32 + self.rotation as u8 * 8 + block_id * 2;
-			let px = self.pos.0 + BPT[tmp as usize];
-			let py = self.pos.1 + BPT[tmp as usize + 1];
+			let tmp = BPT[self.code as usize][self.rotation as usize][block_id as usize];
+			let px = self.pos.0 + tmp.0;
+			let py = self.pos.1 + tmp.1;
 			if !board.is_pos_vacant((px, py)) {
 				return false;
 			}

@@ -36,7 +36,7 @@ impl Thinker for BasicAi {
 			for rot in 0..4 {
 				let mut dx = 0;
 				loop {
-					if dx + BLOCK_WIDTH[*option_code as usize * 4 + rot as usize]
+					if dx + BLOCK_WIDTH[*option_code as usize][rot as usize]
 						> 10
 					{
 						break;
@@ -45,9 +45,9 @@ impl Thinker for BasicAi {
 					let mut posx = [0; 4];
 					let mut posy = [0; 4];
 					for block in 0..4 {
-						let offset = option_code * 32 + rot * 8 + block * 2;
-						posx[block as usize] = BPT[offset as usize];
-						posy[block as usize] = BPT[(offset + 1) as usize];
+						let tmp = BPT[*option_code as usize][rot as usize][block as usize];
+						posx[block as usize] = tmp.0;
+						posy[block as usize] = tmp.1;
 					}
 					let mut posy_sum = 0;
 					for each_posy in posy.iter() {
@@ -85,7 +85,7 @@ impl Thinker for BasicAi {
 					}
 					let cover = (dx <= highest_hole_x
 						&& dx
-							+ BLOCK_WIDTH[*option_code as usize * 4 + rot as usize]
+							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
 					let score = height as f32 + posy_sum as f32 * 0.25 // mass center height
 						- hole as f32 - cover as f32 * 2.0;
@@ -114,11 +114,11 @@ impl Thinker for BasicAi {
 		// perform action
 		let current_posx = INITIAL_POS[best_code as usize];
 		let rotated_pos0 =
-			current_posx + SRP[(best_code * 8 + best_rotation * 2) as usize];
+			current_posx + SRP[best_code as usize][best_rotation as usize].0;
 		let (keycode, times) = if best_posx == 0 {
 			(KeyType::LLeft, 1)
 		} else if best_posx
-			== 10 - BLOCK_WIDTH[(best_code * 4 + best_rotation) as usize]
+			== 10 - BLOCK_WIDTH[best_code as usize][best_rotation as usize]
 		{
 			(KeyType::RRight, 1)
 		} else if rotated_pos0 > best_posx {

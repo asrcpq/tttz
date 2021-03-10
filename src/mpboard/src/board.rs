@@ -130,20 +130,9 @@ impl Board {
 		}
 		self.tmp_block.rotate(dr);
 		let std_pos = self.tmp_block.pos;
-		let len = if dr == 2 { 6 } else { 5 };
-		let wkd: &Vec<i32> = if dr == 2 {
-			&FWKD
-		} else if code == 0 {
-			&IWKD
-		} else {
-			&WKD
-		};
-		for wkid in 0..len {
-			let left_offset = (dr == -1) as i8 * 40;
-			let idx = (rotation * len * 2 + left_offset + wkid * 2)
-				as usize;
-			self.tmp_block.pos.0 = std_pos.0 + wkd[idx];
-			self.tmp_block.pos.1 = std_pos.1 + wkd[idx + 1];
+		for wkp in kick_iter(code, rotation, dr) {
+			self.tmp_block.pos.0 = std_pos.0 + wkp.0 as i32;
+			self.tmp_block.pos.1 = std_pos.1 + wkp.1 as i32;
 			if self.tmp_block.test(self) {
 				if self.test_twist() > 0 {
 					return 2
@@ -268,12 +257,12 @@ impl Board {
 		if self.tmp_block.code == 0 {
 			return 1;
 		}
-		let offset = self.tmp_block.code as usize * 16 + self.tmp_block.rotation as usize * 4;
+		let tmp = TWIST_MINI_CHECK[self.tmp_block.code as usize][self.tmp_block.rotation as usize];
 		for i in 0..2 {
 			let check_x =
-				self.tmp_block.pos.0 + TWIST_MINI_CHECK[offset + i * 2];
+				self.tmp_block.pos.0 + tmp[i].0;
 			let check_y =
-				self.tmp_block.pos.1 + TWIST_MINI_CHECK[offset + i * 2 + 1];
+				self.tmp_block.pos.1 + tmp[i].1;
 			if self.display.color[check_y as usize][check_x as usize] == 7 {
 				return 1;
 			}
@@ -403,12 +392,11 @@ impl Board {
 		}
 	}
 
-	// true: die
-	pub fn hard_drop(&mut self) -> bool {
+	// set color, update height
+	// return lines to check
+	fn hard_drop_set_color(&mut self) -> Vec<usize> {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = Vec::new();
-		// check tspin before setting color
-		let tspin = self.test_twist();
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
@@ -429,6 +417,14 @@ impl Board {
 			}
 			self.display.color[py][px] = self.tmp_block.code;
 		}
+		lines_tocheck
+	}
+
+	// true: die
+	pub fn hard_drop(&mut self) -> bool {
+		// check twist before setting color
+		let tspin = self.test_twist();
+		let lines_tocheck = self.hard_drop_set_color();
 
 		let line_count = self.checkline(lines_tocheck);
 		// put attack amount into pool

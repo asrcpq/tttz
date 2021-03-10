@@ -138,9 +138,9 @@ impl ClientDisplay {
 	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: usize) {
 		let mut print_info: HashMap<(u32, u32), i32> = HashMap::new();
 		for i in 0..4 {
-			let bpt_offset = 32 * code + i * 2;
-			let x1 = BPT[bpt_offset as usize] as u32 + x;
-			let double_y1 = BPT[bpt_offset as usize + 1] as u32 + double_y;
+			let tmp = BPT[code as usize][0][i as usize];
+			let x1 = tmp.0 as u32 + x;
+			let double_y1 = tmp.1 as u32 + double_y;
 			let y1 = double_y1 / 2;
 			let mut mod2 = double_y1 as i32 % 2 + 1;
 			if let Some(old_mod2) = print_info.remove(&(x1, y1)) {
