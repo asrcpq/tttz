@@ -208,14 +208,13 @@ impl Server {
 						"basic" => {
 							self.ai_threads.push(std::thread::spawn(move || {
 								let mut basic_ai = BasicAi::new();
-								basic_ai.cover_weight = 1.0;
 								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
 							}));
 						}
-						"basic_nocover" => {
+						"basic_cover" => {
 							self.ai_threads.push(std::thread::spawn(move || {
 								let mut basic_ai = BasicAi::new();
-								basic_ai.cover_weight = 0.0;
+								basic_ai.cover_weight = 0.5;
 								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
 							}));
 						}

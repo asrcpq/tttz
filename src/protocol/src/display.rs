@@ -25,7 +25,7 @@ impl Display {
 			shadow_block: [0; 4],
 			tmp_block: [0; 4],
 			hold: 7,
-			bag_preview: [0; 6],
+			bag_preview: [7; 6],
 			combo_multiplier: 0,
 			b2b_multiplier: 0,
 			garbages: VecDeque::new(),

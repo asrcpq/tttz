@@ -18,6 +18,14 @@ impl SbAi {
 
 impl Thinker for SbAi {
 	fn main_think(&mut self, display: &Display) -> VecDeque<KeyType> {
-		VecDeque::new()
+		let mut ret = VecDeque::new();
+		if display.hold == 7 {
+			ret.push_back(KeyType::Hold);
+			return ret
+		}
+
+		let (heights, highest_hole_x, _highest_hole) = get_height_and_hole(&display);
+
+		ret
 	}
 }

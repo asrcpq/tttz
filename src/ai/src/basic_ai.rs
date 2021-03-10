@@ -21,7 +21,7 @@ pub struct BasicAi {
 impl BasicAi {
 	pub fn new() -> Self {
 		BasicAi {
-			cover_weight: 2.0,
+			cover_weight: 0.,
 			hole_weight: 1.0,
 			height_weight: 1.0,
 		}
@@ -99,10 +99,12 @@ impl Thinker for BasicAi {
 						&& dx
 							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
-					let score = (height as f32 + posy_sum as f32 * 0.25) // mass center height
-							* self.height_weight
-						- hole as f32 * self.hole_weight
-						- cover as f32 * self.cover_weight;
+					let score = (
+							height as f32 +
+							MCH[*option_code as usize][rot as usize]
+						) * self.height_weight -
+						hole as f32 * self.hole_weight -
+						cover as f32 * self.cover_weight;
 					if score > best_score {
 						eprintln!(
 							"{} {} {} = {} overtake {} at dx: {}, rot: {}",
