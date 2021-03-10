@@ -90,40 +90,13 @@ impl Thinker for BasicAi {
 				}
 			}
 		}
-
 		let best_code = if best_id == 0 {
 			display.tmp_block[2]
 		} else {
 			// best solution is from the hold block
-			ret.push_back(KeyType::Hold);
 			display.hold
 		};
 		// perform action
-		let current_posx = INITIAL_POS[best_code as usize];
-		let rotated_pos0 =
-			current_posx + SRP[best_code as usize][best_rotation as usize].0;
-		let (keycode, times) = if best_posx == 0 {
-			(KeyType::LLeft, 1)
-		} else if best_posx
-			== 10 - BLOCK_WIDTH[best_code as usize][best_rotation as usize]
-		{
-			(KeyType::RRight, 1)
-		} else if rotated_pos0 > best_posx {
-			(KeyType::Left, rotated_pos0 - best_posx)
-		} else {
-			(KeyType::Right, best_posx - rotated_pos0)
-		};
-		if best_rotation == 1 {
-			ret.push_back(KeyType::Rotate);
-		} else if best_rotation == 3 {
-			ret.push_back(KeyType::RotateReverse);
-		} else if best_rotation == 2 {
-			ret.push_back(KeyType::RotateFlip);
-		}
-		for _ in 0..times {
-			ret.push_back(keycode.clone());
-		}
-		ret.push_back(KeyType::HardDrop);
-		ret
+		generate_keys(best_id != 0, best_code, best_rotation, KeyType::Nothing, best_posx)
 	}
 }

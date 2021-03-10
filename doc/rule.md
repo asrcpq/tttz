@@ -12,7 +12,7 @@
 
 * Combos are calculated as multipliers.
 
-	single combos are extremely weakened(e.g, attack always 1 for 3-14 combo)
+	single combos are extremely weakened(e.g., attack always 1 for 3-14 combos)
 
 * B2B becomes twist combo multiplier(tcm)
 

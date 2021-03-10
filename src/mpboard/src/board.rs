@@ -58,6 +58,7 @@ impl Board {
 		self.replay.push_operation(board_msg.clone());
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
+				KeyType::Nothing => {},
 				KeyType::Hold => {
 					self.hold();
 					self.last_se = SoundEffect::Hold;
@@ -423,7 +424,7 @@ impl Board {
 	// true: die
 	pub fn hard_drop(&mut self) -> bool {
 		// check twist before setting color
-		let tspin = self.test_twist();
+		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
 
 		let line_count = self.checkline(lines_tocheck);
@@ -431,7 +432,7 @@ impl Board {
 		if line_count > 0 {
 			self.height += line_count as i32;
 			// assert!(self.attack_pool != 0)
-			self.calc_attack(tspin, line_count);
+			self.calc_attack(twist, line_count);
 		} else {
 			// plain drop: attack execution
 			self.last_se = SoundEffect::PlainDrop;

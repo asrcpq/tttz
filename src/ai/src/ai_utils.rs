@@ -1,5 +1,47 @@
-use tttz_protocol::Display;
+use tttz_protocol::{Display, KeyType};
 use tttz_ruleset::*;
+
+use std::collections::VecDeque;
+
+pub fn generate_keys(
+	hold_swap: bool,
+	code: u8,
+	rotation: u8,
+	post_key: KeyType,
+	dx: i32,
+) -> VecDeque<KeyType> {
+	let mut ret = VecDeque::new();
+	if hold_swap { ret.push_back(KeyType::Hold); }
+	let current_posx = INITIAL_POS[code as usize];
+	let rotated_pos0 =
+		current_posx + SRP[code as usize][rotation as usize].0;
+	let (keycode, times) = if dx == 0 {
+		(KeyType::LLeft, 1)
+	} else if dx
+		== 10 - BLOCK_WIDTH[code as usize][rotation as usize]
+	{
+		(KeyType::RRight, 1)
+	} else if rotated_pos0 > dx {
+		(KeyType::Left, rotated_pos0 - dx)
+	} else {
+		(KeyType::Right, dx - rotated_pos0)
+	};
+	if rotation == 1 {
+		ret.push_back(KeyType::Rotate);
+	} else if rotation == 3 {
+		ret.push_back(KeyType::RotateReverse);
+	} else if rotation == 2 {
+		ret.push_back(KeyType::RotateFlip);
+	}
+	for _ in 0..times {
+		ret.push_back(keycode.clone());
+	}
+	if post_key != KeyType::Nothing {
+		ret.push_back(post_key);
+	}
+	ret.push_back(KeyType::HardDrop);
+	ret
+}
 
 // return a list of possible drop pos
 pub fn convolve_height(heights: &[u8], code: u8, rot: u8) ->
