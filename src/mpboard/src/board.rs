@@ -7,6 +7,8 @@ use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
 use rand::Rng;
 
+use std::collections::HashSet;
+
 pub struct Board {
 	pub tmp_block: Block,
 	pub shadow_block: Block,
@@ -181,7 +183,7 @@ impl Board {
 	}
 
 	// return count of lines eliminated
-	fn checkline(&mut self, ln: Vec<usize>) -> u32 {
+	fn checkline(&self, ln: HashSet<usize>) -> Vec<usize> {
 		let mut elims = Vec::new();
 		for each_ln in ln.iter() {
 			let mut flag = true;
@@ -191,21 +193,25 @@ impl Board {
 				}
 			}
 			if flag {
-				elims.push(each_ln);
+				elims.push(*each_ln);
 			}
 		}
+		elims
+	}
+
+	fn proc_elim(&mut self, elims: Vec<usize>) {
 		if elims.is_empty() {
 			self.display.combo_multiplier = 0;
 			if self.display.b2b_multiplier > 0 {
 				self.display.b2b_multiplier = ATTACK_B2B_INC;
 			}
-			return 0;
+			return;
 		}
 		let mut movedown = 0;
 		for i in (0..40).rev() {
 			let mut flag = false;
 			for elim in elims.iter() {
-				if i == **elim {
+				if i == *elim {
 					flag = true;
 					break;
 				}
@@ -219,7 +225,6 @@ impl Board {
 			}
 			self.display.color[i + movedown] = self.display.color[i];
 		}
-		movedown as u32
 	}
 
 	// moving test
@@ -378,6 +383,12 @@ impl Board {
 			self.display.b2b_multiplier = 0;
 		}
 		self.attack_pool = base_atk * twist_mult * total_mult / 1000;
+		if self.height == 40 {
+			self.attack_pool += 10;
+		}
+	}
+
+	fn set_attack_se(&mut self) {
 		if self.attack_pool > 0 {
 			if self.display.b2b_multiplier == 0 {
 				self.last_se = SoundEffect::AttackDrop;
@@ -388,16 +399,15 @@ impl Board {
 			self.last_se = SoundEffect::ClearDrop;
 		} // pc will overwrite this
 		if self.height == 40 {
-			self.attack_pool += 10;
 			self.last_se = SoundEffect::PerfectClear;
 		}
 	}
 
 	// set color, update height
 	// return lines to check
-	fn hard_drop_set_color(&mut self) -> Vec<usize> {
+	fn hard_drop_set_color(&mut self) -> HashSet<usize> {
 		let tmppos = self.tmp_block.getpos();
-		let mut lines_tocheck = Vec::new();
+		let mut lines_tocheck = HashSet::new();
 		for i in 0..4 {
 			let px = tmppos[i * 2] as usize;
 			let py = tmppos[i * 2 + 1] as usize;
@@ -407,18 +417,41 @@ impl Board {
 			}
 
 			// generate lines that changed
-			let mut flag = true;
-			for l in lines_tocheck.iter() {
-				if *l == py {
-					flag = false;
-				}
-			}
-			if flag {
-				lines_tocheck.push(py);
-			}
+			lines_tocheck.insert(py);
 			self.display.color[py][px] = self.tmp_block.code;
 		}
 		lines_tocheck
+	}
+
+	// for dry run
+	fn hard_drop_unset_color(&mut self) {
+		let tmppos = self.tmp_block.getpos();
+		for i in 0..4 {
+			let px = tmppos[i * 2] as usize;
+			let py = tmppos[i * 2 + 1] as usize;
+			// tmp is higher, update height
+			if py < self.height as usize {
+				self.height = py as i32;
+			}
+			self.display.color[py][px] = 7;
+		}
+	}
+
+	// for ai, although run dry mut is required
+	// however attack_pool changes, since it is designed as return value
+	pub fn hard_drop_dry_with_twist(&mut self, twist: u32) {
+		let lines_tocheck = self.hard_drop_set_color();
+		let line_count = self.checkline(lines_tocheck).len() as u32;
+		self.hard_drop_unset_color();
+		// put attack amount into pool
+		if line_count > 0 {
+			let cm = self.display.combo_multiplier;
+			let bm = self.display.b2b_multiplier;
+			self.attack_pool = 0;
+			self.calc_attack(twist, line_count);
+			self.display.combo_multiplier = cm;
+			self.display.b2b_multiplier = bm;
+		}
 	}
 
 	// true: die
@@ -427,12 +460,15 @@ impl Board {
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
 
-		let line_count = self.checkline(lines_tocheck);
+		let elim = self.checkline(lines_tocheck);
+		let line_count = elim.len() as u32;
+		self.proc_elim(elim);
 		// put attack amount into pool
 		if line_count > 0 {
 			self.height += line_count as i32;
 			// assert!(self.attack_pool != 0)
 			self.calc_attack(twist, line_count);
+			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
 			self.last_se = SoundEffect::PlainDrop;
@@ -508,7 +544,7 @@ mod test {
 		let mut display = Display::new(1);
 		for i in 0..10 {
 			for j in 0..heights[i] {
-				display.color[(39 - j) * 10 + i] = 1;
+				display.color[39 - j][i] = 1;
 			}
 		}
 		display
@@ -519,11 +555,11 @@ mod test {
 		let mut board = Board::new(1);
 		board.tmp_block = Block::new(1); // █▄▄
 		board.display = generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
-		board.display.color[391] = 7; // sdp: (1, 0)
+		board.display.color[39][1] = 7; // sdp: (1, 0)
 		board.tmp_block.pos.0 = 1;
 		board.tmp_block.pos.1 = 37;
 		board.tmp_block.rotation = 3;
-		assert!(board.test_twist());
+		assert_eq!(board.test_twist(), 2);
 	}
 
 	#[test]

@@ -3,12 +3,17 @@ trap exittrap EXIT
 exittrap() {
 	pkill tttz
 }
+if [ -z "$1" ]; then
+	t=30
+else
+	t=$1
+fi
 cargo run --release --bin tttz-server 2>server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo basic_cover speed 100" \
+execute "spawnai algo basic speed $t" \
 execute "sleep 50" \
-execute "spawnai algo sbai speed 100" \
+execute "spawnai algo sbai speed $t" \
 execute "sleep 300" \
 execute "invite 2 3" \
 execute "view 2" \

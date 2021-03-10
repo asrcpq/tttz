@@ -6,3 +6,4 @@
 - replay statistic
 - support 256 color mode
 - write a gui
+- a real strategy mode, or make strategy ai vs work
