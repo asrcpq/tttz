@@ -140,7 +140,9 @@ impl ClientSession {
 			ServerMsg::Attack(id, amount) => {
 				if let Some(mut board) = self.last_board.remove(&id) {
 					board.display.garbages.push_back(amount);
-					self.client_display.disp_atk_by_id(&board.display);
+					if self.mode == 1 {
+						self.client_display.disp_atk_by_id(&board.display);
+					}
 					self.last_board.insert(id, board);
 				}
 			}
