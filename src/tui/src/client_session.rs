@@ -28,7 +28,7 @@ impl ClientSession {
 	pub fn new(addr: String) -> ClientSession {
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let client_display = Default::default();
-		ClientSession {
+		let mut client_session = ClientSession {
 			sound_manager: Default::default(),
 			client_socket,
 			client_display,
@@ -38,7 +38,10 @@ impl ClientSession {
 			textbuffer: String::new(),
 			bytebuf: Vec::new(),
 			last_board: HashMap::new(),
-		}
+		};
+		client_session.client_socket.socket.set_nonblocking(true).unwrap();
+		client_session.modeswitch(0);
+		client_session
 	}
 
 	fn modeswitch(&mut self, new: i32) {
@@ -298,8 +301,6 @@ impl ClientSession {
 		let mut stdin = async_stdin().bytes();
 		let stdout = stdout();
 		let mut stdout = stdout.lock().into_raw_mode().unwrap();
-		self.client_socket.socket.set_nonblocking(true).unwrap();
-		self.modeswitch(0);
 		stdout.flush().unwrap();
 		loop {
 			if self.mode == 1 {

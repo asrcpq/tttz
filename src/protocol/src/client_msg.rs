@@ -15,6 +15,7 @@ pub enum ClientMsg {
 	View(IdType),
 	SpawnAi(AiType),
 	Request(IdType),
+	Invite(IdType, IdType),
 	Restart,
 	Accept(IdType),
 	Pair,
@@ -64,6 +65,17 @@ impl FromStr for ClientMsg {
 				if let Some(keyword) = split.get(1) {
 					if let Ok(id) = keyword.parse::<i32>() {
 						return Ok(ClientMsg::Request(id));
+					}
+				}
+			}
+			"invite" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id1) = keyword.parse::<i32>() {
+						if let Some(keyword) = split.get(2) {
+							if let Ok(id2) = keyword.parse::<i32>() {
+								return Ok(ClientMsg::Invite(id1, id2));
+							}
+						}
 					}
 				}
 			}

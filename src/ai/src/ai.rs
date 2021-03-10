@@ -36,8 +36,15 @@ pub trait Thinker {
 						state = 2;
 					}
 					ServerMsg::Request(id) => {
-						state = 2;
-						client_socket.send(ClientMsg::Accept(id)).unwrap();
+						if state != 2 {
+							state = 2;
+							client_socket.send(ClientMsg::Accept(id)).unwrap();
+						}
+					}
+					ServerMsg::Invite(id) => {
+						if state != 2 {
+							client_socket.send(ClientMsg::Request(id)).unwrap();
+						}
 					}
 					ServerMsg::Terminate => {
 						return;

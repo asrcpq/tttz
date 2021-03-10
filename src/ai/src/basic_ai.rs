@@ -19,14 +19,14 @@ impl BasicAi {
 impl Thinker for BasicAi {
 	fn main_think(&mut self, display: &Display) -> VecDeque<KeyType> {
 		let mut ret = VecDeque::new();
-	
+
 		if display.hold == 7 {
 			ret.push_back(KeyType::Hold);
 			return ret;
 		}
-	
+
 		let (heights, highest_hole_x, _highest_hole) = get_height_and_hole(&display);
-	
+
 		let mut best_score: f32 = 0.0;
 		let mut best_rotation = 0;
 		let mut best_posx = 0;
@@ -41,7 +41,7 @@ impl Thinker for BasicAi {
 					{
 						break;
 					}
-	
+
 					let mut posx = [0; 4];
 					let mut posy = [0; 4];
 					for block in 0..4 {
@@ -66,7 +66,7 @@ impl Thinker for BasicAi {
 						}
 						height += 1;
 					}
-	
+
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
 					for block in 0..4 {
@@ -103,7 +103,7 @@ impl Thinker for BasicAi {
 				}
 			}
 		}
-	
+
 		let best_code = if best_id == 0 {
 			display.tmp_block[2]
 		} else {

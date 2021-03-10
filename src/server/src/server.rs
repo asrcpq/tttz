@@ -213,6 +213,21 @@ impl Server {
 						}));
 					}
 				},
+				ClientMsg::Invite(id1, id2) => {
+					if let Some(opponent) = self.client_manager.view_by_id(id1) {
+						if opponent.state == 1 {
+							client.state = 3;
+							opponent.send_msg(ServerMsg::Invite(id2));
+						} else {
+							eprintln!(
+								"SERVER: invite: invalid invited state {}",
+								opponent.state
+							);
+						}
+					} else {
+						eprintln!("SERVER: invite: cannot find client {}", id1);
+					}
+				}
 				ClientMsg::Request(id) => {
 					if let Some(opponent) = self.client_manager.view_by_id(id) {
 						if opponent.state == 1 {

@@ -10,11 +10,12 @@ use std::borrow::Cow;
 pub enum ServerMsg<'a> {
 	AllocId(IdType), // response of new client
 	ClientList(Vec<IdType>),
-	Attack(IdType, u32),       // receiver, amount
-	Start(IdType),             // opponent, or 0 in single player mode
-	Request(IdType),           // sender
-	GameOver(bool),            // true = win
-	Terminate,                 // kicked
+	Attack(IdType, u32), // receiver, amount
+	Start(IdType), // opponent, or 0 in single player mode
+	Request(IdType), // sender
+	Invite(IdType), // ask someone to request a match to id
+	GameOver(bool), // true = win
+	Terminate, // kicked
 	Display(Cow<'a, Display>), // hope this can be optimized
 	SoundEffect(IdType, SoundEffect),
 }
@@ -44,6 +45,9 @@ impl<'a> std::fmt::Display for ServerMsg<'a> {
 			Self::Terminate => "kicked".to_string(),
 			Self::Request(id) => {
 				format!("request {}", id)
+			}
+			Self::Invite(id) => {
+				format!("invite {}", id)
 			}
 			Self::ClientList(list) => {
 				format!("Client list {:?}", list)
