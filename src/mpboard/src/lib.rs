@@ -5,4 +5,3 @@ pub use board::Board;
 mod random_generator;
 pub use random_generator::RandomGenerator;
 mod replay;
-pub mod srs_data;

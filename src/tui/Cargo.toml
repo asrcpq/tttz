@@ -24,3 +24,6 @@ path = "../protocol"
 
 [dependencies.tttz-mpboard]
 path = "../mpboard"
+
+[dependencies.tttz-ruleset]
+path = "../ruleset"

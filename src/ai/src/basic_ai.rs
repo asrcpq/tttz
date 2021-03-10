@@ -1,5 +1,5 @@
 // stupid ai, put block to make least holes and lowest height
-use tttz_mpboard::srs_data::*;
+use tttz_ruleset::*;
 use tttz_protocol::Display;
 use tttz_protocol::KeyType;
 
@@ -10,8 +10,14 @@ use std::collections::VecDeque;
 
 pub struct BasicAi {}
 
+impl BasicAi {
+	pub fn new() -> Self {
+		BasicAi {}
+	}
+}
+
 impl Thinker for BasicAi {
-	fn main_think(display: &Display) -> VecDeque<KeyType> {
+	fn main_think(&mut self, display: &Display) -> VecDeque<KeyType> {
 		let mut ret = VecDeque::new();
 	
 		if display.hold == 7 {

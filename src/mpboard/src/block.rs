@@ -1,5 +1,5 @@
 use crate::board::Board;
-use crate::srs_data::*;
+use tttz_ruleset::*;
 
 // clone is used when revert rotation test
 #[derive(Clone)]

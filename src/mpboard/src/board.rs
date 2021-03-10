@@ -1,9 +1,9 @@
 use tttz_protocol::Display;
 use tttz_protocol::{BoardMsg, BoardReply, KeyType, SoundEffect};
+use tttz_ruleset::*;
 
 use crate::block::Block;
 use crate::random_generator::RandomGenerator;
-use crate::srs_data::*;
 use crate::replay::Replay;
 use rand::Rng;
 

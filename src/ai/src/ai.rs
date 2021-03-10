@@ -4,9 +4,9 @@ use tttz_libclient::client_socket::ClientSocket;
 use std::collections::VecDeque;
 
 pub trait Thinker {
-	fn main_think(display: &Display) -> VecDeque<KeyType>;
+	fn main_think(&mut self, display: &Display) -> VecDeque<KeyType>;
 
-	fn main_loop(addr: &str, sleep_millis: u64, strategy: bool) {
+	fn main_loop(&mut self, addr: &str, sleep_millis: u64, strategy: bool) {
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let main_sleep = 10;
 	
@@ -49,7 +49,7 @@ pub trait Thinker {
 				if let Some(ref decoded) = last_display {
 					if state == 2 && moveflag {
 						if operation_queue.is_empty() {
-							operation_queue = Self::main_think(decoded);
+							operation_queue = self.main_think(decoded);
 						}
 						client_socket
 							.send(ClientMsg::KeyEvent(
@@ -62,7 +62,7 @@ pub trait Thinker {
 				}
 			} else if let Some(ref decoded) = last_display {
 				if state == 2 {
-					operation_queue = Self::main_think(decoded);
+					operation_queue = self.main_think(decoded);
 					while let Some(key_type) = operation_queue.pop_front() {
 						client_socket.send(ClientMsg::KeyEvent(key_type)).unwrap();
 						std::thread::sleep(std::time::Duration::from_millis(

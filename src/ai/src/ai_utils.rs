@@ -1,4 +1,3 @@
-use tttz_mpboard::srs_data::*;
 use tttz_protocol::Display;
 
 pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {

@@ -16,3 +16,6 @@ features = ["derive"]
 
 [dependencies.tttz-protocol]
 path = "../protocol"
+
+[dependencies.tttz-ruleset]
+path = "../ruleset"

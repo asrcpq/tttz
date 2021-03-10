@@ -1,6 +1,6 @@
 use tttz_mpboard::Block;
-use tttz_mpboard::srs_data::*;
 use tttz_protocol::Display;
+use tttz_ruleset::*;
 
 use std::collections::HashMap;
 use std::io::Write;

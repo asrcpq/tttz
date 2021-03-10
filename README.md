@@ -14,7 +14,7 @@
 
 * Dummy AI, support strategy mode(moves in turn)
 
-## Special Rules
+## Rules
 
 * Special keys: move left/right until fail(=long press in gui)
 
@@ -75,7 +75,7 @@
 
 	There are two types of board changes: hard drop and garbage overflow.
 
-## Gameplay
+## Default Keybind
 
 * h/l: move left/right
 
