@@ -1,10 +1,9 @@
 use crate::client_manager::ClientManager;
 use crate::server::SOCKET;
-use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg, SoundEffect};
+use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg, SoundEffect, Display};
 
 pub struct Client {
 	pub id: i32,
@@ -16,7 +15,6 @@ pub struct Client {
 	pub state: i32,
 	pub board: Board,
 	pub attack_target: i32,
-	pub display_update: bool,
 }
 
 impl Client {
@@ -28,7 +26,6 @@ impl Client {
 			state: 1,
 			board: Board::new(id),
 			attack_target: 0,
-			display_update: true,
 		}
 	}
 
@@ -69,10 +66,10 @@ impl Client {
 		}
 	}
 
-	pub fn send_display(&mut self, client_manager: &ClientManager) {
+	pub fn send_display(&mut self, client_manager: &ClientManager, display: Display) {
 		self.broadcast_msg(
 			client_manager,
-			&ServerMsg::Display(Cow::Borrowed(&self.board.display)),
+			&ServerMsg::Display(display),
 		);
 		let last_se = std::mem::replace(&mut self.board.last_se, SoundEffect::Silence);
 		self.broadcast_msg(

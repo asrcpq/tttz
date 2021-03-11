@@ -21,18 +21,18 @@ impl Server {
 		// target id and attr
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
-		match client_target.board.handle_msg(BoardMsg::Attacked(lines)) {
-			BoardReply::Ok => {
-				client_target.broadcast_msg(
-					&self.client_manager,
-					&ServerMsg::Attack(client_target.id, lines),
-				);
-			}
-			BoardReply::GarbageOverflow => {
-				client_target.send_display(&self.client_manager);
-			}
-			BoardReply::Die => {
-				client_target.send_display(&self.client_manager);
+		let reply = client_target.board.handle_msg(BoardMsg::Attacked(lines));
+		if reply == BoardReply::Ok {
+			client_target.broadcast_msg(
+				&self.client_manager,
+				&ServerMsg::Attack(client_target.id, lines),
+			);
+		} else {
+			client_target.send_display(
+				&self.client_manager,
+				client_target.board.generate_display()
+			);
+			if reply == BoardReply::Die {
 				flag = true
 			}
 		}
@@ -65,8 +65,8 @@ impl Server {
 			}
 			client.board.attack_pool = 0;
 		}
-		client.board.update_display();
-		client.send_display(&self.client_manager);
+		let display = client.board.generate_display();
+		client.send_display(&self.client_manager, display);
 	}
 
 	fn fetch_message(&mut self) -> Option<(Client, ClientMsg)> {
@@ -298,11 +298,8 @@ impl Server {
 				}
 				ClientMsg::KeyEvent(key_type) => {
 					let dieflag = client.process_key(key_type);
-					// update_display should always be evaluated in this cycle
-					if client.display_update {
-						// display is included in after_operation
-						self.post_operation(&mut client);
-					}
+					// display is included in after_operation
+					self.post_operation(&mut client);
 					// update display before die
 					if dieflag {
 						self.die(&mut client, true);

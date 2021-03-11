@@ -4,10 +4,8 @@ use crate::IdType;
 use crate::Display;
 use crate::SoundEffect;
 
-use std::borrow::Cow;
-
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub enum ServerMsg<'a> {
+pub enum ServerMsg {
 	AllocId(IdType), // response of new client
 	ClientList(Vec<IdType>),
 	Attack(IdType, u32), // receiver, amount
@@ -16,14 +14,14 @@ pub enum ServerMsg<'a> {
 	Invite(IdType), // ask someone to request a match to id
 	GameOver(bool), // true = win
 	Terminate, // kicked
-	Display(Cow<'a, Display>), // hope this can be optimized
+	Display(Display), // hope this can be optimized
 	SoundEffect(IdType, SoundEffect),
 }
 
-impl ServerMsg<'_> {
-	pub fn from_serialized<'a>(
+impl ServerMsg {
+	pub fn from_serialized(
 		buf: &[u8],
-	) -> Result<ServerMsg<'a>, Box<bincode::ErrorKind>> {
+	) -> Result<ServerMsg, Box<bincode::ErrorKind>> {
 		bincode::deserialize(buf)
 	}
 
@@ -32,7 +30,7 @@ impl ServerMsg<'_> {
 	}
 }
 
-impl<'a> std::fmt::Display for ServerMsg<'a> {
+impl std::fmt::Display for ServerMsg {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let string = match self {
 			Self::AllocId(id) => format!("Ok {}", id),

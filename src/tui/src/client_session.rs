@@ -1,9 +1,6 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-
-use tttz_mpboard::Board;
-use tttz_mpboard::Block;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg, BoardMsg, SoundEffect};
+use tttz_protocol::{ClientMsg, KeyType, ServerMsg, Display};
 
 use crate::sound_manager::SoundManager;
 use crate::client_display::ClientDisplay;
@@ -21,7 +18,7 @@ pub struct ClientSession {
 	mode: i32,
 	textbuffer: String,
 	bytebuf: Vec<u8>,
-	last_board: HashMap<i32, Board>,
+	last_display: HashMap<i32, Display>,
 }
 
 impl ClientSession {
@@ -37,7 +34,7 @@ impl ClientSession {
 			mode: 0,
 			textbuffer: String::new(),
 			bytebuf: Vec::new(),
-			last_board: HashMap::new(),
+			last_display: HashMap::new(),
 		};
 		client_session.client_socket.socket.set_nonblocking(true).unwrap();
 		client_session.modeswitch(0);
@@ -51,8 +48,8 @@ impl ClientSession {
 			self.print_prompt();
 		} else {
 			self.client_display.activate();
-			for (_id, board) in &self.last_board {
-				self.client_display.disp_by_id(&board.display);
+			for (_id, display) in &self.last_display {
+				self.client_display.disp_by_id(&display);
 			}
 		}
 	}
@@ -107,7 +104,7 @@ impl ClientSession {
 	}
 
 	fn setpanel(&mut self, panel: usize, id: i32) {
-		self.last_board.insert(id, Board::new(id));
+		self.last_display.insert(id, Display::new(id));
 		self.client_display.setpanel(panel, id);
 	}
 
@@ -138,12 +135,12 @@ impl ClientSession {
 				self.state = 2;
 			}
 			ServerMsg::Attack(id, amount) => {
-				if let Some(mut board) = self.last_board.remove(&id) {
-					board.display.garbages.push_back(amount);
+				if let Some(mut display) = self.last_display.remove(&id) {
+					display.garbages.push_back(amount);
 					if self.mode == 1 {
-						self.client_display.disp_atk_by_id(&board.display);
+						self.client_display.disp_atk_by_id(&display);
 					}
-					self.last_board.insert(id, board);
+					self.last_display.insert(id, display);
 				}
 			}
 			ServerMsg::GameOver(_) => {
@@ -152,9 +149,7 @@ impl ClientSession {
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
 			ServerMsg::SoundEffect(id, ref se) => {
-				if id != self.id {
-					self.sound_manager.play(se);
-				}
+				self.sound_manager.play(se);
 				return false //  early return
 			}
 			_ => {
@@ -251,12 +246,6 @@ impl ClientSession {
 						b'd' => KeyType::RotateFlip,
 						_ => return false,
 					};
-					if let Some(self_board) = self.last_board.get_mut(&self.id) {
-						self_board.handle_msg(BoardMsg::KeyEvent(key_event.clone()));
-						self.client_display.disp_by_id(&self_board.display);
-						self.sound_manager.play(&self_board.last_se);
-						self_board.last_se = SoundEffect::Silence;
-					}
 					self.client_socket
 						.send(ClientMsg::KeyEvent(key_event.clone()))
 						.unwrap();
@@ -272,15 +261,9 @@ impl ClientSession {
 			match server_msg {
 				ServerMsg::Display(display) => {
 					let id = display.id;
-					if let Some(mut board) = self.last_board.remove(&id) {
-						if self.mode == 1 {
-							self.client_display.disp_by_id(&display);
-						}
-						board.tmp_block = Block::decompress(&display.tmp_block);
-						board.shadow_block = Block::decompress(&display.shadow_block);
-						board.rg.bag = display.bag_preview.iter().map(|x| *x).collect();
-						board.display = display.into_owned();
-						self.last_board.insert(id, board);
+					if self.last_display.remove(&id).is_some() {
+						self.client_display.disp_by_id(&display);
+						self.last_display.insert(id, display);
 					} else {
 						eprintln!(
 							"Received display of unknown id {}",

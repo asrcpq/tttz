@@ -7,13 +7,18 @@ use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
 use rand::Rng;
 
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 pub struct Board {
+	id: i32,
 	pub tmp_block: Block,
 	pub shadow_block: Block,
 	pub rg: RandomGenerator,
-	pub display: Display,
+	color: [[u8; 10]; 40],
+	hold: u8,
+	combo_multiplier: u32,
+	b2b_multiplier: u32,
+	garbages: VecDeque<u32>,
 	pub attack_pool: u32,
 	pub last_se: SoundEffect,
 	pub height: i32,
@@ -24,10 +29,15 @@ impl Board {
 	pub fn new(id: i32) -> Board {
 		let replay = Default::default();
 		let mut board = Board {
+			id,
 			tmp_block: Block::new(0), // immediately overwritten
 			shadow_block: Block::new(0), // immediately overwritten
 			rg: Default::default(),
-			display: Display::new(id),
+			color: [[7; 10]; 40],
+			hold: 7,
+			combo_multiplier: 0,
+			b2b_multiplier: 0,
+			garbages: VecDeque::new(),
 			attack_pool: 0,
 			last_se: SoundEffect::Silence,
 			height: 40,
@@ -52,7 +62,7 @@ impl Board {
 		if !self.is_pos_inside(pos) {
 			return false;
 		}
-		self.display.color[pos.1 as usize][pos.0 as usize] == 7
+		self.color[pos.1 as usize][pos.0 as usize] == 7
 	}
 
 	// true = die
@@ -100,7 +110,7 @@ impl Board {
 			BoardMsg::Attacked(amount) => {
 				self.push_garbage(amount);
 				const MAX_GARBAGE_LEN: usize = 5;
-				if self.display.garbages.len() > MAX_GARBAGE_LEN {
+				if self.garbages.len() > MAX_GARBAGE_LEN {
 					if self.flush_garbage(MAX_GARBAGE_LEN) {
 						return BoardReply::Die;
 					} else {
@@ -109,6 +119,7 @@ impl Board {
 				}
 			}
 		}
+		eprintln!("tmp {:?}", self.tmp_block);
 		BoardReply::Ok
 	}
 
@@ -164,12 +175,12 @@ impl Board {
 	}
 
 	fn hold(&mut self) {
-		if self.display.hold == 7 {
-			self.display.hold = self.tmp_block.code;
+		if self.hold == 7 {
+			self.hold = self.tmp_block.code;
 			self.spawn_block();
 		} else {
-			let tmp = self.display.hold;
-			self.display.hold = self.tmp_block.code;
+			let tmp = self.hold;
+			self.hold = self.tmp_block.code;
 			self.tmp_block = Block::new(tmp);
 		}
 	}
@@ -188,7 +199,7 @@ impl Board {
 		for each_ln in ln.iter() {
 			let mut flag = true;
 			for x in 0..10 {
-				if self.display.color[*each_ln][x] == 7 {
+				if self.color[*each_ln][x] == 7 {
 					flag = false;
 				}
 			}
@@ -201,9 +212,9 @@ impl Board {
 
 	fn proc_elim(&mut self, elims: Vec<usize>) {
 		if elims.is_empty() {
-			self.display.combo_multiplier = 0;
-			if self.display.b2b_multiplier > 0 {
-				self.display.b2b_multiplier = ATTACK_B2B_INC;
+			self.combo_multiplier = 0;
+			if self.b2b_multiplier > 0 {
+				self.b2b_multiplier = ATTACK_B2B_INC;
 			}
 			return;
 		}
@@ -223,7 +234,7 @@ impl Board {
 			if movedown == 0 {
 				continue;
 			}
-			self.display.color[i + movedown] = self.display.color[i];
+			self.color[i + movedown] = self.color[i];
 		}
 	}
 
@@ -269,7 +280,7 @@ impl Board {
 				self.tmp_block.pos.0 + tmp[i].0;
 			let check_y =
 				self.tmp_block.pos.1 + tmp[i].1;
-			if self.display.color[check_y as usize][check_x as usize] == 7 {
+			if self.color[check_y as usize][check_x as usize] == 7 {
 				return 1;
 			}
 		}
@@ -286,7 +297,6 @@ impl Board {
 		if self.height < 0 {
 			flag = true;
 		}
-		self.update_display();
 		flag
 	}
 
@@ -295,7 +305,7 @@ impl Board {
 		if atk == 0 {
 			return;
 		}
-		self.display.garbages.push_back(atk);
+		self.garbages.push_back(atk);
 	}
 
 	// pull all pending garbages and write to board color
@@ -303,10 +313,10 @@ impl Board {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0;
 		loop {
-			if self.display.garbages.len() <= keep {
+			if self.garbages.len() <= keep {
 				break;
 			}
-			let mut count = match self.display.garbages.pop_front() {
+			let mut count = match self.garbages.pop_front() {
 				Some(x) => x,
 				None => break,
 			} as usize;
@@ -319,8 +329,8 @@ impl Board {
 			ret += count;
 			for y in 0..(40 - count) {
 				for x in 0..10 {
-					self.display.color[y][x] =
-						self.display.color[y + count][x];
+					self.color[y][x] =
+						self.color[y + count][x];
 				}
 			}
 			for y in 0..count {
@@ -330,9 +340,9 @@ impl Board {
 				}
 				let yy = 39 - y;
 				for x in 0..10 {
-					self.display.color[yy][x] = 2; // L = white
+					self.color[yy][x] = 2; // L = white
 				}
-				self.display.color[yy][slot] = 7;
+				self.color[yy][slot] = 7;
 				if !self.tmp_block.test(self) {
 					self.tmp_block.pos.1 -= 1;
 				}
@@ -346,18 +356,18 @@ impl Board {
 	pub fn counter_attack(&mut self) -> bool {
 		loop {
 			// return if attack remains
-			if self.display.garbages.is_empty() {
+			if self.garbages.is_empty() {
 				break self.attack_pool > 0;
 			}
-			if self.display.garbages[0] >= self.attack_pool {
-				self.display.garbages[0] -= self.attack_pool;
-				if self.display.garbages[0] == 0 {
-					self.display.garbages.pop_front();
+			if self.garbages[0] >= self.attack_pool {
+				self.garbages[0] -= self.attack_pool;
+				if self.garbages[0] == 0 {
+					self.garbages.pop_front();
 				}
 				self.attack_pool = 0;
 				break false;
 			}
-			let popped_lines = self.display.garbages.pop_front().unwrap();
+			let popped_lines = self.garbages.pop_front().unwrap();
 			self.attack_pool -= popped_lines;
 		}
 	}
@@ -375,11 +385,11 @@ impl Board {
 			10
 		};
 		let mut total_mult = 10;
-		total_mult += self.display.combo_multiplier;
-		let cm = self.display.combo_multiplier + ATTACK_COMBO_INC;
+		total_mult += self.combo_multiplier;
+		let cm = self.combo_multiplier + ATTACK_COMBO_INC;
 		let tcm = if tspin > 0 || line_count == 4 {
-			total_mult += self.display.b2b_multiplier;
-			self.display.b2b_multiplier + ATTACK_B2B_INC
+			total_mult += self.b2b_multiplier;
+			self.b2b_multiplier + ATTACK_B2B_INC
 		} else {
 			0
 		};
@@ -392,7 +402,7 @@ impl Board {
 
 	fn set_attack_se(&mut self) {
 		if self.attack_pool > 0 {
-			if self.display.b2b_multiplier == 0 {
+			if self.b2b_multiplier == 0 {
 				self.last_se = SoundEffect::AttackDrop;
 			} else {
 				self.last_se = SoundEffect::AttackDrop2;
@@ -420,7 +430,7 @@ impl Board {
 
 			// generate lines that changed
 			lines_tocheck.insert(py);
-			self.display.color[py][px] = self.tmp_block.code;
+			self.color[py][px] = self.tmp_block.code;
 		}
 		lines_tocheck
 	}
@@ -435,7 +445,7 @@ impl Board {
 			if py < self.height as usize {
 				self.height = py as i32;
 			}
-			self.display.color[py][px] = 7;
+			self.color[py][px] = 7;
 		}
 	}
 
@@ -466,8 +476,8 @@ impl Board {
 			// assert!(self.attack_pool != 0)
 			let ret = self.calc_attack(twist, line_count);
 			self.attack_pool = ret.0;
-			self.display.combo_multiplier = ret.1;
-			self.display.b2b_multiplier = ret.2;
+			self.combo_multiplier = ret.1;
+			self.b2b_multiplier = ret.2;
 			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
@@ -518,12 +528,19 @@ impl Board {
 		}
 	}
 
-	pub fn update_display(&mut self) {
-		self.display.shadow_block = self.shadow_block.compress();
-		self.display.tmp_block = self.tmp_block.compress();
-		for i in 0..6 {
-			self.display.bag_preview[i] = self.rg.bag[i];
+	pub fn generate_display(&self) -> Display {
+		let mut display = Display::new(self.id);
+		for i in 20..40 {
+			display.color[i] = self.color[i];
 		}
+		display.shadow_block = self.shadow_block.compress();
+		display.tmp_block = self.tmp_block.compress();
+		display.garbages = self.garbages.clone();
+		display.hold = self.hold;
+		for i in 0..6 {
+			display.bag_preview[i] = self.rg.bag[i];
+		}
+		display
 	}
 }
 

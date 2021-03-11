@@ -34,9 +34,7 @@ impl ClientSocket {
 		Ok(())
 	}
 
-	pub fn recv<'a, 'b>(
-		&'b self,
-	) -> Result<ServerMsg<'a>, Box<dyn std::error::Error>> {
+	pub fn recv(&self) -> Result<ServerMsg, Box<dyn std::error::Error>> {
 		let mut buf = [0; 1024];
 		let amt = self.socket.recv(&mut buf)?;
 		let server_msg = ServerMsg::from_serialized(&buf[..amt])?;

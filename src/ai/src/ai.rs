@@ -21,7 +21,7 @@ pub trait Thinker {
 				match server_msg {
 					ServerMsg::Display(display) => {
 						if display.id == id {
-							last_display = Some(display.into_owned());
+							last_display = Some(display);
 						} else {
 							// strategy ai moves after user move
 							if strategy {
