@@ -219,7 +219,7 @@ impl Board {
 			return;
 		}
 		let mut movedown = 0;
-		for i in (0..40).rev() {
+		for i in 0..40 {
 			let mut flag = false;
 			for elim in elims.iter() {
 				if i == *elim {
@@ -234,7 +234,7 @@ impl Board {
 			if movedown == 0 {
 				continue;
 			}
-			self.color[i + movedown] = self.color[i];
+			self.color[i - movedown] = self.color[i];
 		}
 	}
 
@@ -308,7 +308,7 @@ impl Board {
 		self.garbages.push_back(atk);
 	}
 
-	// pull all pending garbages and write to board color
+	// pull pending garbages and write to board color
 	pub fn generate_garbage(&mut self, keep: usize) -> u32 {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0;
@@ -327,10 +327,10 @@ impl Board {
 				count = 40;
 			}
 			ret += count;
-			for y in 0..(40 - count) {
+			for y in (count..40).rev() {
 				for x in 0..10 {
 					self.color[y][x] =
-						self.color[y + count][x];
+						self.color[y - count][x];
 				}
 			}
 			for y in 0..count {
@@ -338,11 +338,10 @@ impl Board {
 				if same >= SAME_LINE {
 					slot = self.rg.rng.gen_range(0..10);
 				}
-				let yy = 39 - y;
 				for x in 0..10 {
-					self.color[yy][x] = 2; // L = white
+					self.color[y][x] = 2; // L = white
 				}
-				self.color[yy][slot] = 7;
+				self.color[y][slot] = 7;
 				if !self.tmp_block.test(self) {
 					self.tmp_block.pos.1 -= 1;
 				}
@@ -516,10 +515,10 @@ impl Board {
 	pub fn calc_shadow(&mut self) -> bool {
 		self.shadow_block = self.tmp_block.clone();
 		loop {
-			self.shadow_block.pos.1 += 1;
+			self.shadow_block.pos.1 -= 1;
 			if !self.shadow_block.test(self) {
-				self.shadow_block.pos.1 -= 1;
-				if self.shadow_block.bottom_pos() < 20 {
+				self.shadow_block.pos.1 += 1;
+				if self.shadow_block.bottom_pos() >= 20 {
 					return false;
 				} else {
 					return true;
@@ -531,7 +530,7 @@ impl Board {
 	pub fn generate_display(&self) -> Display {
 		let mut display = Display::new(self.id);
 		for i in 0..20 {
-			display.color[19 - i] = self.color[i];
+			display.color[i] = self.color[i];
 		}
 		display.shadow_block = self.shadow_block.compress();
 		display.tmp_block = self.tmp_block.compress();

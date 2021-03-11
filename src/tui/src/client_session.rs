@@ -260,6 +260,7 @@ impl ClientSession {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
 				ServerMsg::Display(display) => {
+					eprintln!("{:?}", display);
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
 						self.client_display.disp_by_id(&display);

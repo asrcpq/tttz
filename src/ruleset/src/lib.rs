@@ -1,5 +1,5 @@
-mod srs_data;
-pub use srs_data::*;
+mod srs;
+pub use srs::*;
 mod basic;
 pub use basic::*;
 mod attack;

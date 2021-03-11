@@ -140,7 +140,7 @@ impl ClientDisplay {
 		for i in 0..4 {
 			let tmp = BPT[code as usize][0][i as usize];
 			let x1 = tmp.0 as u32 + x;
-			let double_y1 = tmp.1 as u32 + double_y;
+			let double_y1 = double_y + 1 - tmp.1 as u32 ;
 			let y1 = double_y1 / 2;
 			let mut mod2 = double_y1 as i32 % 2 + 1;
 			if let Some(old_mod2) = print_info.remove(&(x1, y1)) {
@@ -237,7 +237,7 @@ impl ClientDisplay {
 			for j in 0..20 {
 				self.blockp(
 					offsetx + i * 2,
-					offsety + j,
+					offsety + 19 - j,
 					display.color[j as usize][i as usize],
 					0,
 				);
@@ -251,10 +251,10 @@ impl ClientDisplay {
 		for i in 0..4 {
 			let x = shadow_pos[i].0 as u16;
 			let y = shadow_pos[i].1 as u16;
-			if y >= 20 {
+			if y < 20 {
 				self.blockp(
 					offsetx + x * 2,
-					offsety + y - 20,
+					offsety + 19 - y,
 					tmp_block.code,
 					1,
 				);
@@ -265,10 +265,10 @@ impl ClientDisplay {
 		for i in 0..4 {
 			let x = tmp_pos[i].0 as u16;
 			let y = tmp_pos[i].1 as u16;
-			if y >= 20 {
+			if y < 20 {
 				self.blockp(
 					offsetx + x * 2,
-					offsety + y - 20,
+					offsety + 19 - y,
 					tmp_block.code,
 					0,
 				);
