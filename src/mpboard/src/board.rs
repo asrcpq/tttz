@@ -531,7 +531,7 @@ impl Board {
 	pub fn generate_display(&self) -> Display {
 		let mut display = Display::new(self.id);
 		for i in 20..40 {
-			display.color[i] = self.color[i];
+			display.color[i - 20] = self.color[i];
 		}
 		display.shadow_block = self.shadow_block.compress();
 		display.tmp_block = self.tmp_block.compress();

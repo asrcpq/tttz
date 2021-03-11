@@ -21,7 +21,7 @@ impl Display {
 	pub fn new(id: i32) -> Display {
 		Display {
 			id,
-			color: vec![[7; BOARD_WIDTH]; 40],
+			color: vec![[7; BOARD_WIDTH]; 20],
 			shadow_block: [0; 4],
 			tmp_block: [0; 4],
 			hold: 7,

@@ -234,10 +234,10 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[panel] as u16;
 		let offsety = self.offset_y[panel] as u16;
 		for i in 0..10 {
-			for j in 20..40 {
+			for j in 0..20 {
 				self.blockp(
 					offsetx + i * 2,
-					offsety + j - 20,
+					offsety + j,
 					display.color[j as usize][i as usize],
 					0,
 				);

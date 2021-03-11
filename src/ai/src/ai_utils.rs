@@ -90,8 +90,8 @@ pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
 
 pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 	// calc height
-	let mut heights = [40u8; 10];
-	let mut highest_hole = 40;
+	let mut heights = [20u8; 10];
+	let mut highest_hole = 20;
 	let mut highest_hole_x: i32 = -1;
 	for i in 0..10 {
 		let mut j: usize = 0;
@@ -106,7 +106,7 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 				heights[i as usize] = j as u8;
 			}
 			j += 1;
-			if j == 40 {
+			if j == 20 {
 				break;
 			}
 		}
