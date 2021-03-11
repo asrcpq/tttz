@@ -251,12 +251,12 @@ impl Board {
 			return false;
 		}
 		self.tmp_block.pos.0 -= 1;
-		self.tmp_block.pos.1 -= 1;
+		self.tmp_block.pos.1 += 1;
 		if self.tmp_block.test(self) {
-			self.tmp_block.pos.1 += 1;
+			self.tmp_block.pos.1 -= 1;
 			return false;
 		}
-		self.tmp_block.pos.1 += 1;
+		self.tmp_block.pos.1 -= 1;
 		true
 	}
 
@@ -393,6 +393,7 @@ impl Board {
 			0
 		};
 		let mut atk = base_atk * twist_mult * total_mult / 1000;
+		eprintln!("{} {} {}", base_atk, twist_mult, total_mult);
 		if self.height == 40 {
 			atk += 10;
 		}
