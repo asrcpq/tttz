@@ -8,7 +8,7 @@ if [ -z "$1" ]; then
 else
 	t=$1
 fi
-cargo run --release --bin tttz-server 2>server.log &
+cargo run --release --bin tttz-server 2>/dev/shm/tttz-server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
 execute "spawnai algo basic speed $t" \
@@ -21,4 +21,4 @@ execute "panel 0 2" \
 execute "view 3" \
 execute "panel 1 3" \
 execute "" \
-2>client.log
+2>/dev/shm/tttz-client.log

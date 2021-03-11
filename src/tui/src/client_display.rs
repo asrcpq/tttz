@@ -249,8 +249,8 @@ impl ClientDisplay {
 		// show shadow_block first
 		print!("[0m");
 		for i in 0..4 {
-			let x = shadow_pos[i * 2] as u16;
-			let y = shadow_pos[i * 2 + 1] as u16;
+			let x = shadow_pos[i].0 as u16;
+			let y = shadow_pos[i].1 as u16;
 			if y >= 20 {
 				self.blockp(
 					offsetx + x * 2,
@@ -263,8 +263,8 @@ impl ClientDisplay {
 		print!("[30m");
 		let tmp_pos = tmp_block.getpos();
 		for i in 0..4 {
-			let x = tmp_pos[i * 2] as u16;
-			let y = tmp_pos[i * 2 + 1] as u16;
+			let x = tmp_pos[i].0 as u16;
+			let y = tmp_pos[i].1 as u16;
 			if y >= 20 {
 				self.blockp(
 					offsetx + x * 2,

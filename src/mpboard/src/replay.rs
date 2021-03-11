@@ -5,7 +5,7 @@ use tttz_protocol::BoardMsg;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Write;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Replay {
 	start_time: SystemTime,
 	data: Vec<(u128, BoardMsg)>,

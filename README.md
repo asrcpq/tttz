@@ -6,9 +6,6 @@
 
 * a VT100 compatible terminal
 
-Notice: tttz-server will create replay folder in app directory
-(in Linux `$XDG_DATA_HOME/tttz`) and save replay files there.
-
 ## Functions
 
 * TUI with sound, cross-platform(maybe)

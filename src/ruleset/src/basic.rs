@@ -4,7 +4,7 @@ pub const ID_TO_CHAR: [char; 8] = [
 
 // block pos table
 // code * rotation * block * (x, y)
-pub const BPT: [[[(i32, i32); 4]; 4]; 7] = [
+pub const BPT: [[[(u8, u8); 4]; 4]; 7] = [
 	[
 		[(0, 0), (1, 0), (2, 0), (3, 0)],
 		[(0, 0), (0, 1), (0, 2), (0, 3)],

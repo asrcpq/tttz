@@ -9,6 +9,7 @@ use rand::Rng;
 
 use std::collections::HashSet;
 
+#[derive(Clone)]
 pub struct Board {
 	pub tmp_block: Block,
 	pub shadow_block: Block,
@@ -364,7 +365,8 @@ impl Board {
 
 	// providing whether tspin, shape offset and cleared lines
 	// change self b2b and attack_pool
-	fn calc_attack(&mut self, tspin: u32, line_count: u32) {
+	// return atk, cm, tcm
+	fn calc_attack(&self, tspin: u32, line_count: u32) -> (u32, u32, u32) {
 		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
 		let twist_mult = if tspin > 0 {
 			ATTACK_BASE_TWIST_MULTIPLIER[
@@ -375,17 +377,18 @@ impl Board {
 		};
 		let mut total_mult = 10;
 		total_mult += self.display.combo_multiplier;
-		self.display.combo_multiplier += ATTACK_COMBO_INC;
-		if tspin > 0 || line_count == 4 {
+		let cm = self.display.combo_multiplier + ATTACK_COMBO_INC;
+		let tcm = if tspin > 0 || line_count == 4 {
 			total_mult += self.display.b2b_multiplier;
-			self.display.b2b_multiplier += ATTACK_B2B_INC;
+			self.display.b2b_multiplier + ATTACK_B2B_INC
 		} else {
-			self.display.b2b_multiplier = 0;
-		}
-		self.attack_pool = base_atk * twist_mult * total_mult / 1000;
+			0
+		};
+		let mut atk = base_atk * twist_mult * total_mult / 1000;
 		if self.height == 40 {
-			self.attack_pool += 10;
+			atk += 10;
 		}
+		return (atk, cm, tcm)
 	}
 
 	fn set_attack_se(&mut self) {
@@ -409,8 +412,8 @@ impl Board {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = HashSet::new();
 		for i in 0..4 {
-			let px = tmppos[i * 2] as usize;
-			let py = tmppos[i * 2 + 1] as usize;
+			let px = tmppos[i].0 as usize;
+			let py = tmppos[i].1 as usize;
 			// tmp is higher, update height
 			if py < self.height as usize {
 				self.height = py as i32;
@@ -427,8 +430,8 @@ impl Board {
 	fn hard_drop_unset_color(&mut self) {
 		let tmppos = self.tmp_block.getpos();
 		for i in 0..4 {
-			let px = tmppos[i * 2] as usize;
-			let py = tmppos[i * 2 + 1] as usize;
+			let px = tmppos[i].0 as usize;
+			let py = tmppos[i].1 as usize;
 			// tmp is higher, update height
 			if py < self.height as usize {
 				self.height = py as i32;
@@ -437,21 +440,16 @@ impl Board {
 		}
 	}
 
-	// for ai, although run dry mut is required
-	// however attack_pool changes, since it is designed as return value
-	pub fn hard_drop_dry_with_twist(&mut self, twist: u32) {
+	// for ai
+	pub fn hard_drop_dry_with_twist(&mut self, twist: u32) -> u32 {
 		let lines_tocheck = self.hard_drop_set_color();
 		let line_count = self.checkline(lines_tocheck).len() as u32;
 		self.hard_drop_unset_color();
 		// put attack amount into pool
 		if line_count > 0 {
-			let cm = self.display.combo_multiplier;
-			let bm = self.display.b2b_multiplier;
-			self.attack_pool = 0;
-			self.calc_attack(twist, line_count);
-			self.display.combo_multiplier = cm;
-			self.display.b2b_multiplier = bm;
+			return self.calc_attack(twist, line_count).0;
 		}
+		0
 	}
 
 	// true: die
@@ -467,7 +465,10 @@ impl Board {
 		if line_count > 0 {
 			self.height += line_count as i32;
 			// assert!(self.attack_pool != 0)
-			self.calc_attack(twist, line_count);
+			let ret = self.calc_attack(twist, line_count);
+			self.attack_pool = ret.0;
+			self.display.combo_multiplier = ret.1;
+			self.display.b2b_multiplier = ret.2;
 			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
@@ -568,8 +569,8 @@ mod test {
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
 			blocks.remove(&(
-				shadow_pos[i * 2] as i32,
-				shadow_pos[i * 2 + 1] as i32,
+				shadow_pos[i].0 as i32,
+				shadow_pos[i].1 as i32,
 			));
 		}
 		assert!(blocks.is_empty());
@@ -584,8 +585,8 @@ mod test {
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
 			blocks.remove(&(
-				shadow_pos[i * 2] as i32,
-				shadow_pos[i * 2 + 1] as i32,
+				shadow_pos[i].0 as i32,
+				shadow_pos[i].1 as i32,
 			));
 		}
 	}

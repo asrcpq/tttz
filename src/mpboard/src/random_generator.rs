@@ -3,6 +3,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::VecDeque;
 
+#[derive(Clone)]
 pub struct RandomGenerator {
 	pub rng: ThreadRng, // directly called for garbage generation
 	pub bag: VecDeque<u8>,

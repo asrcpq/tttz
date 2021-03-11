@@ -2,7 +2,7 @@ use crate::board::Board;
 use tttz_ruleset::*;
 
 // clone is used when revert rotation test
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Block {
 	pub code: u8,
 	pub pos: (i32, i32),
@@ -52,14 +52,19 @@ impl Block {
 		}
 	}
 
-	pub fn getpos(&self) -> [u8; 8] {
-		let mut ret = [0u8; 8];
+	// each square pos relative to block pos
+	pub fn getpos_internal(&self) -> [(u8, u8); 4] {
+		BPT[self.code as usize][self.rotation as usize].clone()
+	}
+
+	pub fn getpos(&self) -> [(u8, u8); 4] {
+		let mut ret = [(0, 0); 4];
 		for block_id in 0..4 {
 			let tmp = BPT[self.code as usize][self.rotation as usize][block_id as usize];
-			let px = self.pos.0 + tmp.0;
-			let py = self.pos.1 + tmp.1;
-			ret[block_id as usize * 2] = px as u8;
-			ret[block_id as usize * 2 + 1] = py as u8;
+			let px = self.pos.0 as u8 + tmp.0;
+			let py = self.pos.1 as u8 + tmp.1;
+			ret[block_id as usize].0 = px;
+			ret[block_id as usize].1 = py;
 		}
 		ret
 	}
@@ -73,8 +78,8 @@ impl Block {
 	pub fn test(&self, board: &Board) -> bool {
 		for block_id in 0..4 {
 			let tmp = BPT[self.code as usize][self.rotation as usize][block_id as usize];
-			let px = self.pos.0 + tmp.0;
-			let py = self.pos.1 + tmp.1;
+			let px = self.pos.0 + tmp.0 as i32;
+			let py = self.pos.1 + tmp.1 as i32;
 			if !board.is_pos_vacant((px, py)) {
 				return false;
 			}
