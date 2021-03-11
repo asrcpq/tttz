@@ -1,4 +1,4 @@
-use tttz_ai::{BasicAi, SbAi, Thinker};
+use tttz_ai::{BasicAi, Thinker};
 use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 use crate::client::Client;
 use crate::client_manager::ClientManager;
@@ -205,12 +205,6 @@ impl Server {
 						AiType::Speed(sleep) => (sleep, false),
 					};
 					match algo.as_ref() {
-						"sbai" => {
-							self.ai_threads.push(std::thread::spawn(move || {
-								let mut sbai: SbAi = Default::default();
-								sbai.main_loop("127.0.0.1:23124", sleep, strategy);
-							}));
-						}
 						"basic" => {
 							self.ai_threads.push(std::thread::spawn(move || {
 								let mut basic_ai = BasicAi::new();
