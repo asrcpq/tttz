@@ -14,7 +14,7 @@ pub struct Board {
 	pub tmp_block: Block,
 	pub shadow_block: Block,
 	pub rg: RandomGenerator,
-	color: [[u8; 10]; 40],
+	pub(in crate) color: [[u8; 10]; 40],
 	hold: u8,
 	combo_multiplier: u32,
 	b2b_multiplier: u32,
@@ -530,8 +530,8 @@ impl Board {
 
 	pub fn generate_display(&self) -> Display {
 		let mut display = Display::new(self.id);
-		for i in 20..40 {
-			display.color[i - 20] = self.color[i];
+		for i in 0..20 {
+			display.color[19 - i] = self.color[i];
 		}
 		display.shadow_block = self.shadow_block.compress();
 		display.tmp_block = self.tmp_block.compress();
@@ -547,6 +547,7 @@ impl Board {
 #[cfg(test)]
 mod test {
 	use super::*;
+	use crate::test::*;
 
 	#[test]
 	fn test_is_pos_inside() {
@@ -559,10 +560,9 @@ mod test {
 
 	#[test]
 	fn test_test_twist() {
-		let mut board = Board::new(1);
+		let mut board = test::generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
+		board.color[39][1] = 7; // sdp: (1, 0)
 		board.tmp_block = Block::new(1); // █▄▄
-		board.display = Display::generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
-		board.display.color[39][1] = 7; // sdp: (1, 0)
 		board.tmp_block.pos.0 = 1;
 		board.tmp_block.pos.1 = 37;
 		board.tmp_block.rotation = 3;
@@ -571,9 +571,8 @@ mod test {
 
 	#[test]
 	fn test_calc_shadow() {
-		let mut board = Board::new(1);
+		let mut board = test::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
 		board.tmp_block = Block::new(1); // █▄▄
-		board.display = Display::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
 		board.calc_shadow();
 		use std::collections::HashSet;
 		let mut blocks: HashSet<(i32, i32)> = HashSet::new();

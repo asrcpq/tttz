@@ -1,5 +1,5 @@
 pub const ID_TO_CHAR: [char; 8] = [
-	'i', 'j', 'l', 'o', 's', 't', 'z', ' ',
+	'i', 'j', 'l', 'o', 's', 't', 'z', 'x',
 ];
 
 // block pos table
