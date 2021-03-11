@@ -79,10 +79,6 @@ impl SbAi {
 		// we should not really optimize first block since
 		// possible twists can be filtered out easily
 		for id in 0..2 {
-				self.test_board.tmp_block.code,
-				self.test_board.display.hold,
-				self.test_board.rg.bag,
-				depth);
 			for rot in 0..4i8 {
 				let (possible_pos, _posx, _posy) = convolve_height(
 					&self.heights,
@@ -152,8 +148,7 @@ impl SbAi {
 								}
 							};
 							let value = if depth == 1 {
-								let mut sbai2: SbAi = Default::default();
-								sbai2.test_board = self.test_board.clone();
+								let mut sbai2: SbAi = self.sbai_clone();
 								let value1 = self.think2(
 									twist,
 								);
@@ -196,15 +191,8 @@ impl SbAi {
 		}
 		(max_value, gkp)
 	}
-}
 
-impl Thinker for SbAi {
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
-		if display.hold == 7 {
-			let mut ret = VecDeque::new();
-			ret.push_back(KeyType::Hold);
-			return ret
-		}
+	fn set_board(&mut self, display: Display) {
 		self.test_board.tmp_block = Block::decompress(&display.tmp_block);
 		self.test_board.display = display;
 		self.test_board.rg.bag =
@@ -214,6 +202,25 @@ impl Thinker for SbAi {
 				.iter()
 				.map(|x| *x)
 				.collect();
+	}
+
+	fn sbai_clone(&self) -> SbAi {
+		let mut sb_ai: SbAi = Default::default();
+		sb_ai.test_board.tmp_block = self.test_board.tmp_block.clone();
+		sb_ai.test_board.display = self.test_board.display.clone();
+		sb_ai.test_board.rg.bag = self.test_board.rg.bag.clone();
+		sb_ai
+	}
+}
+
+impl Thinker for SbAi {
+	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
+		if display.hold == 7 {
+			let mut ret = VecDeque::new();
+			ret.push_back(KeyType::Hold);
+			return ret
+		}
+		self.set_board(display);
 		let gkp = self.think1(1).1;
 		generate_keys(gkp)
 	}

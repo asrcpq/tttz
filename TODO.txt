@@ -1,4 +1,3 @@
-- better AI
 - better sound effects
 - better readline
 - id system(for replay)
@@ -7,3 +6,5 @@
 - support 256 color mode
 - write a gui
 - a real strategy mode, or make strategy ai vs work
+- optimize sbai performance
+- improve sbai

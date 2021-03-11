@@ -12,8 +12,6 @@
 
 * Combos are calculated as multipliers.
 
-	single combos are extremely weakened(e.g., attack always 1 for 3-14 combos)
-
 * B2B becomes twist combo multiplier(tcm)
 
 	* A plain drop will reset twist combo(tc) to 1x(if it was not 0x)
@@ -27,8 +25,8 @@
 	```
 	b = base_attack[cleared_lines] = [0.5, 1.0, 2.0, 4.0]
 	tb = twist_bonus[mini|regular][block_type]
-	cm = 1 + combo * COMBO_INC=0.2
-	tcm = 1 + tcm * TWIST_COMBO_INC=0.5
+	cm = 1 + combo * COMBO_INC=0.3
+	tcm = 1 + tcm * TWIST_COMBO_INC=0.6
 	atk = floor(b * tb * (cm + tcm))
 	```
 

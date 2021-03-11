@@ -1,5 +1,7 @@
 /target
-*.log
 /replay
-*.wav
 /Cargo.lock
+*.log
+*.wav
+perf.*
+*.svg

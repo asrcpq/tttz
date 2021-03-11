@@ -9,7 +9,6 @@ use rand::Rng;
 
 use std::collections::HashSet;
 
-#[derive(Clone)]
 pub struct Board {
 	pub tmp_block: Block,
 	pub shadow_block: Block,
