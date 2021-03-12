@@ -16,8 +16,8 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub(in crate) color: [[u8; 10]; 40],
 	hold: u8,
-	combo_multiplier: u32,
-	b2b_multiplier: u32,
+	cm: u32,
+	tcm: u32,
 	garbages: VecDeque<u32>,
 	pub attack_pool: u32,
 	pub last_se: SoundEffect,
@@ -35,8 +35,8 @@ impl Board {
 			rg: Default::default(),
 			color: [[7; 10]; 40],
 			hold: 7,
-			combo_multiplier: 0,
-			b2b_multiplier: 0,
+			cm: 0,
+			tcm: 0,
 			garbages: VecDeque::new(),
 			attack_pool: 0,
 			last_se: SoundEffect::Silence,
@@ -211,9 +211,9 @@ impl Board {
 
 	fn proc_elim(&mut self, elims: Vec<usize>) {
 		if elims.is_empty() {
-			self.combo_multiplier = 0;
-			if self.b2b_multiplier > 0 {
-				self.b2b_multiplier = ATTACK_B2B_INC;
+			self.cm = 0;
+			if self.tcm > 0 {
+				self.tcm = ATTACK_B2B_INC;
 			}
 			return;
 		}
@@ -380,11 +380,11 @@ impl Board {
 			10
 		};
 		let mut total_mult = 10;
-		total_mult += self.combo_multiplier;
-		let cm = self.combo_multiplier + ATTACK_COMBO_INC;
+		total_mult += self.cm;
+		let cm = self.cm + ATTACK_COMBO_INC;
 		let tcm = if tspin > 0 || line_count == 4 {
-			total_mult += self.b2b_multiplier;
-			self.b2b_multiplier + ATTACK_B2B_INC
+			total_mult += self.tcm;
+			self.tcm + ATTACK_B2B_INC
 		} else {
 			0
 		};
@@ -397,7 +397,7 @@ impl Board {
 
 	fn set_attack_se(&mut self) {
 		if self.attack_pool > 0 {
-			if self.b2b_multiplier == 0 {
+			if self.tcm == 0 {
 				self.last_se = SoundEffect::AttackDrop;
 			} else {
 				self.last_se = SoundEffect::AttackDrop2;
@@ -445,8 +445,8 @@ impl Board {
 			// assert!(self.attack_pool != 0)
 			let ret = self.calc_attack(twist, line_count);
 			self.attack_pool = ret.0;
-			self.combo_multiplier = ret.1;
-			self.b2b_multiplier = ret.2;
+			self.cm = ret.1;
+			self.tcm = ret.2;
 			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
@@ -502,6 +502,10 @@ impl Board {
 		display.tmp_block = self.tmp_block.compress();
 		display.garbages = self.garbages.clone();
 		display.hold = self.hold;
+		display.tmp_block = self.tmp_block.compress();
+		display.garbages = self.garbages.clone();
+		display.cm = self.cm;
+		display.tcm = self.tcm;
 		for i in 0..6 {
 			display.bag_preview[i] = self.rg.bag[i];
 		}

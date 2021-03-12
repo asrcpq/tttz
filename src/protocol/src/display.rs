@@ -12,8 +12,8 @@ pub struct Display {
 	pub tmp_block: [u8; 4],
 	pub hold: u8,
 	pub bag_preview: [u8; 6],
-	pub combo_multiplier: u32,
-	pub b2b_multiplier: u32,
+	pub cm: u32,
+	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
 }
 
@@ -26,8 +26,8 @@ impl Display {
 			tmp_block: [0; 4],
 			hold: 7,
 			bag_preview: [7; 6],
-			combo_multiplier: 0,
-			b2b_multiplier: 0,
+			cm: 0,
+			tcm: 0,
 			garbages: VecDeque::new(),
 		}
 	}
