@@ -10,7 +10,7 @@
 
 * All twists are rewarded(in different base attack), with mini-twists
 
-* Combos are calculated as multipliers.
+* Combos are calculated as multipliers(cm).
 
 * B2B becomes twist combo multiplier(tcm)
 
@@ -25,9 +25,9 @@
 	```
 	b = base_attack[cleared_lines] = [0.5, 1.5, 2.5, 4.0]
 	tb = twist_bonus[mini|regular][block_type]
-	cm = 1 + combo * COMBO_INC=0.3
-	tcm = 1 + tcm * TWIST_COMBO_INC=0.6
-	atk = floor(b * tb * (cm + tcm))
+	cm = combo * COMBO_INC=0.3
+	tcm = tc * TWIST_COMBO_INC=0.6
+	atk = floor(b * tb * (cm + tcm + 1))
 	```
 
 	`twist_bonus` table
