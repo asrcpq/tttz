@@ -4,26 +4,23 @@
 
 * rust(cargo)
 
-* a VT100 compatible terminal
+* a VT100 compatible terminal with common unicode support
 
 ## Functions
 
 * TUI with sound, cross-platform(maybe)
 
-* No resource file!
+* No resource file
 
 * Replay automatically saved(working)
 
-* Dummy AI, support strategy mode(moves in turn)
+* Built with [cold-clear](https://github.com/MinusKelvin/cold-clear) AI
 
 ## Features
 
-* focus on 1v1 combat
+* focus on 1v1 network combat(ai use the same interface as human)
 
-* can be manually played on console
-
-* responsive(network delay is handled) and minimalist.
-Zero-gravity and no timer.
+* responsive and minimalist. zero-gravity, non-realtime.
 
 * heavily modified rules to encourage fancy attack patterns,
 making stupid AI harder to win.
@@ -48,7 +45,13 @@ See doc/rule.md for more
 
 ## Commands:
 
-* `spawnai strategy` or `spawnai speed [sleep_millis]`
+* `spawnai {commands}`, subcommands list:
+
+	`algo < basic | cc >` specify algorithm: dummy bot or cold-clear
+
+	`strategy`
+
+	`speed [sleep_millis]`
 
 * `kick <id>`
 
