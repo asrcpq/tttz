@@ -3,9 +3,7 @@ use crate::server::SOCKET;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
-use tttz_protocol::{
-	BoardMsg, BoardReply, Display, KeyType, ServerMsg,
-};
+use tttz_protocol::{BoardMsg, BoardReply, Display, KeyType, ServerMsg};
 
 pub struct Client {
 	pub id: i32,

@@ -30,9 +30,7 @@ impl ClientManager {
 	}
 
 	pub fn clients(&self) -> impl Iterator<Item = i32> + '_ {
-		self.id_addr
-			.iter()
-			.map(|(&x, _)| x)
+		self.id_addr.iter().map(|(&x, _)| x)
 	}
 
 	pub fn send_msg_by_id(&self, id: i32, msg: ServerMsg) {

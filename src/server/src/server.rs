@@ -1,6 +1,6 @@
 use crate::client::Client;
 use crate::client_manager::ClientManager;
-use tttz_ai::{BasicAi, Thinker};
+use tttz_ai::{BasicAi, CCBot, Thinker};
 use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
 use std::net::UdpSocket;
@@ -52,9 +52,7 @@ impl Server {
 					"{} attack {} with {}",
 					client.id, client.attack_target, atk,
 				);
-				if self
-					.send_attack(client.attack_target, atk)
-				{
+				if self.send_attack(client.attack_target, atk) {
 					self.die(client, false);
 				};
 			} else {
@@ -155,6 +153,40 @@ impl Server {
 		self.post_operation(&mut client, 0);
 	}
 
+	fn spawn_ai(&mut self, algo: &str, ai_type: AiType) {
+		let (sleep, strategy) = match ai_type {
+			AiType::Strategy => (10, true),
+			AiType::Speed(sleep) => (sleep, false),
+		};
+		match algo.as_ref() {
+			"basic" => {
+				self.ai_threads.push(std::thread::spawn(move || {
+					let mut basic_ai: BasicAi = Default::default();
+					basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+				}));
+			}
+			"basic_cover" => {
+				self.ai_threads.push(std::thread::spawn(move || {
+					let mut basic_ai = BasicAi {
+						cover_weight: 0.5,
+						hole_weight: 1.0,
+						height_weight: 1.0,
+					};
+					basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+				}));
+			}
+			"cc" => {
+				self.ai_threads.push(std::thread::spawn(move || {
+					let mut ccbot: CCBot = Default::default();
+					ccbot.main_loop("127.0.0.1:23124", sleep, strategy);
+				}));
+			}
+			_ => {
+				eprintln!("SERVER: Unknown algorithm {}", algo);
+			}
+		}
+	}
+
 	pub fn main_loop(&mut self) {
 		loop {
 			let (mut client, msg) = match self.fetch_message() {
@@ -173,7 +205,8 @@ impl Server {
 					self.die(&mut client, true);
 				}
 				ClientMsg::GetClients => {
-					let list = self.client_manager
+					let list = self
+						.client_manager
 						.clients()
 						.filter(|&x| x != client.id)
 						.collect();
@@ -196,44 +229,7 @@ impl Server {
 					self.set_view(client.id, id);
 				}
 				ClientMsg::SpawnAi(algo, ai_type) => {
-					let (sleep, strategy) = match ai_type {
-						AiType::Strategy => (10, true),
-						AiType::Speed(sleep) => (sleep, false),
-					};
-					match algo.as_ref() {
-						"basic" => {
-							self.ai_threads.push(std::thread::spawn(
-								move || {
-									let mut basic_ai: BasicAi =
-										Default::default();
-									basic_ai.main_loop(
-										"127.0.0.1:23124",
-										sleep,
-										strategy,
-									);
-								},
-							));
-						}
-						"basic_cover" => {
-							self.ai_threads.push(std::thread::spawn(
-								move || {
-									let mut basic_ai = BasicAi {
-										cover_weight: 0.5,
-										hole_weight: 1.0,
-										height_weight: 1.0,
-									};
-									basic_ai.main_loop(
-										"127.0.0.1:23124",
-										sleep,
-										strategy,
-									);
-								},
-							));
-						}
-						_ => {
-							eprintln!("SERVER: Unknown algorithm {}", algo);
-						}
-					}
+					self.spawn_ai(&algo, ai_type);
 				}
 				ClientMsg::Invite(id1, id2) => {
 					if let Some(opponent) = self.client_manager.view_by_id(id1)

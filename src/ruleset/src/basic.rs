@@ -107,12 +107,21 @@ mod test {
 		let mut width: BlockScalar<i32> = Default::default();
 		for code in 0..7 {
 			for rot in 0..4 {
-				height[code][rot] = BPT[code][rot].iter()
-					.fold(0, |max, data| if data.1 > max {data.1} else {max}) as i32
-					+ 1;
-				width[code][rot] = BPT[code][rot].iter()
-					.fold(0, |max, data| if data.0 > max {data.0} else {max}) as i32
-					+ 1;
+				height[code][rot] =
+					BPT[code][rot].iter().fold(0, |max, data| {
+						if data.1 > max {
+							data.1
+						} else {
+							max
+						}
+					}) as i32 + 1;
+				width[code][rot] = BPT[code][rot].iter().fold(0, |max, data| {
+					if data.0 > max {
+						data.0
+					} else {
+						max
+					}
+				}) as i32 + 1;
 			}
 		}
 		assert_eq!(height, BLOCK_HEIGHT);
@@ -124,7 +133,8 @@ mod test {
 		let mut mch: BlockScalar<f32> = Default::default();
 		for code in 0..7 {
 			for rot in 0..4 {
-				mch[code][rot] = BPT[code][rot].iter()
+				mch[code][rot] = BPT[code][rot]
+					.iter()
 					.fold(0f32, |max, data| max + data.1 as f32)
 					/ 4.0;
 			}

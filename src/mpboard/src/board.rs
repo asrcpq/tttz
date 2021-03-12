@@ -3,8 +3,8 @@ use tttz_protocol::{BoardMsg, BoardReply, KeyType, SoundEffect};
 use tttz_ruleset::*;
 
 use crate::block::Block;
-use crate::random_generator::RandomGenerator;
 use crate::garbage_attack_manager::GarbageAttackManager;
+use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
 use rand::Rng;
 
@@ -28,8 +28,8 @@ impl Board {
 		let replay = Default::default();
 		let mut board = Board {
 			id,
-			floating_block: Block::new(0),    // immediately overwritten
-			shadow_block: Block::new(0), // immediately overwritten
+			floating_block: Block::new(0), // immediately overwritten
+			shadow_block: Block::new(0),   // immediately overwritten
 			rg: Default::default(),
 			color: vec![[7; 10]; 40],
 			hold: 7,
@@ -298,17 +298,17 @@ impl Board {
 	// No plain drop
 	fn attack_se(&self, atk: u32, line_clear: u32) -> SoundEffect {
 		if line_clear == 0 {
-			return SoundEffect::PlainDrop
+			return SoundEffect::PlainDrop;
 		}
 		let mut se = if atk >= 4 {
-			 SoundEffect::AttackDrop2
+			SoundEffect::AttackDrop2
 		} else if atk >= 1 {
-			 SoundEffect::AttackDrop
+			SoundEffect::AttackDrop
 		} else {
-			 SoundEffect::ClearDrop
+			SoundEffect::ClearDrop
 		};
 		if self.height == 0 {
-			 se = SoundEffect::PerfectClear;
+			se = SoundEffect::PerfectClear;
 		}
 		se
 	}
@@ -334,10 +334,7 @@ impl Board {
 	}
 
 	// pull pending garbages and write to board color
-	pub fn generate_garbage(
-		&mut self,
-		keep: usize,
-	) -> i32 {
+	pub fn generate_garbage(&mut self, keep: usize) -> i32 {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0;
 		loop {
@@ -526,7 +523,7 @@ mod test {
 		assert_eq!(board.test_twist(), 1);
 
 		let mut board =
-			test::generate_solidlines([2, 1, 1, 1, 2, 2, 2, 2 ,2, 2]);
+			test::generate_solidlines([2, 1, 1, 1, 2, 2, 2, 2, 2, 2]);
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 1;
@@ -570,7 +567,8 @@ mod test {
 
 	#[test]
 	fn test_shadow_die() {
-		let mut board = test::generate_solidlines([1, 20, 20, 19, 0, 0, 0, 0, 0, 0]);
+		let mut board =
+			test::generate_solidlines([1, 20, 20, 19, 0, 0, 0, 0, 0, 0]);
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		assert!(board.calc_shadow());

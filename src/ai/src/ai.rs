@@ -4,6 +4,8 @@ use tttz_protocol::{ClientMsg, Display, KeyType, ServerMsg};
 use std::collections::VecDeque;
 
 pub trait Thinker {
+	fn reset(&mut self);
+
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType>;
 
 	fn main_loop(&mut self, addr: &str, sleep_millis: u64, strategy: bool) {
@@ -33,6 +35,7 @@ pub trait Thinker {
 						state = 1;
 					}
 					ServerMsg::Start(_) => {
+						self.reset();
 						state = 2;
 					}
 					ServerMsg::Request(id) => {

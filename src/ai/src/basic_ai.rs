@@ -29,6 +29,8 @@ impl Default for BasicAi {
 }
 
 impl Thinker for BasicAi {
+	fn reset(&mut self) {}
+
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
 		if display.hold == 7 {
 			let mut ret = VecDeque::new();
@@ -69,8 +71,7 @@ impl Thinker for BasicAi {
 						}
 					}
 					let cover = (dx <= highest_hole_x
-						&& dx
-							+ BLOCK_WIDTH[option_code as usize][rot as usize]
+						&& dx + BLOCK_WIDTH[option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
 					let score = (height as f32
 						+ BLOCK_MCH[option_code as usize][rot as usize])

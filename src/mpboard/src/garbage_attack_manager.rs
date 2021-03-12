@@ -1,5 +1,5 @@
-use tttz_ruleset::*;
 use tttz_protocol::Display;
+use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
@@ -94,12 +94,10 @@ mod test {
 		gaman.garbages = VecDeque::from(vec![1, 2, 3, 4, 5]);
 		gaman.counter_attack(5);
 		let expect_garbage = vec![1, 4, 5];
-		assert!(gaman.garbages
+		assert!(gaman
+			.garbages
 			.iter()
 			.zip(expect_garbage.iter())
-			.fold(true, |result, (ref x, ref y)| {
-				result & (x == y)
-			})
-		)
+			.fold(true, |result, (ref x, ref y)| { result & (x == y) }))
 	}
 }

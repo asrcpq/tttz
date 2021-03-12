@@ -109,12 +109,10 @@ impl ClientDisplay {
 		offsety += 20;
 		let mut infostring = format!("id: {}", display.id);
 		if display.cm > 0 {
-			infostring =
-				format!("{}, c: {}", infostring, display.cm);
+			infostring = format!("{}, c: {}", infostring, display.cm);
 		}
 		if display.tcm > 0 {
-			infostring =
-				format!("{}, b: {}", infostring, display.tcm);
+			infostring = format!("{}, b: {}", infostring, display.tcm);
 		}
 		let infostring = infostring.into_bytes();
 		for x in 0..LEN {
@@ -195,7 +193,8 @@ impl ClientDisplay {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
 		}
 		self.disp_box(offsetx - 1, offsetx + 4, offsety - 1, offsety + 1);
-		for &code in [display.hold].iter().chain(display.bag_preview[..n].iter())
+		for &code in
+			[display.hold].iter().chain(display.bag_preview[..n].iter())
 		{
 			if code == 7 {
 				doubley += 5;
