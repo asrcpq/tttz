@@ -4,6 +4,7 @@ use tttz_ruleset::*;
 
 use crate::block::Block;
 use crate::random_generator::RandomGenerator;
+use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::replay::Replay;
 use rand::Rng;
 
@@ -16,10 +17,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub(in crate) color: [[u8; 10]; 40],
 	hold: u8,
-	cm: u32,
-	tcm: u32,
-	garbages: VecDeque<u32>,
-	pub attack_pool: u32,
+	pub gaman: GarbageAttackManager,
 	pub last_se: SoundEffect,
 	pub height: i32,
 	pub replay: Replay,
@@ -35,10 +33,7 @@ impl Board {
 			rg: Default::default(),
 			color: [[7; 10]; 40],
 			hold: 7,
-			cm: 0,
-			tcm: 0,
-			garbages: VecDeque::new(),
-			attack_pool: 0,
+			gaman: Default::default(),
 			last_se: SoundEffect::Silence,
 			height: 0,
 			replay,
@@ -108,9 +103,9 @@ impl Board {
 				}
 			},
 			BoardMsg::Attacked(amount) => {
-				self.push_garbage(amount);
+				self.gaman.push_garbage(amount);
 				const MAX_GARBAGE_LEN: usize = 5;
-				if self.garbages.len() > MAX_GARBAGE_LEN {
+				if self.gaman.garbages.len() > MAX_GARBAGE_LEN {
 					if self.flush_garbage(MAX_GARBAGE_LEN) {
 						return BoardReply::Die;
 					} else {
@@ -210,13 +205,6 @@ impl Board {
 	}
 
 	fn proc_elim(&mut self, elims: Vec<usize>) {
-		if elims.is_empty() {
-			self.cm = 0;
-			if self.tcm > 0 {
-				self.tcm = ATTACK_B2B_INC;
-			}
-			return;
-		}
 		let mut movedown = 0;
 		for i in 0..40 {
 			let mut flag = false;
@@ -288,7 +276,7 @@ impl Board {
 	// true = death
 	fn flush_garbage(&mut self, max: usize) -> bool {
 		let mut flag = false;
-		self.generate_garbage(max);
+		self.height += self.generate_garbage(0);
 		if self.calc_shadow() {
 			flag = true;
 		}
@@ -298,106 +286,10 @@ impl Board {
 		flag
 	}
 
-	// push a new attack into pending garbage queue
-	pub fn push_garbage(&mut self, atk: u32) {
-		if atk == 0 {
-			return;
-		}
-		self.garbages.push_back(atk);
-	}
-
-	// pull pending garbages and write to board color
-	fn generate_garbage(&mut self, keep: usize) -> u32 {
-		const SAME_LINE: f32 = 0.6;
-		let mut ret = 0;
-		loop {
-			if self.garbages.len() <= keep {
-				break;
-			}
-			let mut count = match self.garbages.pop_front() {
-				Some(x) => x,
-				None => break,
-			} as usize;
-			self.height += count as i32;
-			let mut slot = self.rg.rng.gen_range(0..10);
-			// assert!(count != 0);
-			if count > 40 {
-				count = 40;
-			}
-			ret += count;
-			for y in (count..40).rev() {
-				for x in 0..10 {
-					self.color[y][x] = self.color[y - count][x];
-				}
-			}
-			for y in 0..count {
-				let same = self.rg.rng.gen::<f32>();
-				if same >= SAME_LINE {
-					slot = self.rg.rng.gen_range(0..10);
-				}
-				for x in 0..10 {
-					self.color[y][x] = 2; // L = white
-				}
-				self.color[y][slot] = 7;
-				if !self.tmp_block.test(self) {
-					self.tmp_block.pos.1 -= 1;
-				}
-			}
-		}
-		ret as u32
-	}
-
-	// should only called when attack_pool > 0
-	// return true if attack is larger
-	pub fn counter_attack(&mut self) -> bool {
-		loop {
-			// return if attack remains
-			if self.garbages.is_empty() {
-				break self.attack_pool > 0;
-			}
-			if self.garbages[0] >= self.attack_pool {
-				self.garbages[0] -= self.attack_pool;
-				if self.garbages[0] == 0 {
-					self.garbages.pop_front();
-				}
-				self.attack_pool = 0;
-				break false;
-			}
-			let popped_lines = self.garbages.pop_front().unwrap();
-			self.attack_pool -= popped_lines;
-		}
-	}
-
-	// providing whether tspin, shape offset and cleared lines
-	// change self b2b and attack_pool
-	// return atk, cm, tcm
-	fn calc_attack(&self, tspin: u32, line_count: u32) -> (u32, u32, u32) {
-		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
-		let twist_mult = if tspin > 0 {
-			ATTACK_BASE_TWIST_MULTIPLIER
-				[((tspin - 1) * 7 + self.tmp_block.code as u32) as usize]
-		} else {
-			10
-		};
-		let mut total_mult = 10;
-		total_mult += self.cm;
-		let cm = self.cm + ATTACK_COMBO_INC;
-		let tcm = if tspin > 0 || line_count == 4 {
-			total_mult += self.tcm;
-			self.tcm + ATTACK_B2B_INC
-		} else {
-			0
-		};
-		let mut atk = base_atk * twist_mult * total_mult / 1000;
-		if self.height == 0 {
-			atk += 10;
-		}
-		(atk, cm, tcm)
-	}
 
 	fn set_attack_se(&mut self) {
-		if self.attack_pool > 0 {
-			if self.tcm == 0 {
+		if self.gaman.attack_pool > 0 {
+			if self.gaman.tcm == 0 {
 				self.last_se = SoundEffect::AttackDrop;
 			} else {
 				self.last_se = SoundEffect::AttackDrop2;
@@ -430,8 +322,51 @@ impl Board {
 		lines_tocheck
 	}
 
+	// pull pending garbages and write to board color
+	pub fn generate_garbage(
+		&mut self,
+		keep: usize,
+	) -> i32 {
+		const SAME_LINE: f32 = 0.6;
+		let mut ret = 0;
+		loop {
+			if self.gaman.garbages.len() <= keep {
+				break;
+			}
+			let mut count = match self.gaman.garbages.pop_front() {
+				Some(x) => x,
+				None => break,
+			} as usize;
+			let mut slot = self.rg.rng.gen_range(0..10);
+			// assert!(count != 0);
+			if count > 40 {
+				count = 40;
+			}
+			ret += count;
+			for y in (count..40).rev() {
+				for x in 0..10 {
+					self.color[y][x] = self.color[y - count][x];
+				}
+			}
+			for y in 0..count {
+				let same = self.rg.rng.gen::<f32>();
+				if same >= SAME_LINE {
+					slot = self.rg.rng.gen_range(0..10);
+				}
+				for x in 0..10 {
+					self.color[y][x] = 2; // L = white
+				}
+				self.color[y][slot] = 7;
+				if !self.tmp_block.test(self) {
+					self.tmp_block.pos.1 -= 1;
+				}
+			}
+		}
+		ret as i32
+	}
+
 	// true: die
-	pub fn hard_drop(&mut self) -> bool {
+	fn hard_drop(&mut self) -> bool {
 		// check twist before setting color
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
@@ -440,18 +375,20 @@ impl Board {
 		let line_count = elim.len() as u32;
 		self.proc_elim(elim);
 		// put attack amount into pool
+		assert!(self.gaman.attack_pool == 0);
+		self.gaman.calc_attack(
+			twist,
+			line_count,
+			self.tmp_block.code,
+			self.height == 0,
+		);
 		if line_count > 0 {
 			self.height -= line_count as i32;
-			// assert!(self.attack_pool != 0)
-			let ret = self.calc_attack(twist, line_count);
-			self.attack_pool = ret.0;
-			self.cm = ret.1;
-			self.tcm = ret.2;
 			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
 			self.last_se = SoundEffect::PlainDrop;
-			self.generate_garbage(0); // drain garbage
+			self.height += self.generate_garbage(0);
 			if self.height == 40 {
 				return true;
 			}
@@ -466,7 +403,7 @@ impl Board {
 	}
 
 	// true = death
-	pub fn press_down(&mut self) -> bool {
+	fn press_down(&mut self) -> bool {
 		if !self.soft_drop() {
 			return self.hard_drop();
 		} else {
@@ -476,7 +413,7 @@ impl Board {
 	}
 
 	// true = death
-	pub fn press_up(&mut self) -> bool {
+	fn press_up(&mut self) -> bool {
 		self.soft_drop();
 		self.hard_drop()
 	}
@@ -500,12 +437,12 @@ impl Board {
 		}
 		display.shadow_block = self.shadow_block.compress();
 		display.tmp_block = self.tmp_block.compress();
-		display.garbages = self.garbages.clone();
+		display.garbages = self.gaman.garbages.clone();
 		display.hold = self.hold;
 		display.tmp_block = self.tmp_block.compress();
-		display.garbages = self.garbages.clone();
-		display.cm = self.cm;
-		display.tcm = self.tcm;
+		display.garbages = self.gaman.garbages.clone();
+		display.cm = self.gaman.cm;
+		display.tcm = self.gaman.tcm;
 		for i in 0..6 {
 			display.bag_preview[i] = self.rg.bag[i];
 		}

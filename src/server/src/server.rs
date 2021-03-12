@@ -42,7 +42,7 @@ impl Server {
 
 	fn post_operation(&mut self, mut client: &mut Client) {
 		// note the size effect of counter_attack
-		if client.board.attack_pool > 0 && client.board.counter_attack() {
+		if client.board.gaman.attack_pool > 0 && client.board.gaman.counter_attack() {
 			if self
 				.client_manager
 				.get_addr_by_id(client.attack_target)
@@ -50,20 +50,20 @@ impl Server {
 			{
 				eprintln!(
 					"{} attack {} with {}",
-					client.id, client.attack_target, client.board.attack_pool,
+					client.id, client.attack_target, client.board.gaman.attack_pool,
 				);
 				if self
-					.send_attack(client.attack_target, client.board.attack_pool)
+					.send_attack(client.attack_target, client.board.gaman.attack_pool)
 				{
 					self.die(client, false);
 				};
 			} else {
 				eprintln!(
 					"Client {} is attacking nonexistent target {} with {}",
-					client.id, client.attack_target, client.board.attack_pool,
+					client.id, client.attack_target, client.board.gaman.attack_pool,
 				);
 			}
-			client.board.attack_pool = 0;
+			client.board.gaman.attack_pool = 0;
 		}
 		let display = client.board.generate_display();
 		client.send_display(&self.client_manager, display);
