@@ -84,7 +84,7 @@ impl ClientDisplay {
 		let (ch1, ch2) = if piece != b' ' { ('[', ']') } else { (' ', ' ') };
 		let fgbg = 4 - style; // 0 bg 1 fg
 		print!(
-			"[{}{}m{}{}{}{}",
+			"[{}8;5;{}m{}{}{}{}",
 			fgbg,
 			COLORMAP[piece],
 			termion::cursor::Goto(i, j),

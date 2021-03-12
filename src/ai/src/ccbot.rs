@@ -81,7 +81,7 @@ impl Thinker for CCBot {
 			let mut field = [[false; 10]; 40];
 			for row in 0..20 {
 				for col in 0..10 {
-					field[row][col] = display.color[row][col] != 7;
+					field[row][col] = display.color[row][col] != b' ';
 				}
 			}
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);

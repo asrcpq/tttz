@@ -353,7 +353,7 @@ impl Board {
 					slot = self.rg.rng.gen_range(0..10);
 				}
 				for x in 0..10 {
-					self.color[y][x] = 2; // L = white
+					self.color[y][x] = b'g';
 				}
 				self.color[y][slot] = b' ';
 				if !self.floating_block.test(self) {

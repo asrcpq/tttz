@@ -4,7 +4,7 @@
 
 * rust(cargo)
 
-* a VT100 compatible terminal with common unicode support
+* a modern terminal(unicode + ansi escape + 256 color)
 
 ## Functions
 

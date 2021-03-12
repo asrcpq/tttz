@@ -103,7 +103,7 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 		let mut j: usize = 19;
 		let mut state = 0;
 		loop {
-			if display.color[j][i] == 7 {
+			if display.color[j][i] == b' ' {
 				if state == 1 {
 					break;
 				}
