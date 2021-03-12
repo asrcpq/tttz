@@ -77,6 +77,15 @@ impl Thinker for CCBot {
 	// TODO: handle garbages
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
 		self.update_preview(&display.bag_preview, display.floating_block[2]);
+		if display.garbage_flush {
+			let mut field = [[false; 10]; 40];
+			for row in 0..20 {
+				for col in 0..10 {
+					field[row][col] = display.color[row][col] != 7;
+				}
+			}
+			self.interface.reset(field, display.tcm > 0, display.cm / 3);
+		}
 		self.interface.request_next_move(0);
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),
