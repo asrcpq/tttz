@@ -78,8 +78,8 @@ impl ClientManager {
 		let id2 = client2.id;
 		client1.pair_success(id2);
 		client2.pair_success(id1);
-		client2.send_display(self, client2.board.generate_display());
-		client1.send_display(self, client1.board.generate_display());
+		client2.send_display(self, client2.board.generate_display(false));
+		client1.send_display(self, client1.board.generate_display(false));
 	}
 
 	pub fn pair_attempt(&mut self, mut client: &mut Client) {

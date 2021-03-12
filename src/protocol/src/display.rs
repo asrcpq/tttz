@@ -15,6 +15,7 @@ pub struct Display {
 	pub cm: u32,
 	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
+	pub garbage_flush: bool,
 }
 
 impl Display {
@@ -29,6 +30,7 @@ impl Display {
 			cm: 0,
 			tcm: 0,
 			garbages: VecDeque::new(),
+			garbage_flush: false,
 		}
 	}
 }

@@ -63,7 +63,6 @@ impl Board {
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		self.replay.push_operation(board_msg.clone());
-		let mut atk = 0;
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
 				KeyType::Nothing => {}
@@ -84,18 +83,10 @@ impl Board {
 					self.move2(-1);
 				}
 				KeyType::HardDrop => {
-					let ret = self.press_up();
-					atk = match ret {
-						None => return BoardReply::Die,
-						Some(atk) => atk,
-					}
+					return self.press_up()
 				}
 				KeyType::SoftDrop => {
-					let ret = self.press_down();
-					atk = match ret {
-						None => return BoardReply::Die,
-						Some(atk) => atk,
-					}
+					return self.press_down()
 				}
 				KeyType::RotateReverse => {
 					self.rotate(-1);
@@ -119,7 +110,7 @@ impl Board {
 				}
 			}
 		}
-		BoardReply::Ok(atk)
+		BoardReply::Ok(0)
 	}
 
 	fn move1(&mut self, dx: i32) -> bool {
@@ -373,7 +364,7 @@ impl Board {
 		ret as i32
 	}
 
-	fn hard_drop(&mut self) -> Option<u32> {
+	fn hard_drop(&mut self) -> BoardReply {
 		// check twist before setting color
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
@@ -389,36 +380,44 @@ impl Board {
 			self.height == 0,
 		);
 		self.last_se = Some(self.attack_se(atk, line_count));
+		let mut flush_garbage = false;
 		if line_count > 0 {
 			self.height -= line_count as i32;
 		} else {
 			// plain drop: attack execution
-			self.height += self.generate_garbage(0);
+			let ret = self.generate_garbage(0);
+			if ret > 0 {
+				flush_garbage = true;
+			}
+			self.height += ret;
 			if self.height == 40 {
-				return None;
+				return BoardReply::Die;
 			}
 		}
 
 		// new block
 		self.spawn_block();
 		if self.calc_shadow() {
-			return None;
+			return BoardReply::Die;
 		}
-		Some(atk)
+		if flush_garbage {
+			return BoardReply::GarbageOverflow;
+		}
+		BoardReply::Ok(atk)
 	}
 
 	// true = death
-	fn press_down(&mut self) -> Option<u32> {
+	fn press_down(&mut self) -> BoardReply {
 		if !self.soft_drop() {
 			return self.hard_drop();
 		} else {
 			self.last_se = Some(SoundEffect::SoftDrop);
 		}
-		Some(0)
+		BoardReply::Ok(0)
 	}
 
 	// true = death
-	fn press_up(&mut self) -> Option<u32> {
+	fn press_up(&mut self) -> BoardReply {
 		self.soft_drop();
 		self.hard_drop()
 	}
@@ -435,7 +434,7 @@ impl Board {
 		}
 	}
 
-	pub fn generate_display(&self) -> Display {
+	pub fn generate_display(&self, garbage_flush: bool) -> Display {
 		let mut display = Display::new(self.id);
 		for i in 0..20 {
 			display.color[i] = self.color[i];
@@ -443,6 +442,7 @@ impl Board {
 		display.shadow_block = self.shadow_block.compress();
 		display.floating_block = self.floating_block.compress();
 		display.garbages = self.gaman.garbages.clone();
+		display.garbage_flush = garbage_flush;
 		display.hold = self.hold;
 		display.floating_block = self.floating_block.compress();
 		self.gaman.set_display(&mut display);
