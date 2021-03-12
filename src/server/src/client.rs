@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
 use tttz_protocol::{
-	BoardMsg, BoardReply, Display, KeyType, ServerMsg, SoundEffect,
+	BoardMsg, BoardReply, Display, KeyType, ServerMsg,
 };
 
 pub struct Client {
@@ -73,12 +73,12 @@ impl Client {
 		display: Display,
 	) {
 		self.broadcast_msg(client_manager, &ServerMsg::Display(display));
-		let last_se =
-			std::mem::replace(&mut self.board.last_se, SoundEffect::Silence);
-		self.broadcast_msg(
-			client_manager,
-			&ServerMsg::SoundEffect(self.id, last_se),
-		);
+		if let Some(last_se) = self.board.pop_se() {
+			self.broadcast_msg(
+				client_manager,
+				&ServerMsg::SoundEffect(self.id, last_se),
+			);
+		}
 	}
 
 	// true = die

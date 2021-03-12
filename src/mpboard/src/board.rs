@@ -18,7 +18,7 @@ pub struct Board {
 	pub(in crate) color: [[u8; 10]; 40],
 	hold: u8,
 	gaman: GarbageAttackManager,
-	pub last_se: SoundEffect,
+	last_se: Option<SoundEffect>,
 	pub height: i32,
 	pub replay: Replay,
 }
@@ -34,7 +34,7 @@ impl Board {
 			color: [[7; 10]; 40],
 			hold: 7,
 			gaman: Default::default(),
-			last_se: SoundEffect::Silence,
+			last_se: None,
 			height: 0,
 			replay,
 		};
@@ -69,7 +69,7 @@ impl Board {
 				KeyType::Nothing => {}
 				KeyType::Hold => {
 					self.hold();
-					self.last_se = SoundEffect::Hold;
+					self.last_se = Some(SoundEffect::Hold);
 				}
 				KeyType::Left => {
 					self.move1(1);
@@ -164,7 +164,7 @@ impl Board {
 		if ret == 0 {
 			self.tmp_block = revert_block;
 		}
-		self.last_se = SoundEffect::Rotate(ret);
+		self.last_se = Some(SoundEffect::Rotate(ret));
 	}
 
 	fn spawn_block(&mut self) {
@@ -291,6 +291,9 @@ impl Board {
 		flag
 	}
 
+	pub fn pop_se(&mut self) -> Option<SoundEffect> {
+		self.last_se.take()
+	}
 
 	// No plain drop
 	fn attack_se(&self, atk: u32, line_clear: u32) -> SoundEffect {
@@ -388,7 +391,7 @@ impl Board {
 			self.tmp_block.code,
 			self.height == 0,
 		);
-		self.last_se = self.attack_se(atk, line_count);
+		self.last_se = Some(self.attack_se(atk, line_count));
 		if line_count > 0 {
 			self.height -= line_count as i32;
 		} else {
@@ -412,7 +415,7 @@ impl Board {
 		if !self.soft_drop() {
 			return self.hard_drop();
 		} else {
-			self.last_se = SoundEffect::SoftDrop;
+			self.last_se = Some(SoundEffect::SoftDrop);
 		}
 		Some(0)
 	}

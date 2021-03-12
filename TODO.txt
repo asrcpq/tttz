@@ -1,6 +1,7 @@
 Planned:
 
 - code clean: make everything private
+- write more tests
 - transplant some ai implementations
 
 Future:
