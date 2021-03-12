@@ -242,7 +242,7 @@ impl ClientDisplay {
 			}
 		}
 		let shadow_block = Block::decompress(&display.shadow_block);
-		let tmp_block = Block::decompress(&display.tmp_block);
+		let floating_block = Block::decompress(&display.floating_block);
 		let shadow_pos = shadow_block.getpos();
 		// show shadow_block first
 		print!("[0m");
@@ -253,13 +253,13 @@ impl ClientDisplay {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + 19 - y,
-					tmp_block.code,
+					floating_block.code,
 					1,
 				);
 			}
 		}
 		print!("[30m");
-		let tmp_pos = tmp_block.getpos();
+		let tmp_pos = floating_block.getpos();
 		for tmp_square in tmp_pos.iter() {
 			let x = tmp_square.0 as u16;
 			let y = tmp_square.1 as u16;
@@ -267,7 +267,7 @@ impl ClientDisplay {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + 19 - y,
-					tmp_block.code,
+					floating_block.code,
 					0,
 				);
 			}

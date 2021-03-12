@@ -9,7 +9,7 @@ pub struct Display {
 	pub id: i32,
 	pub color: Vec<[u8; BOARD_WIDTH]>,
 	pub shadow_block: [u8; 4], // posx, posy, code, rotation
-	pub tmp_block: [u8; 4],
+	pub floating_block: [u8; 4],
 	pub hold: u8,
 	pub bag_preview: [u8; 6],
 	pub cm: u32,
@@ -23,7 +23,7 @@ impl Display {
 			id,
 			color: vec![[7; BOARD_WIDTH]; 20],
 			shadow_block: [0; 4],
-			tmp_block: [0; 4],
+			floating_block: [0; 4],
 			hold: 7,
 			bag_preview: [7; 6],
 			cm: 0,

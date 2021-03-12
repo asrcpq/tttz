@@ -44,7 +44,7 @@ impl Thinker for BasicAi {
 		let mut best_posx = 0;
 		let mut best_id = 0;
 		for (id, option_code) in
-			[display.tmp_block[2], display.hold].iter().enumerate()
+			[display.floating_block[2], display.hold].iter().enumerate()
 		{
 			for rot in 0..4 {
 				let (possible_pos, posx, posy) =
@@ -91,7 +91,7 @@ impl Thinker for BasicAi {
 			}
 		}
 		let best_code = if best_id == 0 {
-			display.tmp_block[2]
+			display.floating_block[2]
 		} else {
 			// best solution is from the hold block
 			display.hold
