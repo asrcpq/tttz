@@ -269,7 +269,9 @@ impl ClientSession {
 				ServerMsg::Display(display) => {
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
-						self.client_display.disp_by_id(&display);
+						if self.mode == 1 {
+							self.client_display.disp_by_id(&display);
+						}
 						self.last_display.insert(id, display);
 					} else {
 						eprintln!("Received display of unknown id {}", id);
