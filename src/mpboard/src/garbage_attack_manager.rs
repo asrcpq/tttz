@@ -3,20 +3,11 @@ use tttz_protocol::Display;
 
 use std::collections::VecDeque;
 
+#[derive(Default)]
 pub struct GarbageAttackManager {
 	cm: u32,
 	tcm: u32,
 	pub garbages: VecDeque<u32>,
-}
-
-impl Default for GarbageAttackManager {
-	fn default() -> Self {
-		GarbageAttackManager {
-			cm: 0,
-			tcm: 0,
-			garbages: VecDeque::new(),
-		}
-	}
 }
 
 impl GarbageAttackManager {
@@ -90,5 +81,25 @@ impl GarbageAttackManager {
 		display.garbages = self.garbages.clone();
 		display.cm = self.cm;
 		display.tcm = self.tcm;
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_counter_attack() {
+		let mut gaman: GarbageAttackManager = Default::default();
+		gaman.garbages = VecDeque::from(vec![1, 2, 3, 4, 5]);
+		gaman.counter_attack(5);
+		let expect_garbage = vec![1, 4, 5];
+		assert!(gaman.garbages
+			.iter()
+			.zip(expect_garbage.iter())
+			.fold(true, |result, (ref x, ref y)| {
+				result & (x == y)
+			})
+		)
 	}
 }

@@ -148,7 +148,7 @@ impl ClientDisplay {
 		}
 		print!("[3{}m", COLORMAP[code as usize]);
 
-		for ((x, y), value) in &print_info {
+		for ((x, y), value) in print_info.into_iter() {
 			// value should not be zero
 			let print_char = match value {
 				1 => "\u{2580}",
@@ -158,24 +158,24 @@ impl ClientDisplay {
 			};
 			print!(
 				"{}{}",
-				termion::cursor::Goto(*x as u16, *y as u16),
+				termion::cursor::Goto(x as u16, y as u16),
 				print_char,
 			);
-			self.last_dirtypos[panel].push((*x, *y))
+			self.last_dirtypos[panel].push((x, y))
 		}
 		print!("{}", termion::style::Reset);
 	}
 
 	fn disp_box(&self, left: u16, right: u16, top: u16, bot: u16) {
-		for yy in [top, bot].iter() {
-			print!("{}", termion::cursor::Goto(left + 1, *yy));
+		for &yy in [top, bot].iter() {
+			print!("{}", termion::cursor::Goto(left + 1, yy));
 			for _ in left + 1..right {
 				print!("\u{2500}");
 			}
 		}
-		for xx in [left, right].iter() {
+		for &xx in [left, right].iter() {
 			for yy in top + 1..bot {
-				print!("{}\u{2502}", termion::cursor::Goto(*xx, yy));
+				print!("{}\u{2502}", termion::cursor::Goto(xx, yy));
 			}
 		}
 		print!(
@@ -195,24 +195,24 @@ impl ClientDisplay {
 			print!("{} ", termion::cursor::Goto(x as u16, y as u16));
 		}
 		self.disp_box(offsetx - 1, offsetx + 4, offsety - 1, offsety + 1);
-		for code in [display.hold].iter().chain(display.bag_preview[..n].iter())
+		for &code in [display.hold].iter().chain(display.bag_preview[..n].iter())
 		{
-			if *code == 7 {
+			if code == 7 {
 				doubley += 5;
 				continue;
 			}
 			let mut tmpx = offsetx;
-			if *code == 3 {
+			if code == 3 {
 				tmpx += 1;
 			}
-			self.mini_blockp(tmpx as u32, doubley as u32, *code, panel);
+			self.mini_blockp(tmpx as u32, doubley as u32, code, panel);
 			doubley += 5;
 		}
 	}
 
 	pub fn disp_by_id(&mut self, display: &Display) {
 		let panel = match self.id_panel.get(&display.id) {
-			Some(panel) => *panel,
+			Some(&panel) => panel,
 			None => {
 				eprintln!("Wrong client received");
 				return;
@@ -289,8 +289,8 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[panel] + 20;
 		let offsety = self.offset_y[panel];
 		let mut dy = 0;
-		for (mut ind, each_garbage) in display.garbages.iter().enumerate() {
-			let mut each_garbage = *each_garbage as u16;
+		for (mut ind, &each_garbage) in display.garbages.iter().enumerate() {
+			let mut each_garbage = each_garbage as u16;
 			let flag = dy + each_garbage > 20;
 			if flag {
 				each_garbage = 20 - dy;

@@ -33,8 +33,8 @@ impl ClientMsg {
 		let mut iter = words.iter();
 		let mut ai_type = AiType::Speed(240);
 		let mut algorithm = "basic".to_string();
-		while let Some(word) = iter.next() {
-			match *word {
+		while let Some(&word) = iter.next() {
+			match word {
 				"strategy" => {
 					ai_type = AiType::Strategy;
 				}
