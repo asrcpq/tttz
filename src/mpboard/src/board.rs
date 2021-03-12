@@ -488,7 +488,7 @@ impl Board {
 			self.shadow_block.pos.1 -= 1;
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 += 1;
-				break self.shadow_block.bottom_pos() >= 20;
+				break self.shadow_block.pos.1 >= 20;
 			}
 		}
 	}

@@ -70,11 +70,6 @@ impl Block {
 		ret
 	}
 
-	pub fn bottom_pos(&self) -> i32 {
-		self.pos.1 - BLOCK_HEIGHT[self.code as usize][self.rotation as usize]
-			+ 1
-	}
-
 	pub fn test(&self, board: &Board) -> bool {
 		for block_id in 0..4 {
 			let tmp = BPT[self.code as usize][self.rotation as usize]
