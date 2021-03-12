@@ -314,17 +314,19 @@ impl Server {
 					self.start_single(&mut client);
 				}
 				ClientMsg::KeyEvent(key_type) => {
-					let ret = client.process_key(key_type);
-					let atk = if let BoardReply::Ok(atk) = ret {
-						atk
-					} else {
-						0
-					};
-					// display is included in after_operation
-					self.post_operation(&mut client, atk);
-					// update display before die
-					if ret == BoardReply::Die {
-						self.die(&mut client, true);
+					if client.state == 2 {
+						let ret = client.process_key(key_type);
+						let atk = if let BoardReply::Ok(atk) = ret {
+							atk
+						} else {
+							0
+						};
+						// display is included in after_operation
+						self.post_operation(&mut client, atk);
+						// update display before die
+						if ret == BoardReply::Die {
+							self.die(&mut client, true);
+						}
 					}
 				}
 				ClientMsg::NewClient => {

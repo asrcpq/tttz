@@ -83,7 +83,6 @@ impl Client {
 
 	// true = die
 	pub fn process_key(&mut self, key_type: KeyType) -> BoardReply {
-		assert!(self.state == 2);
 		let ret = self.board.handle_msg(BoardMsg::KeyEvent(key_type));
 		self.board.calc_shadow();
 		ret

@@ -23,7 +23,7 @@
 * Attack Computation
 
 	```
-	b = base_attack[cleared_lines] = [0.5, 1.0, 2.0, 4.0]
+	b = base_attack[cleared_lines] = [0.5, 1.5, 2.5, 4.0]
 	tb = twist_bonus[mini|regular][block_type]
 	cm = 1 + combo * COMBO_INC=0.3
 	tcm = 1 + tcm * TWIST_COMBO_INC=0.6
