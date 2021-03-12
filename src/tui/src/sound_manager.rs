@@ -60,14 +60,17 @@ fn soundmap_init() -> SoundMap {
 	let mut soundmap: SoundMap = HashMap::new();
 	macro_rules! load_se {
 		($prefix: expr, $mapped_se: expr) => {
-			// todo windows build
-			let sound = include_bytes!(concat!(env!("OUT_DIR"), "/", $prefix, ".wav")).to_vec();
-			soundmap.insert($mapped_se,
+			// windows build, change '/' to '\'
+			let sound =
+				include_bytes!(concat!(env!("OUT_DIR"), "/", $prefix, ".wav"))
+					.to_vec();
+			soundmap.insert(
+				$mapped_se,
 				Decoder::new(BufReader::new(Cursor::new(sound)))
-				.unwrap()
-				.buffered()
+					.unwrap()
+					.buffered(),
 			);
-		}
+		};
 	}
 	load_se!("soft_drop", SoundEffect::SoftDrop);
 	load_se!("plain_drop", SoundEffect::PlainDrop);
@@ -89,7 +92,8 @@ impl Default for SoundManager {
 	fn default() -> SoundManager {
 		let (send, recv) = channel();
 		std::thread::spawn(move || {
-			let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+			let (_stream, stream_handle) =
+				rodio::OutputStream::try_default().unwrap();
 			let sink = Sink::try_new(&stream_handle).unwrap();
 			sink.append(Mixer {
 				playing: Vec::new(),

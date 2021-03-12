@@ -1,20 +1,27 @@
 use serde::{Deserialize, Serialize};
 
-use crate::IdType;
 use crate::Display;
+use crate::IdType;
 use crate::SoundEffect;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum ServerMsg {
-	AllocId(IdType), // response of new client
+	// response of new client
+	AllocId(IdType),
 	ClientList(Vec<IdType>),
-	Attack(IdType, u32), // receiver, amount
-	Start(IdType), // opponent, or 0 in single player mode
-	Request(IdType), // sender
-	Invite(IdType), // ask someone to request a match to id
-	GameOver(bool), // true = win
-	Terminate, // kicked
-	Display(Display), // hope this can be optimized
+	// receiver, amount
+	Attack(IdType, u32),
+	// opponent, or 0 in single player mode
+	Start(IdType),
+	// sender
+	Request(IdType),
+	// ask someone to request a match to id
+	Invite(IdType),
+	// true = win
+	GameOver(bool),
+	// or kicked
+	Terminate,
+	Display(Display),
 	SoundEffect(IdType, SoundEffect),
 }
 

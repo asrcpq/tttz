@@ -1,10 +1,10 @@
 // stupid ai, put block to make least holes and lowest height
-use tttz_ruleset::*;
 use tttz_protocol::Display;
 use tttz_protocol::KeyType;
+use tttz_ruleset::*;
 
-use crate::ai_utils::*;
 use crate::ai::Thinker;
+use crate::ai_utils::*;
 
 use std::collections::VecDeque;
 
@@ -18,8 +18,8 @@ pub struct BasicAi {
 	pub height_weight: f32,
 }
 
-impl BasicAi {
-	pub fn new() -> Self {
+impl Default for BasicAi {
+	fn default() -> Self {
 		BasicAi {
 			cover_weight: 0.,
 			hole_weight: 1.0,
@@ -36,25 +36,26 @@ impl Thinker for BasicAi {
 			return ret;
 		}
 
-		let (heights, highest_hole_x, _highest_hole) = get_height_and_hole(&display);
+		let (heights, highest_hole_x, _highest_hole) =
+			get_height_and_hole(&display);
 
 		let mut best_score = f32::INFINITY;
 		let mut best_rotation = 0;
 		let mut best_posx = 0;
 		let mut best_id = 0;
-		for (id, option_code) in [display.tmp_block[2], display.hold].iter().enumerate()
+		for (id, option_code) in
+			[display.tmp_block[2], display.hold].iter().enumerate()
 		{
 			for rot in 0..4 {
-				let (possible_pos, posx, posy) = convolve_height(&heights, *option_code, rot);
-				for (dx, height) in possible_pos
-					.iter()
-					.map(|(x, y)| (*x as i32, *y as i32))
+				let (possible_pos, posx, posy) =
+					convolve_height(&heights, *option_code, rot);
+				for (dx, height) in
+					possible_pos.iter().map(|(x, y)| (*x as i32, *y as i32))
 				{
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
 					for block in 0..4 {
-						let dh = posy[block]
-							+ height as u8
+						let dh = posy[block] + height as u8
 							- heights[dx as usize + posx[block] as usize] as u8;
 						block_count[posx[block] as usize] += 1;
 						if dh > delta_heights[posx[block] as usize] {
@@ -71,12 +72,11 @@ impl Thinker for BasicAi {
 						&& dx
 							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
-					let score = (
-							height as f32 +
-							MCH[*option_code as usize][rot as usize]
-						) * self.height_weight
-						+ hole as f32 * self.hole_weight
-						+ cover as f32 * self.cover_weight;
+					let score = (height as f32
+						+ MCH[*option_code as usize][rot as usize])
+						* self.height_weight + hole as f32
+						* self.hole_weight + cover as f32
+						* self.cover_weight;
 					if score < best_score {
 						// eprintln!(
 						// 	"{} {} {} = {} overtake {} at dx: {}, rot: {}",
@@ -86,7 +86,7 @@ impl Thinker for BasicAi {
 						best_rotation = rot;
 						best_posx = dx;
 						best_id = id;
-					} 
+					}
 				}
 			}
 		}
@@ -102,7 +102,7 @@ impl Thinker for BasicAi {
 			code: best_code,
 			rotation: best_rotation,
 			post_key: KeyType::Nothing,
-			dx: best_posx
+			dx: best_posx,
 		})
 	}
 }

@@ -1,7 +1,7 @@
-use tttz_ai::{BasicAi, Thinker};
-use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 use crate::client::Client;
 use crate::client_manager::ClientManager;
+use tttz_ai::{BasicAi, Thinker};
+use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
 use std::net::UdpSocket;
 
@@ -30,7 +30,7 @@ impl Server {
 		} else {
 			client_target.send_display(
 				&self.client_manager,
-				client_target.board.generate_display()
+				client_target.board.generate_display(),
 			);
 			if reply == BoardReply::Die {
 				flag = true
@@ -106,7 +106,7 @@ impl Server {
 		eprintln!("SERVER: client {} gameover", client.id);
 		client.state = 1;
 		match client.board.replay.save(&format!("{}", client.id)) {
-			Ok(true) => {},
+			Ok(true) => {}
 			Ok(false) => {
 				eprintln!("[32mSERVER[0m: cannot find path to write replay!");
 			}
@@ -120,8 +120,9 @@ impl Server {
 			return;
 		}
 		// calc win by attack target works only in pair match mode
-		if let Some(mut opponent) = self.client_manager
-			.tmp_pop_by_id(client.attack_target) {
+		if let Some(mut opponent) =
+			self.client_manager.tmp_pop_by_id(client.attack_target)
+		{
 			opponent.send_msg(ServerMsg::GameOver(die));
 			opponent.state = 1;
 			opponent.dc_ids.remove(&client.id);
@@ -206,25 +207,42 @@ impl Server {
 					};
 					match algo.as_ref() {
 						"basic" => {
-							self.ai_threads.push(std::thread::spawn(move || {
-								let mut basic_ai = BasicAi::new();
-								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
-							}));
+							self.ai_threads.push(std::thread::spawn(
+								move || {
+									let mut basic_ai: BasicAi =
+										Default::default();
+									basic_ai.main_loop(
+										"127.0.0.1:23124",
+										sleep,
+										strategy,
+									);
+								},
+							));
 						}
 						"basic_cover" => {
-							self.ai_threads.push(std::thread::spawn(move || {
-								let mut basic_ai = BasicAi::new();
-								basic_ai.cover_weight = 0.5;
-								basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
-							}));
+							self.ai_threads.push(std::thread::spawn(
+								move || {
+									let mut basic_ai = BasicAi {
+										cover_weight: 0.5,
+										hole_weight: 1.0,
+										height_weight: 1.0,
+									};
+									basic_ai.main_loop(
+										"127.0.0.1:23124",
+										sleep,
+										strategy,
+									);
+								},
+							));
 						}
 						_ => {
 							eprintln!("SERVER: Unknown algorithm {}", algo);
 						}
 					}
-				},
+				}
 				ClientMsg::Invite(id1, id2) => {
-					if let Some(opponent) = self.client_manager.view_by_id(id1) {
+					if let Some(opponent) = self.client_manager.view_by_id(id1)
+					{
 						if opponent.state == 1 {
 							client.state = 3;
 							opponent.send_msg(ServerMsg::Invite(id2));

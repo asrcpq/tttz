@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::AiType;
-use crate::KeyType;
 use crate::IdType;
+use crate::KeyType;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientMsg {
@@ -37,20 +37,20 @@ impl ClientMsg {
 			match *word {
 				"strategy" => {
 					ai_type = AiType::Strategy;
-				},
+				}
 				"speed" => {
 					if let Some(word) = iter.next() {
 						if let Ok(sleep) = word.parse::<u64>() {
 							ai_type = AiType::Speed(sleep);
 						}
 					}
-				},
+				}
 				"algo" => {
 					if let Some(word) = iter.next() {
 						algorithm = word.to_string();
 					}
 				}
-				_ => {},
+				_ => {}
 			}
 		}
 		ClientMsg::SpawnAi(algorithm, ai_type)

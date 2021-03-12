@@ -1,7 +1,7 @@
 use bimap::BiMap;
 
-use tttz_protocol::ServerMsg;
 use crate::client::Client;
+use tttz_protocol::ServerMsg;
 
 use std::collections::HashMap;
 use std::net::SocketAddr;

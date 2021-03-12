@@ -3,7 +3,9 @@ use crate::server::SOCKET;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType, ServerMsg, SoundEffect, Display};
+use tttz_protocol::{
+	BoardMsg, BoardReply, Display, KeyType, ServerMsg, SoundEffect,
+};
 
 pub struct Client {
 	pub id: i32,
@@ -50,7 +52,6 @@ impl Client {
 		client_manager: &ClientManager,
 		msg: &ServerMsg,
 	) {
-		// TODO maintain the view list in client, when exit do cleaning
 		for dc_id in self.dc_ids.iter() {
 			let dc_addr =
 				if let Some(addr) = client_manager.get_addr_by_id(*dc_id) {
@@ -66,12 +67,14 @@ impl Client {
 		}
 	}
 
-	pub fn send_display(&mut self, client_manager: &ClientManager, display: Display) {
-		self.broadcast_msg(
-			client_manager,
-			&ServerMsg::Display(display),
-		);
-		let last_se = std::mem::replace(&mut self.board.last_se, SoundEffect::Silence);
+	pub fn send_display(
+		&mut self,
+		client_manager: &ClientManager,
+		display: Display,
+	) {
+		self.broadcast_msg(client_manager, &ServerMsg::Display(display));
+		let last_se =
+			std::mem::replace(&mut self.board.last_se, SoundEffect::Silence);
 		self.broadcast_msg(
 			client_manager,
 			&ServerMsg::SoundEffect(self.id, last_se),

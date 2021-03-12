@@ -1,9 +1,9 @@
 use directories::ProjectDirs;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tttz_protocol::BoardMsg;
 
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Replay {
@@ -34,13 +34,15 @@ impl Replay {
 		self.data.push((since_the_epoch.as_micros(), board_msg));
 	}
 
-	pub fn save(&self, filename: &str)
-		-> Result<bool, Box<dyn std::error::Error>>
-	{
-		if let Some(proj_dirs) = ProjectDirs::from("", "asrcpq",  "tttz") {
+	pub fn save(
+		&self,
+		filename: &str,
+	) -> Result<bool, Box<dyn std::error::Error>> {
+		if let Some(proj_dirs) = ProjectDirs::from("", "asrcpq", "tttz") {
 			let path = proj_dirs.data_dir().join("replay");
 			std::fs::create_dir_all(&path)?;
-			let path = path.join(&format!("{}-{}.tttz_replay",
+			let path = path.join(&format!(
+				"{}-{}.tttz_replay",
 				self.start_time
 					.duration_since(UNIX_EPOCH)
 					.expect("Time went backwards")

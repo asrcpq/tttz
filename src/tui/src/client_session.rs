@@ -1,10 +1,10 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-use tttz_protocol::{ClientMsg, KeyType, ServerMsg, Display};
+use tttz_protocol::{ClientMsg, Display, KeyType, ServerMsg};
 
-use crate::sound_manager::SoundManager;
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
+use crate::sound_manager::SoundManager;
 
 use std::collections::HashMap;
 use std::io::{stdout, Read, Write};
@@ -36,7 +36,11 @@ impl ClientSession {
 			bytebuf: Vec::new(),
 			last_display: HashMap::new(),
 		};
-		client_session.client_socket.socket.set_nonblocking(true).unwrap();
+		client_session
+			.client_socket
+			.socket
+			.set_nonblocking(true)
+			.unwrap();
 		client_session.modeswitch(0);
 		client_session
 	}
@@ -48,7 +52,7 @@ impl ClientSession {
 			self.print_prompt();
 		} else {
 			self.client_display.activate();
-			for (_id, display) in &self.last_display {
+			for display in self.last_display.values() {
 				self.client_display.disp_by_id(&display);
 			}
 		}
@@ -148,13 +152,11 @@ impl ClientSession {
 			}
 			ServerMsg::ClientList(_) => {}
 			ServerMsg::Request(_) => {}
-			ServerMsg::SoundEffect(id, ref se) => {
+			ServerMsg::SoundEffect(_id, ref se) => {
 				self.sound_manager.play(se);
-				return false //  early return
+				return false; //  early return
 			}
-			_ => {
-				self.show_msg("Unknown message received!")
-			}
+			_ => self.show_msg("Unknown message received!"),
 		}
 		self.show_msg(&msg.to_string());
 		false
@@ -164,18 +166,19 @@ impl ClientSession {
 		// mode == 0
 		if self.mode == 0 {
 			if !self.bytebuf.is_empty() {
-				match byte {
-					b'[' => { return false },
-					_ => {},
+				if byte == b'[' {
+					return false;
 				}
 				self.bytebuf.drain(..);
-				return false
+				return false;
 			}
 			match byte {
-				b'' => { // esc
+				b'' => {
+					// esc
 					self.bytebuf.push(byte);
 				}
-				23 => { // ctrl-w
+				23 => {
+					// ctrl-w
 					while let Some(ch) = self.textbuffer.pop() {
 						print!("{} {}", 8 as char, 8 as char);
 						if ch.is_whitespace() {
@@ -183,18 +186,22 @@ impl ClientSession {
 						}
 					}
 				}
-				3 => { // ctrl-c
+				3 => {
+					// ctrl-c
 					self.textbuffer = String::new();
-				} 
-				4 => { // eof
+				}
+				4 => {
+					// eof
 					self.textbuffer = String::new();
 					self.modeswitch(1);
 				}
-				127 => { // bs
+				127 => {
+					// bs
 					self.textbuffer.pop();
 					print!("{} {}", 8 as char, 8 as char);
 				}
-				b'\r' => { // carriage return
+				b'\r' => {
+					// carriage return
 					print!("\n\r");
 					if self.proc_line(&self.textbuffer.clone()) {
 						return true;
@@ -204,7 +211,7 @@ impl ClientSession {
 					if self.mode == 0 {
 						self.print_prompt();
 					}
-				} 
+				}
 				byte => {
 					let byte = byte as char;
 					self.textbuffer.push(byte);
@@ -247,7 +254,7 @@ impl ClientSession {
 						_ => return false,
 					};
 					self.client_socket
-						.send(ClientMsg::KeyEvent(key_event.clone()))
+						.send(ClientMsg::KeyEvent(key_event))
 						.unwrap();
 				}
 			}
@@ -265,10 +272,7 @@ impl ClientSession {
 						self.client_display.disp_by_id(&display);
 						self.last_display.insert(id, display);
 					} else {
-						eprintln!(
-							"Received display of unknown id {}",
-							id
-						);
+						eprintln!("Received display of unknown id {}", id);
 					}
 				}
 				x => {

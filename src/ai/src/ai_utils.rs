@@ -25,7 +25,9 @@ impl Default for GenerateKeyParam {
 
 pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 	let mut ret = VecDeque::new();
-	if gkp.hold_swap { ret.push_back(KeyType::Hold); }
+	if gkp.hold_swap {
+		ret.push_back(KeyType::Hold);
+	}
 	let current_posx = INITIAL_POS[gkp.code as usize];
 	let rotated_pos0 =
 		current_posx + SRP[gkp.code as usize][gkp.rotation as usize].0;
@@ -48,7 +50,7 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 		ret.push_back(KeyType::RotateFlip);
 	}
 	for _ in 0..times {
-		ret.push_back(keycode.clone());
+		ret.push_back(keycode);
 	}
 	if gkp.post_key != KeyType::Nothing {
 		ret.push_back(KeyType::SoftDrop);
@@ -59,9 +61,11 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 }
 
 // return a list of possible drop pos
-pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
-	(Vec<(u8, u8)>, [u8; 4], [u8; 4])
-{
+pub fn convolve_height(
+	heights: &[u8],
+	code: u8,
+	rot: i8,
+) -> (Vec<(u8, u8)>, [u8; 4], [u8; 4]) {
 	let mut ret = Vec::new();
 	let mut dx = 0;
 	let mut posx = [0; 4];
@@ -73,7 +77,7 @@ pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
 	}
 	loop {
 		if dx + BLOCK_WIDTH[code as usize][rot as usize] as u8 > 10 {
-			break (ret, posx, posy)
+			break (ret, posx, posy);
 		}
 
 		let mut highest = 0;
@@ -117,5 +121,5 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 			highest_hole_x = i as i32;
 		}
 	}
-	return (heights, highest_hole_x, highest_hole)
+	(heights, highest_hole_x, highest_hole)
 }

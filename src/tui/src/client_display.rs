@@ -100,11 +100,7 @@ impl ClientDisplay {
 		}
 		let offsetx = self.offset_x[0] as u16 + 1;
 		let offsety = self.offset_y[0] as u16 + 21;
-		print!(
-			"{}{:<32}",
-			termion::cursor::Goto(offsetx, offsety),
-			msg
-		);
+		print!("{}{:<32}", termion::cursor::Goto(offsetx, offsety), msg);
 	}
 
 	fn disp_info(&self, display: &Display, mut offsetx: u16, mut offsety: u16) {
@@ -113,10 +109,12 @@ impl ClientDisplay {
 		offsety += 20;
 		let mut infostring = format!("id: {}", display.id);
 		if display.combo_multiplier > 0 {
-			infostring = format!("{}, c: {}", infostring, display.combo_multiplier);
+			infostring =
+				format!("{}, c: {}", infostring, display.combo_multiplier);
 		}
 		if display.b2b_multiplier > 0 {
-			infostring = format!("{}, b: {}", infostring, display.b2b_multiplier);
+			infostring =
+				format!("{}, b: {}", infostring, display.b2b_multiplier);
 		}
 		let infostring = infostring.into_bytes();
 		for x in 0..LEN {
@@ -140,7 +138,7 @@ impl ClientDisplay {
 		for i in 0..4 {
 			let tmp = BPT[code as usize][0][i as usize];
 			let x1 = tmp.0 as u32 + x;
-			let double_y1 = double_y + 1 - tmp.1 as u32 ;
+			let double_y1 = double_y + 1 - tmp.1 as u32;
 			let y1 = double_y1 / 2;
 			let mut mod2 = double_y1 as i32 % 2 + 1;
 			if let Some(old_mod2) = print_info.remove(&(x1, y1)) {
@@ -248,9 +246,9 @@ impl ClientDisplay {
 		let shadow_pos = shadow_block.getpos();
 		// show shadow_block first
 		print!("[0m");
-		for i in 0..4 {
-			let x = shadow_pos[i].0 as u16;
-			let y = shadow_pos[i].1 as u16;
+		for shadow_square in shadow_pos.iter() {
+			let x = shadow_square.0 as u16;
+			let y = shadow_square.1 as u16;
 			if y < 20 {
 				self.blockp(
 					offsetx + x * 2,
@@ -262,9 +260,9 @@ impl ClientDisplay {
 		}
 		print!("[30m");
 		let tmp_pos = tmp_block.getpos();
-		for i in 0..4 {
-			let x = tmp_pos[i].0 as u16;
-			let y = tmp_pos[i].1 as u16;
+		for tmp_square in tmp_pos.iter() {
+			let x = tmp_square.0 as u16;
+			let y = tmp_square.1 as u16;
 			if y < 20 {
 				self.blockp(
 					offsetx + x * 2,

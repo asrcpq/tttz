@@ -4,43 +4,49 @@ pub const TWIST_MINI_CHECK: [[[(i32, i32); 2]; 4]; 7] = [
 		[(0, 0), (0, 0)],
 		[(0, 0), (0, 0)],
 		[(0, 0), (0, 0)], // I spin does not have mini type
-	],[
+	],
+	[
 		[(1, 0), (2, 0)],
 		[(1, 1), (1, 2)],
 		[(0, 1), (1, 1)],
 		[(0, 0), (0, 1)],
-	],[
+	],
+	[
 		[(0, 0), (1, 0)],
 		[(1, 0), (1, 1)],
 		[(1, 1), (2, 1)],
 		[(0, 1), (0, 2)],
-	],[
+	],
+	[
 		[(0, 0), (0, 0)],
 		[(0, 0), (0, 0)],
 		[(0, 0), (0, 0)],
 		[(0, 0), (0, 0)], // O cannot spin
-	],[
+	],
+	[
 		[(0, 0), (2, 1)],
 		[(1, 0), (0, 2)],
 		[(0, 0), (2, 1)],
 		[(1, 0), (0, 2)],
-	],[
+	],
+	[
 		[(0, 0), (2, 0)],
 		[(1, 0), (1, 2)],
 		[(0, 1), (2, 1)],
 		[(0, 0), (0, 2)],
-	],[
+	],
+	[
 		[(2, 0), (0, 1)],
 		[(0, 0), (1, 2)],
 		[(2, 0), (0, 1)],
 		[(0, 0), (1, 2)],
-	]
+	],
 ];
 
 // wall kick pos
 // line 1-4: 0->1 to 3->0, 5 attempts
 // line 5-8: 0->3 to 3->2
-lazy_static::lazy_static!{
+lazy_static::lazy_static! {
 static ref WKD: [Vec<(i8, i8)>; 8] = [
 	 vec![(0, 0), (-1, 0), (-1, 1), (0,-2), (-1,-2)],
 	 vec![(0, 0), ( 1, 0), ( 1,-1), (0, 2), ( 1, 2)],
@@ -73,9 +79,13 @@ static ref FWKD: [Vec<(i8, i8)>; 4] = [
 }
 
 // assume dr = 1, -1, 2
-pub fn kick_iter(code: u8, start: i8, dr: i8) -> impl Iterator<Item = &'static (i8, i8)> {
+pub fn kick_iter(
+	code: u8,
+	start: i8,
+	dr: i8,
+) -> impl Iterator<Item = &'static (i8, i8)> {
 	if dr == 2 {
-		return FWKD[start as usize].iter()
+		return FWKD[start as usize].iter();
 	}
 	if code != 0 {
 		WKD[(dr == -1) as usize * 4 + start as usize].iter()

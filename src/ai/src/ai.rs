@@ -1,5 +1,5 @@
-use tttz_protocol::{Display, KeyType, ServerMsg, ClientMsg};
 use tttz_libclient::client_socket::ClientSocket;
+use tttz_protocol::{ClientMsg, Display, KeyType, ServerMsg};
 
 use std::collections::VecDeque;
 
@@ -9,7 +9,7 @@ pub trait Thinker {
 	fn main_loop(&mut self, addr: &str, sleep_millis: u64, strategy: bool) {
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let main_sleep = 10;
-	
+
 		let mut state = 3;
 		let mut last_display: Option<Display> = None;
 		let mut moveflag = false;
@@ -70,7 +70,9 @@ pub trait Thinker {
 				if state == 2 {
 					operation_queue = self.main_think(decoded);
 					while let Some(key_type) = operation_queue.pop_front() {
-						client_socket.send(ClientMsg::KeyEvent(key_type)).unwrap();
+						client_socket
+							.send(ClientMsg::KeyEvent(key_type))
+							.unwrap();
 						std::thread::sleep(std::time::Duration::from_millis(
 							sleep_millis,
 						));

@@ -30,7 +30,7 @@ impl Board {
 		let replay = Default::default();
 		let mut board = Board {
 			id,
-			tmp_block: Block::new(0), // immediately overwritten
+			tmp_block: Block::new(0),    // immediately overwritten
 			shadow_block: Block::new(0), // immediately overwritten
 			rg: Default::default(),
 			color: [[7; 10]; 40],
@@ -70,7 +70,7 @@ impl Board {
 		self.replay.push_operation(board_msg.clone());
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
-				KeyType::Nothing => {},
+				KeyType::Nothing => {}
 				KeyType::Hold => {
 					self.hold();
 					self.last_se = SoundEffect::Hold;
@@ -148,13 +148,13 @@ impl Board {
 			self.tmp_block.pos.1 = std_pos.1 + wkp.1 as i32;
 			if self.tmp_block.test(self) {
 				if self.test_twist() > 0 {
-					return 2
+					return 2;
 				} else {
-					return 1
+					return 1;
 				}
 			}
 		}
-		return 0
+		0
 	}
 
 	// rotate2 is extracted for AI
@@ -264,7 +264,7 @@ impl Board {
 	fn test_twist(&mut self) -> u32 {
 		// No o spin
 		if self.tmp_block.code == 3 {
-			return 0
+			return 0;
 		}
 		if !self.test_twist2() {
 			return 0;
@@ -273,17 +273,16 @@ impl Board {
 		if self.tmp_block.code == 0 {
 			return 1;
 		}
-		let tmp = TWIST_MINI_CHECK[self.tmp_block.code as usize][self.tmp_block.rotation as usize];
-		for i in 0..2 {
-			let check_x =
-				self.tmp_block.pos.0 + tmp[i].0;
-			let check_y =
-				self.tmp_block.pos.1 + tmp[i].1;
+		let tmp = TWIST_MINI_CHECK[self.tmp_block.code as usize]
+			[self.tmp_block.rotation as usize];
+		for mini_pos in tmp.iter() {
+			let check_x = self.tmp_block.pos.0 + mini_pos.0;
+			let check_y = self.tmp_block.pos.1 + mini_pos.1;
 			if self.color[check_y as usize][check_x as usize] == 7 {
 				return 1;
 			}
 		}
-		return 2;
+		2
 	}
 
 	// true = death
@@ -328,8 +327,7 @@ impl Board {
 			ret += count;
 			for y in (count..40).rev() {
 				for x in 0..10 {
-					self.color[y][x] =
-						self.color[y - count][x];
+					self.color[y][x] = self.color[y - count][x];
 				}
 			}
 			for y in 0..count {
@@ -376,9 +374,8 @@ impl Board {
 	fn calc_attack(&self, tspin: u32, line_count: u32) -> (u32, u32, u32) {
 		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
 		let twist_mult = if tspin > 0 {
-			ATTACK_BASE_TWIST_MULTIPLIER[
-				((tspin - 1) * 7 + self.tmp_block.code as u32)
-			as usize]
+			ATTACK_BASE_TWIST_MULTIPLIER
+				[((tspin - 1) * 7 + self.tmp_block.code as u32) as usize]
 		} else {
 			10
 		};
@@ -395,7 +392,7 @@ impl Board {
 		if self.height == 0 {
 			atk += 10;
 		}
-		return (atk, cm, tcm)
+		(atk, cm, tcm)
 	}
 
 	fn set_attack_se(&mut self) {
@@ -418,9 +415,9 @@ impl Board {
 	fn hard_drop_set_color(&mut self) -> HashSet<usize> {
 		let tmppos = self.tmp_block.getpos();
 		let mut lines_tocheck = HashSet::new();
-		for i in 0..4 {
-			let px = tmppos[i].0 as usize;
-			let py = tmppos[i].1 as usize;
+		for each_square in tmppos.iter() {
+			let px = each_square.0 as usize;
+			let py = each_square.1 as usize;
 			// tmp is higher, update height
 			if py + 1 > self.height as usize {
 				self.height = py as i32 + 1;
@@ -433,34 +430,8 @@ impl Board {
 		lines_tocheck
 	}
 
-	// for dry run
-	fn hard_drop_unset_color(&mut self) {
-		let tmppos = self.tmp_block.getpos();
-		for i in 0..4 {
-			let px = tmppos[i].0 as usize;
-			let py = tmppos[i].1 as usize;
-			// tmp is higher, update height
-			if py < self.height as usize {
-				self.height = py as i32;
-			}
-			self.color[py][px] = 7;
-		}
-	}
-
-	// for ai
-	pub fn hard_drop_dry_with_twist(&mut self, twist: u32) -> u32 {
-		let lines_tocheck = self.hard_drop_set_color();
-		let line_count = self.checkline(lines_tocheck).len() as u32;
-		self.hard_drop_unset_color();
-		// put attack amount into pool
-		if line_count > 0 {
-			return self.calc_attack(twist, line_count).0;
-		}
-		0
-	}
-
 	// true: die
-pub fn hard_drop(&mut self) -> bool {
+	pub fn hard_drop(&mut self) -> bool {
 		// check twist before setting color
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
@@ -517,11 +488,7 @@ pub fn hard_drop(&mut self) -> bool {
 			self.shadow_block.pos.1 -= 1;
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 += 1;
-				if self.shadow_block.bottom_pos() < 20 {
-					return false;
-				} else {
-					return true;
-				}
+				break self.shadow_block.bottom_pos() >= 20;
 			}
 		}
 	}
@@ -558,7 +525,8 @@ mod test {
 
 	#[test]
 	fn test_test_twist() {
-		let mut board = test::generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
+		let mut board =
+			test::generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
 		board.color[39][1] = 7; // sdp: (1, 0)
 		board.tmp_block = Block::new(1); // █▄▄
 		board.tmp_block.pos.0 = 1;
@@ -569,7 +537,8 @@ mod test {
 
 	#[test]
 	fn test_calc_shadow() {
-		let mut board = test::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
+		let mut board =
+			test::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
 		board.tmp_block = Block::new(1); // █▄▄
 		assert!(!board.calc_shadow());
 		use std::collections::HashSet;
@@ -581,10 +550,7 @@ mod test {
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
-			blocks.remove(&(
-				shadow_pos[i].0 as i32,
-				shadow_pos[i].1 as i32,
-			));
+			blocks.remove(&(shadow_pos[i].0 as i32, shadow_pos[i].1 as i32));
 		}
 		assert!(blocks.is_empty());
 		board.move2(-1); // move to very left
@@ -597,10 +563,7 @@ mod test {
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
-			blocks.remove(&(
-				shadow_pos[i].0 as i32,
-				shadow_pos[i].1 as i32,
-			));
+			blocks.remove(&(shadow_pos[i].0 as i32, shadow_pos[i].1 as i32));
 		}
 	}
 }

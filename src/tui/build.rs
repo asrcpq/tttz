@@ -1,6 +1,6 @@
 extern crate tttz_segen;
-use tttz_segen::segen;
 use std::env;
+use tttz_segen::segen;
 
 fn main() {
 	let out_dir = env::var("OUT_DIR").unwrap();
