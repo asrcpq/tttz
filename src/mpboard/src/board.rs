@@ -31,7 +31,7 @@ impl Board {
 			floating_block: Block::new(0), // immediately overwritten
 			shadow_block: Block::new(0),   // immediately overwritten
 			rg: Default::default(),
-			color: vec![[7; 10]; 40],
+			color: vec![[b' '; 10]; 40],
 			hold: 7,
 			gaman: Default::default(),
 			last_se: None,
@@ -57,7 +57,7 @@ impl Board {
 		if !self.is_pos_inside(pos) {
 			return false;
 		}
-		self.color[pos.1 as usize][pos.0 as usize] == 7
+		self.color[pos.1 as usize][pos.0 as usize] == b' '
 	}
 
 	// true = die
@@ -189,7 +189,7 @@ impl Board {
 		for &each_ln in ln.iter() {
 			let mut flag = true;
 			for x in 0..10 {
-				if self.color[each_ln][x] == 7 {
+				if self.color[each_ln][x] == b' ' {
 					flag = false;
 				}
 			}
@@ -262,7 +262,7 @@ impl Board {
 		for mini_pos in tmp.iter() {
 			let check_x = self.floating_block.pos.0 + mini_pos.0;
 			let check_y = self.floating_block.pos.1 + mini_pos.1;
-			if self.color[check_y as usize][check_x as usize] == 7 {
+			if self.color[check_y as usize][check_x as usize] == b' ' {
 				return 1;
 			}
 		}
@@ -319,7 +319,7 @@ impl Board {
 
 			// generate lines that changed
 			lines_tocheck.insert(py);
-			self.color[py][px] = self.floating_block.code;
+			self.color[py][px] = ID_TO_CHAR[self.floating_block.code as usize];
 		}
 		lines_tocheck
 	}
@@ -355,7 +355,7 @@ impl Board {
 				for x in 0..10 {
 					self.color[y][x] = 2; // L = white
 				}
-				self.color[y][slot] = 7;
+				self.color[y][slot] = b' ';
 				if !self.floating_block.test(self) {
 					self.floating_block.pos.1 -= 1;
 				}
@@ -471,7 +471,7 @@ mod test {
 	fn test_test_tspin() {
 		let mut board =
 			test::generate_solidlines([1, 0, 3, 0, 0, 0, 0, 0, 0, 0]);
-		board.color[38][2] = 7;
+		board.color[38][2] = b' ';
 		board.floating_block = Block::new(5);
 		board.floating_block.pos.0 = 0;
 		board.floating_block.pos.1 = 0;
@@ -483,8 +483,8 @@ mod test {
 	fn test_test_jl_twist() {
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 3, 2, 0, 0, 0, 0, 0]);
-		board.color[39][1] = 7;
-		board.color[39][3] = 7;
+		board.color[39][1] = b' ';
+		board.color[39][3] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -497,8 +497,8 @@ mod test {
 
 		let mut board =
 			test::generate_solidlines([2, 2, 0, 2, 2, 0, 0, 0, 0, 0]);
-		board.color[39][1] = 7;
-		board.color[39][3] = 7;
+		board.color[39][1] = b' ';
+		board.color[39][3] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -511,8 +511,8 @@ mod test {
 
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 0, 3, 2, 0, 0, 0, 0]);
-		board.color[39][1] = 7;
-		board.color[39][4] = 7;
+		board.color[39][1] = b' ';
+		board.color[39][4] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 2;
 		board.floating_block.pos.1 = 0;

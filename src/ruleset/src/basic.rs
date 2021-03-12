@@ -1,4 +1,6 @@
-pub const ID_TO_CHAR: [char; 8] = ['i', 'j', 'l', 'o', 's', 't', 'z', ' '];
+use enum_map::{enum_map, EnumMap};
+
+pub const ID_TO_CHAR: [u8; 8] = [b'i', b'j', b'l', b'o', b's', b't', b'z', b' '];
 
 // block pos table
 // code * rotation * block * (x, y)
@@ -84,7 +86,18 @@ pub const BLOCK_WIDTH: BlockScalar<i32> = [
 	[3, 2, 3, 2],
 ];
 
-pub const COLORMAP: [u8; 8] = [6, 4, 7, 3, 2, 5, 1, 0];
+lazy_static::lazy_static! {
+pub static ref COLORMAP: EnumMap<u8, u8> = enum_map! {
+	b'i' => 6,
+	b'j' => 4,
+	b'l' => 7,
+	b'o' => 3,
+	b's' => 2,
+	b't' => 5,
+	b'z' => 1,
+	_ => 0,
+};
+}
 
 // mass center height, convenient for AI
 pub const BLOCK_MCH: BlockScalar<f32> = [

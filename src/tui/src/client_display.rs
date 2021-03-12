@@ -80,13 +80,13 @@ impl ClientDisplay {
 		);
 	}
 
-	fn blockp(&self, i: u16, j: u16, color: u8, style: u8) {
-		let (ch1, ch2) = if color != 7 { ('[', ']') } else { (' ', ' ') };
+	fn blockp(&self, i: u16, j: u16, piece: u8, style: u8) {
+		let (ch1, ch2) = if piece != b' ' { ('[', ']') } else { (' ', ' ') };
 		let fgbg = 4 - style; // 0 bg 1 fg
 		print!(
 			"[{}{}m{}{}{}{}",
 			fgbg,
-			COLORMAP[color as usize],
+			COLORMAP[piece],
 			termion::cursor::Goto(i, j),
 			ch1,
 			termion::cursor::Goto(i + 1, j),
@@ -144,7 +144,7 @@ impl ClientDisplay {
 			}
 			print_info.insert((x1, y1), mod2);
 		}
-		print!("[3{}m", COLORMAP[code as usize]);
+		print!("[3{}m", COLORMAP[ID_TO_CHAR[code as usize]]);
 
 		for ((x, y), value) in print_info.into_iter() {
 			// value should not be zero
@@ -252,7 +252,7 @@ impl ClientDisplay {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + 19 - y,
-					floating_block.code,
+					ID_TO_CHAR[floating_block.code as usize],
 					1,
 				);
 			}
@@ -266,7 +266,7 @@ impl ClientDisplay {
 				self.blockp(
 					offsetx + x * 2,
 					offsety + 19 - y,
-					floating_block.code,
+					ID_TO_CHAR[floating_block.code as usize],
 					0,
 				);
 			}
