@@ -173,14 +173,10 @@ impl Server {
 					self.die(&mut client, true);
 				}
 				ClientMsg::GetClients => {
-					let list = self
-						.client_manager
-						.id_addr
-						.iter()
-						.map(|(x, _)| *x)
-						.filter(|x| *x != client.id)
+					let list = self.client_manager
+						.clients()
+						.filter(|&x| x != client.id)
 						.collect();
-					eprintln!("{:?} {}", list, client.id);
 					client.send_msg(ServerMsg::ClientList(list));
 				}
 				ClientMsg::Kick(id) => {

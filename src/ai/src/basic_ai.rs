@@ -43,14 +43,14 @@ impl Thinker for BasicAi {
 		let mut best_rotation = 0;
 		let mut best_posx = 0;
 		let mut best_id = 0;
-		for (id, option_code) in
+		for (id, &option_code) in
 			[display.floating_block[2], display.hold].iter().enumerate()
 		{
 			for rot in 0..4 {
 				let (possible_pos, posx, posy) =
-					convolve_height(&heights, *option_code, rot);
+					convolve_height(&heights, option_code, rot);
 				for (dx, height) in
-					possible_pos.iter().map(|(x, y)| (*x as i32, *y as i32))
+					possible_pos.iter().map(|&(x, y)| (x as i32, y as i32))
 				{
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
@@ -70,10 +70,10 @@ impl Thinker for BasicAi {
 					}
 					let cover = (dx <= highest_hole_x
 						&& dx
-							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
+							+ BLOCK_WIDTH[option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
 					let score = (height as f32
-						+ BLOCK_MCH[*option_code as usize][rot as usize])
+						+ BLOCK_MCH[option_code as usize][rot as usize])
 						* self.height_weight + hole as f32
 						* self.hole_weight + cover as f32
 						* self.cover_weight;

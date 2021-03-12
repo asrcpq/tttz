@@ -52,9 +52,9 @@ impl Client {
 		client_manager: &ClientManager,
 		msg: &ServerMsg,
 	) {
-		for dc_id in self.dc_ids.iter() {
+		for &dc_id in self.dc_ids.iter() {
 			let dc_addr =
-				if let Some(addr) = client_manager.get_addr_by_id(*dc_id) {
+				if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
 					addr
 				} else {
 					eprintln!(

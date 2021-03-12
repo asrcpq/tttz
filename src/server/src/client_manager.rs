@@ -9,7 +9,7 @@ use std::net::SocketAddr;
 pub struct ClientManager {
 	id_alloc: i32,
 	clients: HashMap<i32, Client>,
-	pub id_addr: BiMap<i32, SocketAddr>,
+	id_addr: BiMap<i32, SocketAddr>,
 	pending_client: i32,
 }
 
@@ -27,6 +27,12 @@ impl Default for ClientManager {
 impl ClientManager {
 	pub fn view_by_id(&self, id: i32) -> Option<&Client> {
 		self.clients.get(&id)
+	}
+
+	pub fn clients(&self) -> impl Iterator<Item = i32> + '_ {
+		self.id_addr
+			.iter()
+			.map(|(&x, _)| x)
 	}
 
 	pub fn send_msg_by_id(&self, id: i32, msg: ServerMsg) {
@@ -61,18 +67,12 @@ impl ClientManager {
 
 	// return none if not exist
 	pub fn get_addr_by_id(&self, id: i32) -> Option<SocketAddr> {
-		match self.id_addr.get_by_left(&id) {
-			Some(i) => Some(*i),
-			None => None,
-		}
+		self.id_addr.get_by_left(&id).map(|&x| x)
 	}
 
 	// return none if not exist
 	pub fn get_id_by_addr(&self, addr: SocketAddr) -> Option<i32> {
-		match self.id_addr.get_by_right(&addr) {
-			Some(i) => Some(*i),
-			None => None,
-		}
+		self.id_addr.get_by_right(&addr).map(|&x| x)
 	}
 
 	pub fn pair_apply(&mut self, client1: &mut Client, client2: &mut Client) {

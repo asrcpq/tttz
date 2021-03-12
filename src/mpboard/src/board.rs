@@ -195,15 +195,15 @@ impl Board {
 	// return count of lines eliminated
 	fn checkline(&self, ln: HashSet<usize>) -> Vec<usize> {
 		let mut elims = Vec::new();
-		for each_ln in ln.iter() {
+		for &each_ln in ln.iter() {
 			let mut flag = true;
 			for x in 0..10 {
-				if self.color[*each_ln][x] == 7 {
+				if self.color[each_ln][x] == 7 {
 					flag = false;
 				}
 			}
 			if flag {
-				elims.push(*each_ln);
+				elims.push(each_ln);
 			}
 		}
 		elims
@@ -213,8 +213,8 @@ impl Board {
 		let mut movedown = 0;
 		for i in 0..40 {
 			let mut flag = false;
-			for elim in elims.iter() {
-				if i == *elim {
+			for &elim in elims.iter() {
+				if i == elim {
 					flag = true;
 					break;
 				}

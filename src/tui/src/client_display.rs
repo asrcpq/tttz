@@ -280,7 +280,7 @@ impl ClientDisplay {
 
 	pub fn disp_atk_by_id(&self, display: &Display) {
 		let panel = match self.id_panel.get(&display.id) {
-			Some(panel) => *panel,
+			Some(&panel) => panel,
 			None => {
 				eprintln!("Wrong client sigatk received.");
 				return;
