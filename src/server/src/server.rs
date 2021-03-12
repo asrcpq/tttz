@@ -42,7 +42,6 @@ impl Server {
 
 	fn post_operation(&mut self, client: &mut Client, atk: u32) {
 		// note the size effect of counter_attack
-		let atk = client.board.gaman.counter_attack(atk);
 		if atk > 0 {
 			if self
 				.client_manager

@@ -17,7 +17,7 @@ pub struct Board {
 	pub rg: RandomGenerator,
 	pub(in crate) color: [[u8; 10]; 40],
 	hold: u8,
-	pub gaman: GarbageAttackManager,
+	gaman: GarbageAttackManager,
 	pub last_se: SoundEffect,
 	pub height: i32,
 	pub replay: Replay,
@@ -445,9 +445,7 @@ impl Board {
 		display.garbages = self.gaman.garbages.clone();
 		display.hold = self.hold;
 		display.tmp_block = self.tmp_block.compress();
-		display.garbages = self.gaman.garbages.clone();
-		display.cm = self.gaman.cm;
-		display.tcm = self.gaman.tcm;
+		self.gaman.set_display(&mut display);
 		for i in 0..6 {
 			display.bag_preview[i] = self.rg.bag[i];
 		}

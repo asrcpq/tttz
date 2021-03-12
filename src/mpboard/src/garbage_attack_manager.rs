@@ -1,10 +1,11 @@
 use tttz_ruleset::*;
+use tttz_protocol::Display;
 
 use std::collections::VecDeque;
 
 pub struct GarbageAttackManager {
-	pub cm: u32,
-	pub tcm: u32,
+	cm: u32,
+	tcm: u32,
 	pub garbages: VecDeque<u32>,
 }
 
@@ -28,7 +29,7 @@ impl GarbageAttackManager {
 	}
 
 	// return atk
-	pub fn counter_attack(&mut self, mut atk: u32) -> u32 {
+	fn counter_attack(&mut self, mut atk: u32) -> u32 {
 		loop {
 			// return if attack remains
 			if self.garbages.is_empty() {
@@ -80,6 +81,13 @@ impl GarbageAttackManager {
 		if pc {
 			atk += 10;
 		}
+		let atk = self.counter_attack(atk);
 		atk
+	}
+
+	pub fn set_display(&self, mut display: &mut Display) {
+		display.garbages = self.garbages.clone();
+		display.cm = self.cm;
+		display.tcm = self.tcm;
 	}
 }

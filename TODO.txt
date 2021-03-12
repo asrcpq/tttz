@@ -1,3 +1,12 @@
+Planned:
+
+- code clean: make everything private
+- transplant some ai implementations
+
+Future:
+
+- client rendering and se
+- write an RL ai
 - better sound effects
 - better readline
 - id system(for replay)
