@@ -6,7 +6,6 @@ pub struct GarbageAttackManager {
 	pub cm: u32,
 	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
-	pub attack_pool: u32,
 }
 
 impl Default for GarbageAttackManager {
@@ -15,7 +14,6 @@ impl Default for GarbageAttackManager {
 			cm: 0,
 			tcm: 0,
 			garbages: VecDeque::new(),
-			attack_pool: 0,
 		}
 	}
 }
@@ -29,44 +27,38 @@ impl GarbageAttackManager {
 		self.garbages.push_back(atk);
 	}
 
-	// should only called when attack_pool > 0
-	// return true if attack is larger
-	pub fn counter_attack(&mut self) -> bool {
+	// return atk
+	pub fn counter_attack(&mut self, mut atk: u32) -> u32 {
 		loop {
 			// return if attack remains
 			if self.garbages.is_empty() {
-				break self.attack_pool > 0;
+				break atk;
 			}
-			if self.garbages[0] >= self.attack_pool {
-				self.garbages[0] -= self.attack_pool;
+			if self.garbages[0] >= atk {
+				self.garbages[0] -= atk;
 				if self.garbages[0] == 0 {
 					self.garbages.pop_front();
 				}
-				self.attack_pool = 0;
-				break false;
+				break 0;
 			}
 			let popped_lines = self.garbages.pop_front().unwrap();
-			self.attack_pool -= popped_lines;
+			atk -= popped_lines;
 		}
 	}
 
-	// providing whether tspin, shape offset and cleared lines
-	// change self b2b and attack_pool
-	// return atk, cm, tcm
 	pub fn calc_attack(
 		&mut self,
 		tspin: u32,
 		line_count: u32,
 		code: u8,
 		pc: bool,
-	) {
+	) -> u32 {
 		if line_count == 0 {
 			self.cm = 0;
 			if self.tcm > 0 {
 				self.tcm = ATTACK_B2B_INC;
 			}
-			self.attack_pool = 0;
-			return;
+			return 0;
 		}
 		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
 		let twist_mult = if tspin > 0 {
@@ -88,6 +80,6 @@ impl GarbageAttackManager {
 		if pc {
 			atk += 10;
 		}
-		self.attack_pool = atk;
+		atk
 	}
 }

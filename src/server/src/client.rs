@@ -82,19 +82,11 @@ impl Client {
 	}
 
 	// true = die
-	pub fn process_key(&mut self, key_type: KeyType) -> bool {
-		if self.state != 2 {
-			// not playing
-			return false;
-		}
-		if BoardReply::Die
-			== self.board.handle_msg(BoardMsg::KeyEvent(key_type))
-		{
-			return true;
-		}
-		// return value ignored, only board change cause death
+	pub fn process_key(&mut self, key_type: KeyType) -> BoardReply {
+		assert!(self.state == 2);
+		let ret = self.board.handle_msg(BoardMsg::KeyEvent(key_type));
 		self.board.calc_shadow();
-		false
+		ret
 	}
 }
 

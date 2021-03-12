@@ -10,7 +10,7 @@ pub enum BoardMsg {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum BoardReply {
-	Ok,
+	Ok(u32),
 	Die,
 	GarbageOverflow,
 }

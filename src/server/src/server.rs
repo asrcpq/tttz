@@ -22,7 +22,7 @@ impl Server {
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
 		let reply = client_target.board.handle_msg(BoardMsg::Attacked(lines));
-		if reply == BoardReply::Ok {
+		if let BoardReply::Ok(_) = reply {
 			client_target.broadcast_msg(
 				&self.client_manager,
 				&ServerMsg::Attack(client_target.id, lines),
@@ -40,9 +40,10 @@ impl Server {
 		flag
 	}
 
-	fn post_operation(&mut self, mut client: &mut Client) {
+	fn post_operation(&mut self, client: &mut Client, atk: u32) {
 		// note the size effect of counter_attack
-		if client.board.gaman.attack_pool > 0 && client.board.gaman.counter_attack() {
+		let atk = client.board.gaman.counter_attack(atk);
+		if atk > 0 {
 			if self
 				.client_manager
 				.get_addr_by_id(client.attack_target)
@@ -50,20 +51,19 @@ impl Server {
 			{
 				eprintln!(
 					"{} attack {} with {}",
-					client.id, client.attack_target, client.board.gaman.attack_pool,
+					client.id, client.attack_target, atk,
 				);
 				if self
-					.send_attack(client.attack_target, client.board.gaman.attack_pool)
+					.send_attack(client.attack_target, atk)
 				{
 					self.die(client, false);
 				};
 			} else {
 				eprintln!(
 					"Client {} is attacking nonexistent target {} with {}",
-					client.id, client.attack_target, client.board.gaman.attack_pool,
+					client.id, client.attack_target, atk,
 				);
 			}
-			client.board.gaman.attack_pool = 0;
 		}
 		let display = client.board.generate_display();
 		client.send_display(&self.client_manager, display);
@@ -153,7 +153,7 @@ impl Server {
 		client.state = 2;
 		client.attack_target = 0;
 		client.send_msg(ServerMsg::Start(0));
-		self.post_operation(&mut client);
+		self.post_operation(&mut client, 0);
 	}
 
 	pub fn main_loop(&mut self) {
@@ -315,11 +315,16 @@ impl Server {
 					self.start_single(&mut client);
 				}
 				ClientMsg::KeyEvent(key_type) => {
-					let dieflag = client.process_key(key_type);
+					let ret = client.process_key(key_type);
+					let atk = if let BoardReply::Ok(atk) = ret {
+						atk
+					} else {
+						0
+					};
 					// display is included in after_operation
-					self.post_operation(&mut client);
+					self.post_operation(&mut client, atk);
 					// update display before die
-					if dieflag {
+					if ret == BoardReply::Die {
 						self.die(&mut client, true);
 					}
 				}

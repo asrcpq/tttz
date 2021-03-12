@@ -8,7 +8,7 @@ use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::replay::Replay;
 use rand::Rng;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 pub struct Board {
 	id: i32,
@@ -63,6 +63,7 @@ impl Board {
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		self.replay.push_operation(board_msg.clone());
+		let mut atk = 0;
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
 				KeyType::Nothing => {}
@@ -83,13 +84,17 @@ impl Board {
 					self.move2(-1);
 				}
 				KeyType::HardDrop => {
-					if self.press_up() {
-						return BoardReply::Die;
+					let ret = self.press_up();
+					atk = match ret {
+						None => return BoardReply::Die,
+						Some(atk) => atk,
 					}
 				}
 				KeyType::SoftDrop => {
-					if self.press_down() {
-						return BoardReply::Die;
+					let ret = self.press_down();
+					atk = match ret {
+						None => return BoardReply::Die,
+						Some(atk) => atk,
 					}
 				}
 				KeyType::RotateReverse => {
@@ -114,7 +119,7 @@ impl Board {
 				}
 			}
 		}
-		BoardReply::Ok
+		BoardReply::Ok(atk)
 	}
 
 	fn move1(&mut self, dx: i32) -> bool {
@@ -276,7 +281,7 @@ impl Board {
 	// true = death
 	fn flush_garbage(&mut self, max: usize) -> bool {
 		let mut flag = false;
-		self.height += self.generate_garbage(0);
+		self.height += self.generate_garbage(max);
 		if self.calc_shadow() {
 			flag = true;
 		}
@@ -287,19 +292,22 @@ impl Board {
 	}
 
 
-	fn set_attack_se(&mut self) {
-		if self.gaman.attack_pool > 0 {
-			if self.gaman.tcm == 0 {
-				self.last_se = SoundEffect::AttackDrop;
-			} else {
-				self.last_se = SoundEffect::AttackDrop2;
-			}
-		} else {
-			self.last_se = SoundEffect::ClearDrop;
-		} // pc will overwrite this
-		if self.height == 0 {
-			self.last_se = SoundEffect::PerfectClear;
+	// No plain drop
+	fn attack_se(&self, atk: u32, line_clear: u32) -> SoundEffect {
+		if line_clear == 0 {
+			return SoundEffect::PlainDrop
 		}
+		let mut se = if atk >= 4 {
+			 SoundEffect::AttackDrop2
+		} else if atk >= 1 {
+			 SoundEffect::AttackDrop
+		} else {
+			 SoundEffect::ClearDrop
+		};
+		if self.height == 0 {
+			 se = SoundEffect::PerfectClear;
+		}
+		se
 	}
 
 	// set color, update height
@@ -365,8 +373,7 @@ impl Board {
 		ret as i32
 	}
 
-	// true: die
-	fn hard_drop(&mut self) -> bool {
+	fn hard_drop(&mut self) -> Option<u32> {
 		// check twist before setting color
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
@@ -375,45 +382,43 @@ impl Board {
 		let line_count = elim.len() as u32;
 		self.proc_elim(elim);
 		// put attack amount into pool
-		assert!(self.gaman.attack_pool == 0);
-		self.gaman.calc_attack(
+		let atk = self.gaman.calc_attack(
 			twist,
 			line_count,
 			self.tmp_block.code,
 			self.height == 0,
 		);
+		self.last_se = self.attack_se(atk, line_count);
 		if line_count > 0 {
 			self.height -= line_count as i32;
-			self.set_attack_se();
 		} else {
 			// plain drop: attack execution
-			self.last_se = SoundEffect::PlainDrop;
 			self.height += self.generate_garbage(0);
 			if self.height == 40 {
-				return true;
+				return None;
 			}
 		}
 
 		// new block
 		self.spawn_block();
 		if self.calc_shadow() {
-			return true;
+			return None;
 		}
-		false
+		Some(atk)
 	}
 
 	// true = death
-	fn press_down(&mut self) -> bool {
+	fn press_down(&mut self) -> Option<u32> {
 		if !self.soft_drop() {
 			return self.hard_drop();
 		} else {
 			self.last_se = SoundEffect::SoftDrop;
 		}
-		false
+		Some(0)
 	}
 
 	// true = death
-	fn press_up(&mut self) -> bool {
+	fn press_up(&mut self) -> Option<u32> {
 		self.soft_drop();
 		self.hard_drop()
 	}
