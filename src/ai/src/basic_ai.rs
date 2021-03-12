@@ -38,7 +38,7 @@ impl Thinker for BasicAi {
 
 		let (heights, highest_hole_x, _highest_hole) = get_height_and_hole(&display);
 
-		let mut best_score: f32 = 0.0;
+		let mut best_score = f32::INFINITY;
 		let mut best_rotation = 0;
 		let mut best_posx = 0;
 		let mut best_id = 0;
@@ -48,13 +48,14 @@ impl Thinker for BasicAi {
 				let (possible_pos, posx, posy) = convolve_height(&heights, *option_code, rot);
 				for (dx, height) in possible_pos
 					.iter()
-					.map(|(x, y)| (*x as i32, *y as i32)){
-
+					.map(|(x, y)| (*x as i32, *y as i32))
+				{
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
 					for block in 0..4 {
-						let dh = heights[dx as usize + posx[block] as usize] as u8
-							- posy[block] - height as u8;
+						let dh = posy[block]
+							+ height as u8
+							- heights[dx as usize + posx[block] as usize] as u8;
 						block_count[posx[block] as usize] += 1;
 						if dh > delta_heights[posx[block] as usize] {
 							delta_heights[posx[block] as usize] = dh;
@@ -73,10 +74,10 @@ impl Thinker for BasicAi {
 					let score = (
 							height as f32 +
 							MCH[*option_code as usize][rot as usize]
-						) * self.height_weight -
-						hole as f32 * self.hole_weight -
-						cover as f32 * self.cover_weight;
-					if score > best_score {
+						) * self.height_weight
+						+ hole as f32 * self.hole_weight
+						+ cover as f32 * self.cover_weight;
+					if score < best_score {
 						// eprintln!(
 						// 	"{} {} {} = {} overtake {} at dx: {}, rot: {}",
 						// 	height, hole, cover, score, best_score, dx, rot,

@@ -40,7 +40,7 @@ impl Board {
 			garbages: VecDeque::new(),
 			attack_pool: 0,
 			last_se: SoundEffect::Silence,
-			height: 40,
+			height: 0,
 			replay,
 		};
 		board.spawn_block();
@@ -119,7 +119,6 @@ impl Board {
 				}
 			}
 		}
-		eprintln!("tmp {:?}", self.tmp_block);
 		BoardReply::Ok
 	}
 
@@ -288,13 +287,13 @@ impl Board {
 	}
 
 	// true = death
-	pub fn flush_garbage(&mut self, max: usize) -> bool {
+	fn flush_garbage(&mut self, max: usize) -> bool {
 		let mut flag = false;
 		self.generate_garbage(max);
-		if !self.calc_shadow() {
+		if self.calc_shadow() {
 			flag = true;
 		}
-		if self.height < 0 {
+		if self.height == 40 {
 			flag = true;
 		}
 		flag
@@ -309,7 +308,7 @@ impl Board {
 	}
 
 	// pull pending garbages and write to board color
-	pub fn generate_garbage(&mut self, keep: usize) -> u32 {
+	fn generate_garbage(&mut self, keep: usize) -> u32 {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0;
 		loop {
@@ -320,7 +319,7 @@ impl Board {
 				Some(x) => x,
 				None => break,
 			} as usize;
-			self.height -= count as i32;
+			self.height += count as i32;
 			let mut slot = self.rg.rng.gen_range(0..10);
 			// assert!(count != 0);
 			if count > 40 {
@@ -393,8 +392,7 @@ impl Board {
 			0
 		};
 		let mut atk = base_atk * twist_mult * total_mult / 1000;
-		eprintln!("{} {} {}", base_atk, twist_mult, total_mult);
-		if self.height == 40 {
+		if self.height == 0 {
 			atk += 10;
 		}
 		return (atk, cm, tcm)
@@ -410,7 +408,7 @@ impl Board {
 		} else {
 			self.last_se = SoundEffect::ClearDrop;
 		} // pc will overwrite this
-		if self.height == 40 {
+		if self.height == 0 {
 			self.last_se = SoundEffect::PerfectClear;
 		}
 	}
@@ -424,8 +422,8 @@ impl Board {
 			let px = tmppos[i].0 as usize;
 			let py = tmppos[i].1 as usize;
 			// tmp is higher, update height
-			if py < self.height as usize {
-				self.height = py as i32;
+			if py + 1 > self.height as usize {
+				self.height = py as i32 + 1;
 			}
 
 			// generate lines that changed
@@ -462,7 +460,7 @@ impl Board {
 	}
 
 	// true: die
-	pub fn hard_drop(&mut self) -> bool {
+pub fn hard_drop(&mut self) -> bool {
 		// check twist before setting color
 		let twist = self.test_twist();
 		let lines_tocheck = self.hard_drop_set_color();
@@ -472,7 +470,7 @@ impl Board {
 		self.proc_elim(elim);
 		// put attack amount into pool
 		if line_count > 0 {
-			self.height += line_count as i32;
+			self.height -= line_count as i32;
 			// assert!(self.attack_pool != 0)
 			let ret = self.calc_attack(twist, line_count);
 			self.attack_pool = ret.0;
@@ -483,14 +481,14 @@ impl Board {
 			// plain drop: attack execution
 			self.last_se = SoundEffect::PlainDrop;
 			self.generate_garbage(0); // drain garbage
-			if self.height < 0 {
+			if self.height == 40 {
 				return true;
 			}
 		}
 
 		// new block
 		self.spawn_block();
-		if !self.calc_shadow() {
+		if self.calc_shadow() {
 			return true;
 		}
 		false
@@ -512,14 +510,14 @@ impl Board {
 		self.hard_drop()
 	}
 
-	// false: die
+	// true: die
 	pub fn calc_shadow(&mut self) -> bool {
 		self.shadow_block = self.tmp_block.clone();
 		loop {
 			self.shadow_block.pos.1 -= 1;
 			if !self.shadow_block.test(self) {
 				self.shadow_block.pos.1 += 1;
-				if self.shadow_block.bottom_pos() >= 20 {
+				if self.shadow_block.bottom_pos() < 20 {
 					return false;
 				} else {
 					return true;
@@ -564,7 +562,7 @@ mod test {
 		board.color[39][1] = 7; // sdp: (1, 0)
 		board.tmp_block = Block::new(1); // █▄▄
 		board.tmp_block.pos.0 = 1;
-		board.tmp_block.pos.1 = 37;
+		board.tmp_block.pos.1 = 0;
 		board.tmp_block.rotation = 3;
 		assert_eq!(board.test_twist(), 2);
 	}
@@ -573,13 +571,13 @@ mod test {
 	fn test_calc_shadow() {
 		let mut board = test::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
 		board.tmp_block = Block::new(1); // █▄▄
-		board.calc_shadow();
+		assert!(!board.calc_shadow());
 		use std::collections::HashSet;
 		let mut blocks: HashSet<(i32, i32)> = HashSet::new();
-		blocks.insert((3, 33));
-		blocks.insert((3, 34));
-		blocks.insert((4, 34));
-		blocks.insert((5, 34));
+		blocks.insert((3, 6));
+		blocks.insert((3, 5));
+		blocks.insert((4, 5));
+		blocks.insert((5, 5));
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {
@@ -590,12 +588,12 @@ mod test {
 		}
 		assert!(blocks.is_empty());
 		board.move2(-1); // move to very left
-		board.calc_shadow();
+		assert!(!board.calc_shadow());
 
-		blocks.insert((0, 35));
-		blocks.insert((0, 36));
-		blocks.insert((1, 36));
-		blocks.insert((2, 36));
+		blocks.insert((0, 4));
+		blocks.insert((0, 3));
+		blocks.insert((1, 3));
+		blocks.insert((2, 3));
 		let shadow_pos = board.shadow_block.getpos();
 		println!("{:?} {:?}", blocks, shadow_pos);
 		for i in 0..4 {

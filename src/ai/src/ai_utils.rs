@@ -76,10 +76,12 @@ pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
 			break (ret, posx, posy)
 		}
 
-		let mut highest = 40;
+		let mut highest = 0;
 		for block in 0..4usize {
-			let height = (heights[dx as usize + posx[block] as usize]) - posy[block] - 1;
-			if height < highest {
+			let height = heights[dx as usize + posx[block] as usize] as i32
+				- posy[block] as i32
+				+ 1;
+			if height > highest {
 				highest = height;
 			}
 		}
@@ -90,11 +92,11 @@ pub fn convolve_height(heights: &[u8], code: u8, rot: i8) ->
 
 pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 	// calc height
-	let mut heights = [20u8; 10];
-	let mut highest_hole = 20;
+	let mut heights = [0u8; 10];
+	let mut highest_hole = 0;
 	let mut highest_hole_x: i32 = -1;
 	for i in 0..10 {
-		let mut j: usize = 0;
+		let mut j: usize = 19;
 		let mut state = 0;
 		loop {
 			if display.color[j][i] == 7 {
@@ -103,12 +105,12 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 				}
 			} else if state == 0 {
 				state = 1;
-				heights[i as usize] = j as u8;
+				heights[i as usize] = j as u8 + 1;
 			}
-			j += 1;
-			if j == 20 {
+			if j == 0 {
 				break;
 			}
+			j -= 1;
 		}
 		if j > highest_hole {
 			highest_hole = j;
