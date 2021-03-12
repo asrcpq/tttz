@@ -567,4 +567,14 @@ mod test {
 			blocks.remove(&(shadow_pos[i].0 as i32, shadow_pos[i].1 as i32));
 		}
 	}
+
+	#[test]
+	fn test_shadow_die() {
+		let mut board = test::generate_solidlines([1, 20, 20, 19, 0, 0, 0, 0, 0, 0]);
+		board.tmp_block = Block::new(1);
+		board.tmp_block.pos.0 = 1;
+		assert!(board.calc_shadow());
+		board.tmp_block.rotation = 2;
+		assert!(!board.calc_shadow());
+	}
 }
