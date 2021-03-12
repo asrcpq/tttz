@@ -12,14 +12,14 @@ use std::collections::HashSet;
 
 pub struct Board {
 	id: i32,
-	pub tmp_block: Block,
-	pub shadow_block: Block,
-	pub rg: RandomGenerator,
-	pub(in crate) color: [[u8; 10]; 40],
+	tmp_block: Block,
+	shadow_block: Block,
+	rg: RandomGenerator,
+	pub(in crate) color: Vec<[u8; 10]>,
 	hold: u8,
 	gaman: GarbageAttackManager,
 	last_se: Option<SoundEffect>,
-	pub height: i32,
+	height: i32,
 	pub replay: Replay,
 }
 
@@ -31,7 +31,7 @@ impl Board {
 			tmp_block: Block::new(0),    // immediately overwritten
 			shadow_block: Block::new(0), // immediately overwritten
 			rg: Default::default(),
-			color: [[7; 10]; 40],
+			color: vec![[7; 10]; 40],
 			hold: 7,
 			gaman: Default::default(),
 			last_se: None,
@@ -266,7 +266,7 @@ impl Board {
 		if self.tmp_block.code == 0 {
 			return 1;
 		}
-		let tmp = TWIST_MINI_CHECK[self.tmp_block.code as usize]
+		let tmp = &TWIST_MINI_CHECK[self.tmp_block.code as usize]
 			[self.tmp_block.rotation as usize];
 		for mini_pos in tmp.iter() {
 			let check_x = self.tmp_block.pos.0 + mini_pos.0;
@@ -471,15 +471,69 @@ mod test {
 	}
 
 	#[test]
-	fn test_test_twist() {
+	fn test_test_tspin() {
 		let mut board =
-			test::generate_solidlines([2, 3, 0, 2, 0, 0, 0, 0, 0, 0]);
-		board.color[39][1] = 7; // sdp: (1, 0)
-		board.tmp_block = Block::new(1); // █▄▄
+			test::generate_solidlines([1, 0, 3, 0, 0, 0, 0, 0, 0, 0]);
+		board.color[38][2] = 7;
+		board.tmp_block = Block::new(5);
+		board.tmp_block.pos.0 = 0;
+		board.tmp_block.pos.1 = 0;
+		board.tmp_block.rotation = 2;
+		assert_eq!(board.test_twist(), 2);
+	}
+
+	#[test]
+	fn test_test_jl_twist() {
+		let mut board =
+			test::generate_solidlines([2, 3, 0, 3, 2, 0, 0, 0, 0, 0]);
+		board.color[39][1] = 7;
+		board.color[39][3] = 7;
+		board.tmp_block = Block::new(1);
 		board.tmp_block.pos.0 = 1;
 		board.tmp_block.pos.1 = 0;
 		board.tmp_block.rotation = 3;
 		assert_eq!(board.test_twist(), 2);
+		board.tmp_block.code = 2;
+		board.tmp_block.pos.0 = 2;
+		board.tmp_block.rotation = 1;
+		assert_eq!(board.test_twist(), 2);
+
+		let mut board =
+			test::generate_solidlines([2, 2, 0, 2, 2, 0, 0, 0, 0, 0]);
+		board.color[39][1] = 7;
+		board.color[39][3] = 7;
+		board.tmp_block = Block::new(1);
+		board.tmp_block.pos.0 = 1;
+		board.tmp_block.pos.1 = 0;
+		board.tmp_block.rotation = 3;
+		assert_eq!(board.test_twist(), 2);
+		board.tmp_block.code = 2;
+		board.tmp_block.pos.0 = 2;
+		board.tmp_block.rotation = 1;
+		assert_eq!(board.test_twist(), 2);
+
+		let mut board =
+			test::generate_solidlines([2, 3, 0, 0, 3, 2, 0, 0, 0, 0]);
+		board.color[39][1] = 7;
+		board.color[39][4] = 7;
+		board.tmp_block = Block::new(1);
+		board.tmp_block.pos.0 = 2;
+		board.tmp_block.pos.1 = 0;
+		board.tmp_block.rotation = 0;
+		assert_eq!(board.test_twist(), 1);
+		board.tmp_block.code = 2;
+		board.tmp_block.pos.0 = 1;
+		assert_eq!(board.test_twist(), 1);
+
+		let mut board =
+			test::generate_solidlines([2, 1, 1, 1, 2, 2, 2, 2 ,2, 2]);
+		board.tmp_block = Block::new(1);
+		board.tmp_block.pos.0 = 1;
+		board.tmp_block.pos.1 = 1;
+		board.tmp_block.rotation = 0;
+		assert_eq!(board.test_twist(), 0);
+		board.tmp_block.code = 2;
+		assert_eq!(board.test_twist(), 0);
 	}
 
 	#[test]

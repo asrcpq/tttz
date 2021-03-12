@@ -1,6 +1,5 @@
 Planned:
 
-- code clean: make everything private
 - write more tests
 - transplant some ai implementations
 
@@ -9,7 +8,7 @@ Future:
 - client rendering and se
 - write an RL ai
 - better sound effects
-- better readline
+- better ui(readline history, redraw key, arrow key)
 - id system(for replay)
 - load and play replay file
 - replay statistic

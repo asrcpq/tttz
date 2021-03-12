@@ -73,7 +73,7 @@ impl Thinker for BasicAi {
 							+ BLOCK_WIDTH[*option_code as usize][rot as usize]
 							> highest_hole_x) as i32;
 					let score = (height as f32
-						+ MCH[*option_code as usize][rot as usize])
+						+ BLOCK_MCH[*option_code as usize][rot as usize])
 						* self.height_weight + hole as f32
 						* self.hole_weight + cover as f32
 						* self.cover_weight;
