@@ -127,6 +127,7 @@ impl Board {
 				}
 			}
 		}
+		eprintln!("h {}",self.height);
 		BoardReply::Ok(0)
 	}
 
@@ -394,7 +395,7 @@ impl Board {
 			twist,
 			line_count,
 			self.floating_block.code,
-			self.height == 0,
+			self.height == line_count as i32,
 		);
 		self.last_se = Some(self.attack_se(atk, line_count));
 		let mut flush_garbage = false;
