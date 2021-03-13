@@ -1,6 +1,4 @@
-use std::process::Command;
 use std::env;
-use std::path::Path;
 
 fn main() {
 	if let Ok(string) = env::var("TTTZ_MMBOT_PATH") {

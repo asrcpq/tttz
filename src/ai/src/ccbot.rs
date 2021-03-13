@@ -80,7 +80,7 @@ impl Thinker for CCBot {
 		self.update_preview(&display.bag_preview, display.floating_block[2]);
 		if display.garbage_flush {
 			let mut field = [[false; 10]; 40];
-			for (row, each_row) in field.iter_mut().enumerate() {
+			for (row, each_row) in field.iter_mut().take(20).enumerate() {
 				for (col, color) in each_row.iter_mut().enumerate() {
 					*color = display.color[row][col] != b' ';
 				}

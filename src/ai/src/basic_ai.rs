@@ -21,7 +21,7 @@ pub struct BasicAi {
 impl Default for BasicAi {
 	fn default() -> Self {
 		BasicAi {
-			cover_weight: 0.,
+			cover_weight: 0.5,
 			hole_weight: 1.0,
 			height_weight: 1.0,
 		}

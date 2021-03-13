@@ -1,6 +1,5 @@
 use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
-use tttz_ai::{BasicAi, CCBot, Thinker};
 use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
 use std::net::UdpSocket;
@@ -167,36 +166,6 @@ impl Server {
 		self.post_operation(&mut client, &BoardReply::Ok(0));
 	}
 
-	fn spawn_ai(&mut self, algo: &str, game_type: GameType, sleep: u64) {
-		match algo {
-			"basic" => {
-				self.ai_threads.push(std::thread::spawn(move || {
-					let mut basic_ai: BasicAi = Default::default();
-					basic_ai.main_loop("127.0.0.1:23124", sleep, game_type);
-				}));
-			}
-			"basic_cover" => {
-				self.ai_threads.push(std::thread::spawn(move || {
-					let mut basic_ai = BasicAi {
-						cover_weight: 0.5,
-						hole_weight: 1.0,
-						height_weight: 1.0,
-					};
-					basic_ai.main_loop("127.0.0.1:23124", sleep, game_type);
-				}));
-			}
-			"cc" => {
-				self.ai_threads.push(std::thread::spawn(move || {
-					let mut ccbot: CCBot = Default::default();
-					ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
-				}));
-			}
-			_ => {
-				eprintln!("SERVER: Unknown algorithm {}", algo);
-			}
-		}
-	}
-
 	fn handle_msg(&mut self, msg: ClientMsg, mut client: &mut Client) -> bool {
 		match msg {
 			ClientMsg::Quit => {
@@ -236,7 +205,10 @@ impl Server {
 				self.unset_view(client.id, id);
 			}
 			ClientMsg::SpawnAi(algo, game_type, sleep) => {
-				self.spawn_ai(&algo, game_type, sleep);
+				match tttz_ai::spawn_ai(&algo, game_type, sleep) {
+					Ok(join_handle) => self.ai_threads.push(join_handle),
+					Err(e) => eprintln!("SERVER: {}", e),
+				}
 			}
 			ClientMsg::Invite(id1, id2) => {
 				if let Some(opponent) = self.client_manager.view_by_id(id1)
