@@ -135,12 +135,26 @@ impl Server {
 		let viewed_client = self.client_manager.tmp_pop_by_id(to_id);
 		match viewed_client {
 			Some(mut viewed_client) => {
-				eprintln!("Client {} viewing {}", from_id, to_id);
-				viewed_client.dc_ids.insert(from_id);
+				let ret = viewed_client.dc_ids.insert(from_id);
+				eprintln!("Client {} viewing {}: {}", from_id, to_id, ret);
 				self.client_manager.tmp_push_by_id(to_id, viewed_client);
 			}
 			None => {
 				eprintln!("Client {} try to view nonexist {}", from_id, to_id);
+			}
+		}
+	}
+
+	fn unset_view(&mut self, from_id: i32, to_id: i32) {
+		let viewed_client = self.client_manager.tmp_pop_by_id(to_id);
+		match viewed_client {
+			Some(mut viewed_client) => {
+				let ret = viewed_client.dc_ids.remove(&from_id);
+				eprintln!("Client {} unviewing {}: {}", from_id, to_id, ret);
+				self.client_manager.tmp_push_by_id(to_id, viewed_client);
+			}
+			None => {
+				eprintln!("Client {} try to unview nonexist {}", from_id, to_id);
 			}
 		}
 	}
@@ -217,6 +231,9 @@ impl Server {
 			}
 			ClientMsg::View(id) => {
 				self.set_view(client.id, id);
+			}
+			ClientMsg::NoView(id) => {
+				self.unset_view(client.id, id);
 			}
 			ClientMsg::SpawnAi(algo, game_type, sleep) => {
 				self.spawn_ai(&algo, game_type, sleep);

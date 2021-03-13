@@ -1,9 +1,10 @@
-Planned:
+Working:
 
+- a real strategy mode, or make strategy ai vs work
 - write more tests
-- transplant some ai implementations
+- add misamino bot
 
-Future:
+Planned:
 
 - client rendering and se
 - write an RL ai
@@ -12,5 +13,3 @@ Future:
 - id system(for replay)
 - load and play replay file
 - replay statistic
-- a real strategy mode, or make strategy ai vs work
-- fair ping mode

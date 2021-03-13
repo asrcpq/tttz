@@ -11,6 +11,7 @@ pub enum ClientMsg {
 	PlaySingle,
 	Kick(IdType),
 	View(IdType),
+	NoView(IdType),
 	SpawnAi(String, GameType, u64), // kind, game_type, sleep
 	Request(IdType),
 	Invite(IdType, IdType),
@@ -102,6 +103,13 @@ impl FromStr for ClientMsg {
 				if let Some(keyword) = split.get(1) {
 					if let Ok(id) = keyword.parse::<i32>() {
 						return Ok(ClientMsg::View(id));
+					}
+				}
+			}
+			"noview" => {
+				if let Some(keyword) = split.get(1) {
+					if let Ok(id) = keyword.parse::<i32>() {
+						return Ok(ClientMsg::NoView(id));
 					}
 				}
 			}
