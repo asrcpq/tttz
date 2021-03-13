@@ -271,7 +271,7 @@ impl Board {
 		}
 		// No mini i spin
 		if self.floating_block.code == 0 {
-			return 1;
+			return 2;
 		}
 		let tmp = &TWIST_MINI_CHECK[self.floating_block.code as usize]
 			[self.floating_block.rotation as usize];
@@ -573,15 +573,36 @@ mod test {
 
 	#[test]
 	fn test_i_kick() {
-		// 180 left zipper
 		let mut board = Board::new(0);
 		board.floating_block = Block::new(0);
-		board.floating_block.pos.0 = 5;
+		board.floating_block.pos.0 = 3;
 		board.floating_block.pos.1 = 5;
 		board.floating_block.rotation = 0;
 		assert_eq!(board.test_twist(), 0);
-		board.floating_block.code = 2;
-		assert_eq!(board.test_twist(), 0);
+
+		board.floating_block.pos.1 = 0;
+		board.rotate(2);
+		assert_eq!(board.floating_block.pos.1, 0);
+		board.rotate(2);
+		assert_eq!(board.floating_block.pos.1, 1);
+
+		let mut board = test::generate_solidlines([0, 4, 4, 4, 1, 0, 0, 0, 0, 0]);
+		for i in 1..4 {
+			board.color[0][i] = b' ';
+		}
+		eprintln!("{:?}", board);
+		board.floating_block = Block::new(0);
+		board.floating_block.pos.0 = 0;
+		board.floating_block.pos.1 = 0;
+		board.floating_block.rotation = 1;
+		board.rotate(1);
+		assert_eq!(board.floating_block.rotation, 2);
+		assert_eq!(board.floating_block.pos, (0, 0));
+		board.floating_block.rotation = 3;
+		board.rotate(1);
+		assert_eq!(board.floating_block.rotation, 0);
+		assert_eq!(board.floating_block.pos, (0, 0));
+		assert_eq!(board.test_twist(), 2);
 	}
 
 	#[test]
