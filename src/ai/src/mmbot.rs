@@ -103,7 +103,10 @@ impl Thinker for MMBot {
 impl MMBot {
 	pub fn try_new() -> Result<MMBot, Box<dyn std::error::Error>> {
 		let mut process = std::process::Command::new(
-			std::env::var("TTTZ_MMBOT_PATH")?
+			match std::env::var("TTTZ_MMBOT_PATH") {
+				Ok(string) => string,
+				Err(_) => "tttz_mmbot".to_string(),
+			}
 		).stdin(Stdio::piped())
 		.stdout(Stdio::piped())
 		.spawn()?;

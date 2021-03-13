@@ -33,10 +33,10 @@ pub trait Thinker {
 						}
 					}
 					ServerMsg::GameOver(_) => {
+						self.reset();
 						state = 1;
 					}
 					ServerMsg::Start(_) => {
-						self.reset();
 						state = 2;
 					}
 					ServerMsg::Request(id) => {
