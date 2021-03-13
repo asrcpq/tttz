@@ -1,8 +1,8 @@
 Working:
 
+- fix pc bug
 - a real strategy mode, or make strategy ai vs work
 - write more tests
-- add misamino bot
 
 Planned:
 

@@ -37,7 +37,7 @@ See doc/rule.md for more
 
 * `spawnai {commands}`, subcommands list:
 
-	`algo <basic | cc>` specify algorithm: dummy bot or cold-clear
+	`algo <basic | cc | mm>` specify algorithm: dummy bot, cold-clear or MisaMino
 
 	`strategy` ai won't move until player moves
 

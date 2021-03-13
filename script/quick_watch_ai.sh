@@ -6,7 +6,7 @@ exittrap() {
 cargo run --release --bin tttz-server 2>/dev/shm/tttz-server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo basic speed 30" \
+execute "spawnai algo mm speed 100" \
 execute "sleep 100" \
 execute "spawnai algo cc speed 100" \
 execute "sleep 100" \
