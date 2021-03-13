@@ -40,7 +40,6 @@ pub trait Thinker {
 					}
 					ServerMsg::Request(id) => {
 						if state != 2 {
-							state = 2;
 							client_socket.send(ClientMsg::Accept(id)).unwrap();
 						}
 					}

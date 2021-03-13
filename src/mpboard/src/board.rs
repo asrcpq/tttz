@@ -12,15 +12,32 @@ use std::collections::HashSet;
 
 pub struct Board {
 	id: i32,
-	floating_block: Block,
+	pub(in crate) floating_block: Block,
 	shadow_block: Block,
-	rg: RandomGenerator,
+	pub(in crate) rg: RandomGenerator,
 	pub(in crate) color: Vec<[u8; 10]>,
 	hold: u8,
 	gaman: GarbageAttackManager,
 	last_se: Option<SoundEffect>,
 	height: i32,
 	pub replay: Replay,
+}
+
+use std::fmt;
+impl fmt::Debug for Board {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		for row in self.color.iter().rev() {
+			for &ch in row.iter() {
+				write!(f, "{} ", if ch == b' ' {
+					'0'
+				} else {
+					ch as char
+				})?;
+			}
+			write!(f, "\n")?;
+		}
+		Ok(())
+	}
 }
 
 impl Board {
@@ -71,16 +88,16 @@ impl Board {
 					self.last_se = Some(SoundEffect::Hold);
 				}
 				KeyType::Left => {
-					self.move1(1);
-				}
-				KeyType::LLeft => {
-					self.move2(1);
-				}
-				KeyType::Right => {
 					self.move1(-1);
 				}
-				KeyType::RRight => {
+				KeyType::LLeft => {
 					self.move2(-1);
+				}
+				KeyType::Right => {
+					self.move1(1);
+				}
+				KeyType::RRight => {
+					self.move2(1);
 				}
 				KeyType::HardDrop => {
 					return self.press_up()
@@ -114,9 +131,9 @@ impl Board {
 	}
 
 	fn move1(&mut self, dx: i32) -> bool {
-		self.floating_block.pos.0 -= dx;
+		self.floating_block.pos.0 += dx;
 		if !self.floating_block.test(self) {
-			self.floating_block.pos.0 += dx;
+			self.floating_block.pos.0 -= dx;
 			return false;
 		}
 		true
@@ -574,5 +591,31 @@ mod test {
 		assert!(board.calc_shadow());
 		board.floating_block.rotation = 2;
 		assert!(!board.calc_shadow());
+	}
+
+	#[test]
+	fn test_pc() {
+		let mut board = Board::new(0);
+		test::oracle(&mut board, 0, &[0; 10]);
+		eprintln!("{:?}", board.rg.bag);
+		for _ in 0..4 {
+			board.press_up();
+			eprintln!("height: {}", board.height);
+		}
+		for t in -1..=1 {
+			if t == 0 { continue }
+			for i in 0..3 {
+				// eprintln!("{:?}", board);
+				board.rotate(1);
+				board.move2(t);
+				for _ in 0..i {
+					board.move1(-t);
+				}
+				board.calc_shadow();
+				board.press_up();
+				eprintln!("height: {}", board.height);
+			}
+		}
+		assert_eq!(board.height, 0);
 	}
 }

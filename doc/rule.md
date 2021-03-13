@@ -26,7 +26,7 @@
 	b = base_attack[cleared_lines] = [0.5, 1.5, 2.5, 4.0]
 	tb = twist_bonus[mini|regular][block_type]
 	cm = combo * COMBO_INC=0.3
-	tcm = tc * TWIST_COMBO_INC=0.6
+	tcm = tc * TWIST_COMBO_INC=0.3
 	atk = floor(b * tb * (cm + tcm + 1))
 	```
 

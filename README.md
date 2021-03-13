@@ -47,11 +47,11 @@ See doc/rule.md for more
 
 * `spawnai {commands}`, subcommands list:
 
-	`algo < basic | cc >` specify algorithm: dummy bot or cold-clear
+	`algo <basic | cc>` specify algorithm: dummy bot or cold-clear
 
-	`strategy`
+	`strategy` ai won't move until player moves
 
-	`speed [sleep_millis]`
+	`speed [sleep_millis]` ai will sleep between each move
 
 * `kick <id>`
 

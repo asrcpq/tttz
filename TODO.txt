@@ -12,5 +12,5 @@ Future:
 - id system(for replay)
 - load and play replay file
 - replay statistic
-- support 256 color mode
 - a real strategy mode, or make strategy ai vs work
+- fair ping mode

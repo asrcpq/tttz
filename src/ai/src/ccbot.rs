@@ -70,6 +70,7 @@ fn code_to_piece(code: u8) -> libtetris::Piece {
 
 impl Thinker for CCBot {
 	fn reset(&mut self) {
+		eprintln!("CCBOT: Reset");
 		self.interface = get_if();
 		self.preview_list = [7u8; 6];
 	}
@@ -93,7 +94,7 @@ impl Thinker for CCBot {
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),
 			Some((moves, _info)) => {
-				eprintln!("{:?}", moves.inputs);
+				// eprintln!("{:?}", moves.inputs);
 				proc_moves(moves.hold, &moves.inputs)
 			},
 		}
@@ -106,7 +107,7 @@ impl CCBot {
 			// feed previews
 			self.interface.add_next_piece(code_to_piece(current));
 			for &code in new_list.iter() {
-				eprintln!("add {}", code);
+				// eprintln!("add {}", code);
 				self.interface.add_next_piece(code_to_piece(code));
 			}
 			self.preview_list = *new_list;
