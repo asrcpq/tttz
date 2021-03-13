@@ -6,16 +6,6 @@
 
 * a modern terminal(unicode + ansi escape + 256 color)
 
-## Functions
-
-* TUI with sound, cross-platform(maybe)
-
-* No resource file
-
-* Replay automatically saved(working)
-
-* Built with [cold-clear](https://github.com/MinusKelvin/cold-clear) AI
-
 ## Features
 
 * focus on 1v1 network combat(ai use the same interface as human)

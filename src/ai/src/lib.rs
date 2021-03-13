@@ -5,3 +5,9 @@ mod basic_ai;
 pub use basic_ai::BasicAi;
 mod ccbot;
 pub use ccbot::CCBot;
+
+#[cfg(feature="MMBot")]
+mod mmbot;
+
+#[cfg(feature="MMBot")]
+pub use mmbot::MMBot;
