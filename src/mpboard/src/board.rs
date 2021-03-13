@@ -127,7 +127,6 @@ impl Board {
 				}
 			}
 		}
-		eprintln!("h {}",self.height);
 		BoardReply::Ok(0)
 	}
 

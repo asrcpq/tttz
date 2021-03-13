@@ -23,8 +23,8 @@ impl Display {
 		Display {
 			id,
 			color: vec![[7; BOARD_WIDTH]; 20],
-			shadow_block: [0; 4],
-			floating_block: [0; 4],
+			shadow_block: [5, 30, 0, 0],
+			floating_block: [5, 30, 0, 0],
 			hold: 7,
 			bag_preview: [7; 6],
 			cm: 0,

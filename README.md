@@ -23,9 +23,9 @@ See doc/rule.md for more
 
 * H/L: move left/right until fail
 
-* k: hard drop
+* k: hard drop(hard drop + lock)
 
-* j: soft drop
+* j: sonic drop(hard drop without lock)
 
 * Space: hold
 
