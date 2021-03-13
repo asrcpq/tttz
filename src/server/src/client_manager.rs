@@ -1,6 +1,6 @@
 use bimap::BiMap;
 
-use crate::client::Client;
+use crate::client::{Client, ClientState};
 use tttz_protocol::ServerMsg;
 
 use std::collections::HashMap;
@@ -87,7 +87,7 @@ impl ClientManager {
 			// the pending client is just ourselves
 			return;
 		}
-		if client.state == 3 && self.pending_client != 0 {
+		if client.state == ClientState::Pairing && self.pending_client != 0 {
 			// pairing succeed
 			let target_id = self.pending_client;
 			let another_client = self.tmp_pop_by_id(target_id);
@@ -95,13 +95,13 @@ impl ClientManager {
 				None => {}
 				Some(mut pending_client) => {
 					eprintln!(
-						"{}:{} vs {}:{}",
+						"{}:{:?} vs {}:{:?}",
 						target_id,
 						pending_client.state,
 						client.id,
 						client.state,
 					);
-					if pending_client.state == 3 {
+					if pending_client.state == ClientState::Pairing {
 						self.pending_client = 0;
 						self.pair_apply(&mut client, &mut pending_client);
 						self.tmp_push_by_id(target_id, pending_client);

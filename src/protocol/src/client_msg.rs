@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::AiType;
-use crate::IdType;
-use crate::KeyType;
+use crate::{GameType, IdType, KeyType};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientMsg {
@@ -13,7 +11,7 @@ pub enum ClientMsg {
 	PlaySingle,
 	Kick(IdType),
 	View(IdType),
-	SpawnAi(String, AiType), // kind
+	SpawnAi(String, GameType, u64), // kind, game_type, sleep
 	Request(IdType),
 	Invite(IdType, IdType),
 	Restart,
@@ -31,17 +29,19 @@ impl ClientMsg {
 
 	fn from_str_spawnai(words: Vec<&str>) -> ClientMsg {
 		let mut iter = words.iter();
-		let mut ai_type = AiType::Speed(240);
-		let mut algorithm = "basic".to_string();
+		let mut game_type = GameType::Speed;
+		let mut sleep = 500;
+		let mut algorithm = "cc".to_string();
 		while let Some(&word) = iter.next() {
 			match word {
 				"strategy" => {
-					ai_type = AiType::Strategy;
+					game_type = GameType::Strategy(1000); // currently no time limit
 				}
 				"speed" => {
+					game_type = GameType::Speed;
 					if let Some(word) = iter.next() {
-						if let Ok(sleep) = word.parse::<u64>() {
-							ai_type = AiType::Speed(sleep);
+						if let Ok(sleep2) = word.parse::<u64>() {
+							sleep = sleep2;
 						}
 					}
 				}
@@ -53,7 +53,7 @@ impl ClientMsg {
 				_ => {}
 			}
 		}
-		ClientMsg::SpawnAi(algorithm, ai_type)
+		ClientMsg::SpawnAi(algorithm, game_type, sleep)
 	}
 
 	pub fn serialized(&self) -> Vec<u8> {

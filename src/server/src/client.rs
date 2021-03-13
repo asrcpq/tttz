@@ -3,7 +3,14 @@ use crate::server::SOCKET;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
-use tttz_protocol::{BoardMsg, BoardReply, Display, KeyType, ServerMsg};
+use tttz_protocol::{BoardMsg, BoardReply, Display, KeyType, ServerMsg, GameType};
+
+#[derive(PartialEq, Debug)]
+pub enum ClientState {
+	Idle,
+	Pairing,
+	InMatch(GameType),
+}
 
 pub struct Client {
 	pub id: i32,
@@ -12,7 +19,7 @@ pub struct Client {
 	// 1: waiting
 	// 2: in-game
 	// 3: pairing
-	pub state: i32,
+	pub state: ClientState,
 	pub board: Board,
 	pub attack_target: i32,
 }
@@ -23,7 +30,7 @@ impl Client {
 			id,
 			addr,
 			dc_ids: HashSet::new(),
-			state: 1,
+			state: ClientState::Idle,
 			board: Board::new(id),
 			attack_target: 0,
 		}
@@ -34,7 +41,7 @@ impl Client {
 	}
 
 	pub fn pair_success(&mut self, target_id: i32) {
-		self.state = 2;
+		self.state = ClientState::InMatch(GameType::Speed);
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
 		self.init_board();

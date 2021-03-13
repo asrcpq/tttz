@@ -6,8 +6,8 @@ mod server_msg;
 pub use server_msg::ServerMsg;
 mod key_type;
 pub use key_type::KeyType;
-mod ai_type;
-pub use ai_type::AiType;
+mod game_type;
+pub use game_type::GameType;
 mod sound_effect;
 pub use sound_effect::SoundEffect;
 

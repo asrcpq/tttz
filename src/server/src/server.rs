@@ -1,7 +1,7 @@
-use crate::client::Client;
+use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
 use tttz_ai::{BasicAi, CCBot, Thinker};
-use tttz_protocol::{AiType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
+use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
 use std::net::UdpSocket;
 
@@ -103,7 +103,7 @@ impl Server {
 
 	pub fn die(&mut self, client: &mut Client, die: bool) {
 		eprintln!("SERVER: client {} gameover", client.id);
-		client.state = 1;
+		client.state = ClientState::Idle;
 		match client.board.replay.save(&format!("{}", client.id)) {
 			Ok(true) => {}
 			Ok(false) => {
@@ -122,9 +122,7 @@ impl Server {
 		if let Some(mut opponent) =
 			self.client_manager.tmp_pop_by_id(client.attack_target)
 		{
-			opponent.send_msg(ServerMsg::GameOver(die));
-			opponent.state = 1;
-			opponent.dc_ids.remove(&client.id);
+			self.die(&mut opponent, !die);
 			self.client_manager
 				.tmp_push_by_id(client.attack_target, opponent);
 		} // or the opponent has gone
@@ -149,22 +147,18 @@ impl Server {
 
 	fn start_single(&mut self, mut client: &mut Client) {
 		client.init_board();
-		client.state = 2;
+		client.state = ClientState::InMatch(GameType::Single);
 		client.attack_target = 0;
 		client.send_msg(ServerMsg::Start(0));
 		self.post_operation(&mut client, &BoardReply::Ok(0));
 	}
 
-	fn spawn_ai(&mut self, algo: &str, ai_type: AiType) {
-		let (sleep, strategy) = match ai_type {
-			AiType::Strategy => (10, true),
-			AiType::Speed(sleep) => (sleep, false),
-		};
+	fn spawn_ai(&mut self, algo: &str, game_type: GameType, sleep: u64) {
 		match algo.as_ref() {
 			"basic" => {
 				self.ai_threads.push(std::thread::spawn(move || {
 					let mut basic_ai: BasicAi = Default::default();
-					basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+					basic_ai.main_loop("127.0.0.1:23124", sleep, game_type);
 				}));
 			}
 			"basic_cover" => {
@@ -174,19 +168,150 @@ impl Server {
 						hole_weight: 1.0,
 						height_weight: 1.0,
 					};
-					basic_ai.main_loop("127.0.0.1:23124", sleep, strategy);
+					basic_ai.main_loop("127.0.0.1:23124", sleep, game_type);
 				}));
 			}
 			"cc" => {
 				self.ai_threads.push(std::thread::spawn(move || {
 					let mut ccbot: CCBot = Default::default();
-					ccbot.main_loop("127.0.0.1:23124", sleep, strategy);
+					ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
 				}));
 			}
 			_ => {
 				eprintln!("SERVER: Unknown algorithm {}", algo);
 			}
 		}
+	}
+
+	fn handle_msg(&mut self, msg: ClientMsg, mut client: &mut Client) -> bool {
+		match msg {
+			ClientMsg::Quit => {
+				eprintln!("Client {} quit", client.id);
+				self.die(&mut client, true);
+				assert!(self.client_manager.pop_by_id(client.id).is_none());
+				return false;
+			}
+			ClientMsg::Suicide => {
+				self.die(&mut client, true);
+			}
+			ClientMsg::GetClients => {
+				let list = self
+					.client_manager
+					.clients()
+					.filter(|&x| x != client.id)
+					.collect();
+				client.send_msg(ServerMsg::ClientList(list));
+			}
+			ClientMsg::Kick(id) => {
+				let mut flag = true;
+				if id != client.id {
+					if let Some(client) = self.client_manager.pop_by_id(id)
+					{
+						client.send_msg(ServerMsg::Terminate);
+						flag = false;
+					}
+				}
+				if flag {
+					eprintln!("SERVER: kick failed.");
+				}
+			}
+			ClientMsg::View(id) => {
+				self.set_view(client.id, id);
+			}
+			ClientMsg::SpawnAi(algo, game_type, sleep) => {
+				self.spawn_ai(&algo, game_type, sleep);
+			}
+			ClientMsg::Invite(id1, id2) => {
+				if let Some(opponent) = self.client_manager.view_by_id(id1)
+				{
+					if opponent.state == ClientState::Idle {
+						opponent.send_msg(ServerMsg::Invite(id2));
+					} else {
+						eprintln!(
+							"SERVER: invite: invalid invited state {:?}",
+							opponent.state
+						);
+					}
+				} else {
+					eprintln!("SERVER: invite: cannot find client {}", id1);
+				}
+			}
+			ClientMsg::Request(id) => {
+				if let Some(opponent) = self.client_manager.view_by_id(id) {
+					if opponent.state == ClientState::Idle {
+						client.state = ClientState::Pairing;
+						opponent.send_msg(ServerMsg::Request(client.id));
+					} else {
+						eprintln!(
+							"SERVER: request: invalid opponent state {:?}",
+							opponent.state
+						);
+					}
+				} else {
+					eprintln!("SERVER: request: cannot find client {}", id);
+				}
+			}
+			ClientMsg::Restart => {
+				if client.attack_target == 0 {
+					self.start_single(&mut client);
+				} else if let Some(opponent) =
+					self.client_manager.view_by_id(client.attack_target)
+				{
+					if opponent.state == ClientState::Idle {
+						client.state = ClientState::Pairing;
+						opponent.send_msg(ServerMsg::Request(client.id));
+					} else {
+						eprintln!(
+							"SERVER: request: invalid opponent state {:?}",
+							opponent.state
+						);
+					}
+				}
+			}
+			ClientMsg::Accept(id) => {
+				if let Some(mut opponent) =
+					self.client_manager.tmp_pop_by_id(id)
+				{
+					if opponent.state != ClientState::Pairing {
+						eprintln!("SERVER: accept: but the sender is not pairing.");
+					} else {
+						self.client_manager
+							.pair_apply(&mut client, &mut opponent);
+						self.client_manager.tmp_push_by_id(id, opponent);
+					}
+				} else {
+					eprintln!("SERVER: accept: cannot find client {}", id);
+				}
+			}
+			ClientMsg::Pair => {
+				client.state = ClientState::Pairing;
+				self.client_manager.pair_attempt(&mut client);
+			}
+			ClientMsg::PlaySingle => {
+				// terminate current game
+				match client.state {
+					ClientState::InMatch(_) => {},
+					_ => {
+						self.start_single(&mut client);
+					}
+				}
+			}
+			ClientMsg::KeyEvent(key_type) => {
+				if let ClientState::InMatch(_) = client.state {
+					let ret = client.process_key(key_type);
+					// display is included in after_operation
+					self.post_operation(&mut client, &ret);
+					// update display before die
+					if ret == BoardReply::Die {
+						self.die(&mut client, true);
+					}
+				}
+			}
+			ClientMsg::NewClient => {
+				unreachable!()
+			}
+		}
+		true
 	}
 
 	pub fn main_loop(&mut self) {
@@ -196,133 +321,9 @@ impl Server {
 				x => x.unwrap(),
 			};
 			eprintln!("SERVER client {} send: {}", client.id, msg);
-			match msg {
-				ClientMsg::Quit => {
-					eprintln!("Client {} quit", client.id);
-					self.die(&mut client, true);
-					assert!(self.client_manager.pop_by_id(client.id).is_none());
-					continue;
-				}
-				ClientMsg::Suicide => {
-					self.die(&mut client, true);
-				}
-				ClientMsg::GetClients => {
-					let list = self
-						.client_manager
-						.clients()
-						.filter(|&x| x != client.id)
-						.collect();
-					client.send_msg(ServerMsg::ClientList(list));
-				}
-				ClientMsg::Kick(id) => {
-					let mut flag = true;
-					if id != client.id {
-						if let Some(client) = self.client_manager.pop_by_id(id)
-						{
-							client.send_msg(ServerMsg::Terminate);
-							flag = false;
-						}
-					}
-					if flag {
-						eprintln!("SERVER: kick failed.");
-					}
-				}
-				ClientMsg::View(id) => {
-					self.set_view(client.id, id);
-				}
-				ClientMsg::SpawnAi(algo, ai_type) => {
-					self.spawn_ai(&algo, ai_type);
-				}
-				ClientMsg::Invite(id1, id2) => {
-					if let Some(opponent) = self.client_manager.view_by_id(id1)
-					{
-						if opponent.state == 1 {
-							client.state = 3;
-							opponent.send_msg(ServerMsg::Invite(id2));
-						} else {
-							eprintln!(
-								"SERVER: invite: invalid invited state {}",
-								opponent.state
-							);
-						}
-					} else {
-						eprintln!("SERVER: invite: cannot find client {}", id1);
-					}
-				}
-				ClientMsg::Request(id) => {
-					if let Some(opponent) = self.client_manager.view_by_id(id) {
-						if opponent.state == 1 {
-							client.state = 3;
-							opponent.send_msg(ServerMsg::Request(client.id));
-						} else {
-							eprintln!(
-								"SERVER: request: invalid opponent state {}",
-								opponent.state
-							);
-						}
-					} else {
-						eprintln!("SERVER: request: cannot find client {}", id);
-					}
-				}
-				ClientMsg::Restart => {
-					if client.attack_target == 0 {
-						self.start_single(&mut client);
-					} else if let Some(opponent) =
-						self.client_manager.view_by_id(client.attack_target)
-					{
-						if opponent.state == 1 {
-							client.state = 3;
-							opponent.send_msg(ServerMsg::Request(client.id));
-						} else {
-							eprintln!(
-								"SERVER: request: invalid opponent state {}",
-								opponent.state
-							);
-						}
-					}
-				}
-				ClientMsg::Accept(id) => {
-					if let Some(mut opponent) =
-						self.client_manager.tmp_pop_by_id(id)
-					{
-						if opponent.state != 3 {
-							eprintln!("SERVER: accept: but the sender is not pairing.");
-						} else {
-							self.client_manager
-								.pair_apply(&mut client, &mut opponent);
-							self.client_manager.tmp_push_by_id(id, opponent);
-						}
-					} else {
-						eprintln!("SERVER: accept: cannot find client {}", id);
-					}
-				}
-				ClientMsg::Pair => {
-					client.state = 3;
-					self.client_manager.pair_attempt(&mut client);
-				}
-				ClientMsg::PlaySingle => {
-					// terminate current game
-					if client.state == 2 {
-						self.die(&mut client, true);
-					}
-					self.start_single(&mut client);
-				}
-				ClientMsg::KeyEvent(key_type) => {
-					if client.state == 2 {
-						let ret = client.process_key(key_type);
-						// display is included in after_operation
-						self.post_operation(&mut client, &ret);
-						// update display before die
-						if ret == BoardReply::Die {
-							self.die(&mut client, true);
-						}
-					}
-				}
-				ClientMsg::NewClient => {
-					unreachable!()
-				}
+			if self.handle_msg(msg, &mut client) {
+				self.client_manager.tmp_push_by_id(client.id, client);
 			}
-			self.client_manager.tmp_push_by_id(client.id, client);
 			// Be aware of the continue above before writing anything here
 		}
 	}
