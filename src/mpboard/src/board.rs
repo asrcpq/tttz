@@ -149,7 +149,7 @@ impl Board {
 		if code == 3 {
 			return 0;
 		}
-		self.floating_block.rotate(dr);
+		self.floating_block.rotation = (rotation + dr).rem_euclid(4);
 		let std_pos = self.floating_block.pos;
 		for wkp in kick_iter(code, rotation, dr) {
 			self.floating_block.pos.0 = std_pos.0 + wkp.0 as i32;
@@ -165,7 +165,6 @@ impl Board {
 		0
 	}
 
-	// rotate2 is extracted for AI
 	fn rotate(&mut self, dr: i8) {
 		let revert_block = self.floating_block.clone();
 		let ret = self.rotate2(dr);
@@ -497,7 +496,8 @@ mod test {
 	}
 
 	#[test]
-	fn test_test_jl_twist() {
+	fn test_jl_twist() {
+		// The famous 180
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 3, 2, 0, 0, 0, 0, 0]);
 		board.color[39][1] = b' ';
@@ -512,10 +512,11 @@ mod test {
 		board.floating_block.rotation = 1;
 		assert_eq!(board.test_twist(), 2);
 
+		// It is a regular twist, as long as its center is blocked
 		let mut board =
 			test::generate_solidlines([2, 2, 0, 2, 2, 0, 0, 0, 0, 0]);
-		board.color[39][1] = b' ';
-		board.color[39][3] = b' ';
+		board.color[0][1] = b' ';
+		board.color[0][3] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -526,10 +527,11 @@ mod test {
 		board.floating_block.rotation = 1;
 		assert_eq!(board.test_twist(), 2);
 
+		// mini-twist
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 0, 3, 2, 0, 0, 0, 0]);
-		board.color[39][1] = b' ';
-		board.color[39][4] = b' ';
+		board.color[0][1] = b' ';
+		board.color[0][4] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 2;
 		board.floating_block.pos.1 = 0;
@@ -539,11 +541,43 @@ mod test {
 		board.floating_block.pos.0 = 1;
 		assert_eq!(board.test_twist(), 1);
 
+		// no twist
 		let mut board =
 			test::generate_solidlines([2, 1, 1, 1, 2, 2, 2, 2, 2, 2]);
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 1;
+		board.floating_block.rotation = 0;
+		assert_eq!(board.test_twist(), 0);
+		board.floating_block.code = 2;
+		assert_eq!(board.test_twist(), 0);
+
+		// in-place 180 kick
+		let mut board =
+			test::generate_solidlines([4, 0, 0, 4, 2, 2, 2, 2, 2, 2]);
+		board.color[3][2] = b'i';
+		board.floating_block = Block::new(1);
+		board.floating_block.pos.0 = 1;
+		board.floating_block.pos.1 = 0;
+		board.floating_block.rotation = 1;
+		assert_eq!(board.test_twist(), 1);
+		board.rotate(2);
+		assert_eq!(board.floating_block.pos, (1, 0));
+		assert_eq!(board.test_twist(), 1);
+		board.floating_block.code = 2;
+		board.floating_block.rotation = 1;
+		board.rotate(2);
+		assert_eq!(board.floating_block.pos, (1, 0));
+		assert_eq!(board.test_twist(), 1);
+	}
+
+	#[test]
+	fn test_i_kick() {
+		// 180 left zipper
+		let mut board = Board::new(0);
+		board.floating_block = Block::new(0);
+		board.floating_block.pos.0 = 5;
+		board.floating_block.pos.1 = 5;
 		board.floating_block.rotation = 0;
 		assert_eq!(board.test_twist(), 0);
 		board.floating_block.code = 2;

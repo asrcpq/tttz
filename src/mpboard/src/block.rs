@@ -10,23 +10,6 @@ pub struct Block {
 }
 
 impl Block {
-	pub fn rotate(&mut self, dr: i8) {
-		let old_rot = self.rotation;
-		self.rotation += dr;
-		while self.rotation < 0 {
-			self.rotation += 4;
-		}
-		while self.rotation >= 4 {
-			self.rotation -= 4;
-		}
-		let tmp_old = SRP[self.code as usize][old_rot as usize];
-		let tmp = SRP[self.code as usize][self.rotation as usize];
-		self.pos.0 -= tmp_old.0;
-		self.pos.1 -= tmp_old.1;
-		self.pos.0 += tmp.0;
-		self.pos.1 += tmp.1;
-	}
-
 	pub fn compress(&self) -> [u8; 4] {
 		let mut ret = [0u8; 4];
 		ret[0] = self.pos.0 as u8;

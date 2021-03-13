@@ -23,6 +23,19 @@ impl Default for GenerateKeyParam {
 	}
 }
 
+// standard rotation pos
+// each line is for a type of block, 4 pairs of pos(left up) indicates 4 directions
+// each pos is the difference to first pair
+const SRP: [[(i32, i32); 4]; 7] = [
+	[(0, 0), (2, -2), (0, -1), (1, -2)],
+	[(0, 0), (1, -1), (0, -1), (0, -1)],
+	[(0, 0), (1, -1), (0, -1), (0, -1)],
+	[(0, 0), (0, 0), (0, 0), (0, 0)],
+	[(0, 0), (1, -1), (0, -1), (0, -1)],
+	[(0, 0), (1, -1), (0, -1), (0, -1)],
+	[(0, 0), (1, -1), (0, -1), (0, -1)],
+];
+
 pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 	let mut ret = VecDeque::new();
 	if gkp.hold_swap {
