@@ -80,16 +80,16 @@ impl Thinker for CCBot {
 		self.update_preview(&display.bag_preview, display.floating_block[2]);
 		if display.garbage_flush {
 			let mut field = [[false; 10]; 40];
-			for row in 0..20 {
-				for col in 0..10 {
-					field[row][col] = display.color[row][col] != b' ';
+			for (row, each_row) in field.iter_mut().enumerate() {
+				for (col, color) in each_row.iter_mut().enumerate() {
+					*color = display.color[row][col] != b' ';
 				}
 			}
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
 		let garbage_sum = display.garbages
 			.iter()
-			.fold(0, |x, y| x + y);
+			.sum();
 		self.interface.request_next_move(garbage_sum);
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),

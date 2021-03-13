@@ -65,12 +65,12 @@ impl ClientManager {
 
 	// return none if not exist
 	pub fn get_addr_by_id(&self, id: i32) -> Option<SocketAddr> {
-		self.id_addr.get_by_left(&id).map(|&x| x)
+		self.id_addr.get_by_left(&id).copied()
 	}
 
 	// return none if not exist
 	pub fn get_id_by_addr(&self, addr: SocketAddr) -> Option<i32> {
-		self.id_addr.get_by_right(&addr).map(|&x| x)
+		self.id_addr.get_by_right(&addr).copied()
 	}
 
 	pub fn pair_apply(&mut self, client1: &mut Client, client2: &mut Client) {

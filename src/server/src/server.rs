@@ -168,7 +168,7 @@ impl Server {
 	}
 
 	fn spawn_ai(&mut self, algo: &str, game_type: GameType, sleep: u64) {
-		match algo.as_ref() {
+		match algo {
 			"basic" => {
 				self.ai_threads.push(std::thread::spawn(move || {
 					let mut basic_ai: BasicAi = Default::default();
@@ -343,5 +343,21 @@ impl Server {
 			}
 			// Be aware of the continue above before writing anything here
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn create_and_remove_client() {
+		let mut server: Server = Default::default();
+		let addr = "127.0.0.1:23124";
+		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap());
+		let client = server.client_manager.tmp_pop_by_id(id).unwrap();
+		server.client_manager.tmp_push_by_id(id, client);
+		assert_eq!(server.client_manager.get_addr_by_id(id).unwrap(), addr.parse().unwrap());
+		assert!(server.client_manager.pop_by_id(id).is_some());
 	}
 }

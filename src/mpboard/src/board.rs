@@ -34,7 +34,7 @@ impl fmt::Debug for Board {
 					ch as char
 				})?;
 			}
-			write!(f, "\n")?;
+			writeln!(f)?;
 		}
 		Ok(())
 	}

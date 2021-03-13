@@ -73,8 +73,7 @@ impl GarbageAttackManager {
 		if pc {
 			atk += 10;
 		}
-		let atk = self.counter_attack(atk);
-		atk
+		self.counter_attack(atk)
 	}
 
 	pub fn set_display(&self, mut display: &mut Display) {
