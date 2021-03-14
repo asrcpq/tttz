@@ -29,7 +29,7 @@ See doc/rule.md for more
 
 * Space: hold
 
-* r: suicide/restart
+* r: give up/restart
 
 * /: enter cmd mode
 

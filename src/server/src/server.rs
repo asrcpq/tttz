@@ -1,12 +1,23 @@
+use once_cell::sync::Lazy;
+
 use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
 use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg, MsgEncoding};
 
 use std::net::{UdpSocket, SocketAddr};
 
-lazy_static::lazy_static! {
-	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();
-}
+pub static SOCKET: Lazy<UdpSocket> = Lazy::new(|| {
+	let mut addr = "0.0.0.0:23124".to_string();
+	let mut iter = std::env::args();
+	while let Some(cmd) = iter.next() {
+		if cmd == "addr" {
+			if let Some(cmd) = iter.next() {
+				addr = cmd.clone();
+			}
+		}
+	}
+	UdpSocket::bind(&addr).unwrap()
+});
 
 #[derive(Default)]
 pub struct Server {

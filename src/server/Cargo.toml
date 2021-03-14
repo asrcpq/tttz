@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 bimap = "*"
-lazy_static = "*"
+once_cell = "*"
 
 [dependencies.tttz-mpboard]
 path = "../mpboard"
