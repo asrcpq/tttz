@@ -3,13 +3,15 @@ use crate::server::SOCKET;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
-use tttz_protocol::{BoardMsg, BoardReply, Display, KeyType, ServerMsg, GameType};
-
-#[derive(Clone, Copy, Debug)]
-pub enum ClientMsgEncoding {
-	Bincode,
-	Json,
-}
+use tttz_protocol::{
+	BoardMsg,
+	BoardReply,
+	Display,
+	KeyType,
+	ServerMsg,
+	GameType,
+	ClientMsgEncoding
+};
 
 #[derive(PartialEq, Debug)]
 pub enum ClientState {
@@ -28,7 +30,7 @@ pub struct Client {
 	pub state: ClientState,
 	pub board: Board,
 	pub attack_target: i32,
-	cme: ClientMsgEncoding,
+	pub cme: ClientMsgEncoding,
 }
 
 impl Client {

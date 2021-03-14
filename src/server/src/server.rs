@@ -1,6 +1,6 @@
-use crate::client::{Client, ClientState, ClientMsgEncoding};
+use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
-use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
+use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg, ClientMsgEncoding};
 
 use std::net::UdpSocket;
 
@@ -111,7 +111,7 @@ impl Server {
 				return None;
 			}
 		};
-		let client_msg = match ClientMsg::from_serialized(&buf[..amt]) {
+		let client_msg = match ClientMsg::from_bytes(&buf[..amt], client.cme) {
 			Ok(client_msg) => client_msg,
 			Err(_) => {
 				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);

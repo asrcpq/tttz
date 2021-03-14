@@ -2,6 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{GameType, IdType, KeyType};
 
+#[derive(Clone, Copy, Debug)]
+pub enum ClientMsgEncoding {
+	Bincode,
+	Json,
+}
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientMsg {
 	Quit,
@@ -21,10 +27,26 @@ pub enum ClientMsg {
 }
 
 impl ClientMsg {
-	pub fn from_serialized(
+	fn from_bincode(
 		buf: &[u8],
-	) -> Result<ClientMsg, Box<bincode::ErrorKind>> {
-		bincode::deserialize(buf)
+	) -> Result<ClientMsg, String> {
+		bincode::deserialize(buf).map_err(|e| e.to_string())
+	}
+
+	fn from_json(
+		buf: &[u8],
+	) -> Result<ClientMsg, String> {
+		serde_json::from_str::<ClientMsg>(
+			std::str::from_utf8(buf)
+				.map_err(|e| e.to_string())?
+		).map_err(|e| e.to_string())
+	}
+
+	pub fn from_bytes(buf: &[u8], cme: ClientMsgEncoding) -> Result<ClientMsg, String> {
+		match cme {
+			ClientMsgEncoding::Json => Self::from_json(buf),
+			ClientMsgEncoding::Bincode => Self::from_bincode(buf),
+		}
 	}
 
 	fn from_str_spawnai(words: Vec<&str>) -> ClientMsg {

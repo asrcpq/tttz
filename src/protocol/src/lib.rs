@@ -1,7 +1,7 @@
 mod board_msg;
 pub use board_msg::{BoardMsg, BoardReply};
 mod client_msg;
-pub use client_msg::ClientMsg;
+pub use client_msg::{ClientMsg, ClientMsgEncoding};
 mod server_msg;
 pub use server_msg::ServerMsg;
 mod key_type;
