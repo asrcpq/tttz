@@ -86,12 +86,6 @@ impl Client {
 		display: Display,
 	) {
 		self.broadcast_msg(client_manager, &ServerMsg::Display(display));
-		if let Some(last_se) = self.board.pop_se() {
-			self.broadcast_msg(
-				client_manager,
-				&ServerMsg::SoundEffect(self.id, last_se),
-			);
-		}
 	}
 
 	// true = die

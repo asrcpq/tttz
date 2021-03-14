@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::BoardReply;
 use std::collections::VecDeque;
 
 pub const BOARD_WIDTH: usize = 10;
@@ -15,7 +16,7 @@ pub struct Display {
 	pub cm: u32,
 	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
-	pub garbage_flush: bool,
+	pub board_reply: BoardReply,
 }
 
 impl Display {
@@ -30,7 +31,7 @@ impl Display {
 			cm: 0,
 			tcm: 0,
 			garbages: VecDeque::new(),
-			garbage_flush: false,
+			board_reply: BoardReply::Ok,
 		}
 	}
 }

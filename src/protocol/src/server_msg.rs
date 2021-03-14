@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::Display;
 use crate::IdType;
-use crate::SoundEffect;
 use crate::MsgEncoding;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -23,7 +22,6 @@ pub enum ServerMsg {
 	// or kicked
 	Terminate,
 	Display(Display),
-	SoundEffect(IdType, SoundEffect),
 }
 
 impl ServerMsg {
@@ -63,7 +61,6 @@ impl std::fmt::Display for ServerMsg {
 			}
 			Self::GameOver(true) => "win".to_string(),
 			Self::GameOver(false) => "die".to_string(),
-			Self::SoundEffect(id, se) => format!("se of {}, {:?}", id, se),
 			Self::Display(_) => "display".to_string(),
 		};
 		write!(f, "{}", string)

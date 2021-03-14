@@ -10,8 +10,6 @@ mod key_type;
 pub use key_type::KeyType;
 mod game_type;
 pub use game_type::GameType;
-mod sound_effect;
-pub use sound_effect::SoundEffect;
 
 mod display;
 pub use display::Display;

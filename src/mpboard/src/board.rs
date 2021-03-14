@@ -1,5 +1,5 @@
 use tttz_protocol::Display;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType, SoundEffect};
+use tttz_protocol::{BoardMsg, BoardReply, KeyType};
 use tttz_ruleset::*;
 
 use crate::block::Block;
@@ -18,7 +18,6 @@ pub struct Board {
 	pub(in crate) color: Vec<[u8; 10]>,
 	hold: u8,
 	gaman: GarbageAttackManager,
-	last_se: Option<SoundEffect>,
 	height: i32,
 	pub replay: Replay,
 }
@@ -51,7 +50,6 @@ impl Board {
 			color: vec![[b' '; 10]; 40],
 			hold: 7,
 			gaman: Default::default(),
-			last_se: None,
 			height: 0,
 			replay,
 		};
@@ -85,7 +83,6 @@ impl Board {
 				KeyType::Nothing => {}
 				KeyType::Hold => {
 					self.hold();
-					self.last_se = Some(SoundEffect::Hold);
 				}
 				KeyType::Left => {
 					self.move1(-1);
@@ -119,15 +116,16 @@ impl Board {
 				self.gaman.push_garbage(amount);
 				const MAX_GARBAGE_LEN: usize = 5;
 				if self.gaman.garbages.len() > MAX_GARBAGE_LEN {
-					if self.flush_garbage(MAX_GARBAGE_LEN) {
+					let ret = self.flush_garbage(MAX_GARBAGE_LEN);
+					if ret == -1 {
 						return BoardReply::Die;
 					} else {
-						return BoardReply::GarbageOverflow;
+						return BoardReply::GarbageOverflow(ret as u32);
 					}
 				}
 			}
 		}
-		BoardReply::Ok(0)
+		BoardReply::Ok
 	}
 
 	fn move1(&mut self, dx: i32) -> bool {
@@ -171,7 +169,6 @@ impl Board {
 		if ret == 0 {
 			self.floating_block = revert_block;
 		}
-		self.last_se = Some(SoundEffect::Rotate(ret));
 	}
 
 	fn spawn_block(&mut self) {
@@ -285,39 +282,17 @@ impl Board {
 		2
 	}
 
-	// true = death
-	fn flush_garbage(&mut self, max: usize) -> bool {
-		let mut flag = false;
-		self.height += self.generate_garbage(max);
+	// -1 = death
+	fn flush_garbage(&mut self, max: usize) -> i32 {
+		let garbage_line = self.generate_garbage(max);
+		self.height += garbage_line;
 		if self.calc_shadow() {
-			flag = true;
+			return -1
 		}
 		if self.height == 40 {
-			flag = true;
+			return -1
 		}
-		flag
-	}
-
-	pub fn pop_se(&mut self) -> Option<SoundEffect> {
-		self.last_se.take()
-	}
-
-	// No plain drop
-	fn attack_se(&self, atk: u32, line_clear: u32) -> SoundEffect {
-		if line_clear == 0 {
-			return SoundEffect::PlainDrop;
-		}
-		let mut se = if atk >= 4 {
-			SoundEffect::AttackDrop2
-		} else if atk >= 1 {
-			SoundEffect::AttackDrop
-		} else {
-			SoundEffect::ClearDrop
-		};
-		if self.height == 0 {
-			se = SoundEffect::PerfectClear;
-		}
-		se
+		garbage_line as i32
 	}
 
 	// set color, update height
@@ -395,41 +370,33 @@ impl Board {
 			self.floating_block.code,
 			self.height == line_count as i32,
 		);
-		self.last_se = Some(self.attack_se(atk, line_count));
-		let mut flush_garbage = false;
 		if line_count > 0 {
 			self.height -= line_count as i32;
+			self.spawn_block();
+			self.calc_shadow(); // cannot die from a clear drop!
+			return BoardReply::ClearDrop(line_count, atk);
 		} else {
 			// plain drop: attack execution
 			let ret = self.generate_garbage(0);
-			if ret > 0 {
-				flush_garbage = true;
-			}
-			self.height += ret;
-			if self.height == 40 {
+			// ret=-1 <=> height=40
+			if ret == -1 {
 				return BoardReply::Die;
 			}
+			self.height += ret;
+			self.spawn_block();
+			if self.calc_shadow() {
+				return BoardReply::Die;
+			}
+			return BoardReply::PlainDrop(ret as u32);
 		}
-
-		// new block
-		self.spawn_block();
-		if self.calc_shadow() {
-			return BoardReply::Die;
-		}
-		if flush_garbage {
-			return BoardReply::GarbageOverflow;
-		}
-		BoardReply::Ok(atk)
 	}
 
 	// true = death
 	fn press_down(&mut self) -> BoardReply {
 		if !self.soft_drop() {
 			return self.hard_drop();
-		} else {
-			self.last_se = Some(SoundEffect::SonicDrop);
 		}
-		BoardReply::Ok(0)
+		BoardReply::Ok
 	}
 
 	// true = death
@@ -450,7 +417,7 @@ impl Board {
 		}
 	}
 
-	pub fn generate_display(&self, garbage_flush: bool) -> Display {
+	pub fn generate_display(&self, board_reply: BoardReply) -> Display {
 		let mut display = Display::new(self.id);
 		for i in 0..20 {
 			display.color[i] = self.color[i];
@@ -458,8 +425,8 @@ impl Board {
 		display.shadow_block = self.shadow_block.compress();
 		display.floating_block = self.floating_block.compress();
 		display.garbages = self.gaman.garbages.clone();
-		display.garbage_flush = garbage_flush;
 		display.hold = self.hold;
+		display.board_reply = board_reply;
 		display.floating_block = self.floating_block.compress();
 		self.gaman.set_display(&mut display);
 		for i in 0..6 {

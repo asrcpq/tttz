@@ -1,5 +1,4 @@
-use tttz_protocol::Display;
-use tttz_protocol::KeyType;
+use tttz_protocol::{Display, KeyType, BoardReply};
 
 use crate::Thinker;
 use cold_clear::Interface;
@@ -78,7 +77,7 @@ impl Thinker for CCBot {
 	// TODO: handle garbages
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
 		self.update_preview(&display.bag_preview, display.floating_block[2]);
-		if display.garbage_flush {
+		if let BoardReply::GarbageOverflow(_) = display.board_reply {
 			let mut field = [[false; 10]; 40];
 			for (row, each_row) in field.iter_mut().take(20).enumerate() {
 				for (col, color) in each_row.iter_mut().enumerate() {

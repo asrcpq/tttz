@@ -53,7 +53,7 @@ impl Server {
 		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
 		let mut flag = false;
 		let reply = client_target.board.handle_msg(BoardMsg::Attacked(lines));
-		if let BoardReply::Ok(_) = reply {
+		if let BoardReply::Ok = reply {
 			client_target.broadcast_msg(
 				&self.client_manager,
 				&ServerMsg::Attack(client_target.id, lines),
@@ -61,7 +61,7 @@ impl Server {
 		} else {
 			client_target.send_display(
 				&self.client_manager,
-				client_target.board.generate_display(true),
+				client_target.board.generate_display(reply.clone()),
 			);
 			if reply == BoardReply::Die {
 				flag = true
@@ -73,7 +73,7 @@ impl Server {
 
 	fn post_operation(&mut self, client: &mut Client, board_reply: &BoardReply) {
 		// note the size effect of counter_attack
-		if let BoardReply::Ok(atk) = *board_reply {
+		if let BoardReply::ClearDrop(_line_clear, atk) = *board_reply {
 			if atk > 0 {
 				if self
 					.client_manager
@@ -95,7 +95,7 @@ impl Server {
 				}
 			}
 		}
-		let display = client.board.generate_display(*board_reply == BoardReply::GarbageOverflow);
+		let display = client.board.generate_display(board_reply.clone());
 		client.send_display(&self.client_manager, display);
 	}
 
@@ -191,12 +191,13 @@ impl Server {
 		}
 	}
 
-	fn start_single(&mut self, mut client: &mut Client) {
+	fn start_single(&mut self, client: &mut Client) {
 		client.init_board();
 		client.state = ClientState::InMatch(GameType::Single);
 		client.attack_target = 0;
 		client.send_msg(&ServerMsg::Start(0));
-		self.post_operation(&mut client, &BoardReply::Ok(0));
+		let display = client.board.generate_display(BoardReply::Ok);
+		client.send_display(&self.client_manager, display);
 	}
 
 	fn handle_msg(&mut self, msg: ClientMsg, mut client: &mut Client) -> bool {

@@ -1,7 +1,7 @@
 use rodio::source::Buffered;
 use rodio::{Decoder, Sink, Source};
 
-use tttz_protocol::SoundEffect;
+use crate::sound_effect::SoundEffect;
 
 use std::collections::HashMap;
 use std::io::{BufReader, Cursor};

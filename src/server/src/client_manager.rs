@@ -1,7 +1,7 @@
 use bimap::BiMap;
 
 use crate::client::{Client, ClientState};
-use tttz_protocol::{ServerMsg, MsgEncoding};
+use tttz_protocol::{ServerMsg, MsgEncoding, BoardReply};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -82,8 +82,8 @@ impl ClientManager {
 		let id2 = client2.id;
 		client1.pair_success(id2);
 		client2.pair_success(id1);
-		client2.send_display(self, client2.board.generate_display(false));
-		client1.send_display(self, client1.board.generate_display(false));
+		client2.send_display(self, client2.board.generate_display(BoardReply::Ok));
+		client1.send_display(self, client1.board.generate_display(BoardReply::Ok));
 	}
 
 	pub fn pair_attempt(&mut self, mut client: &mut Client) {

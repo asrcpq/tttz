@@ -8,9 +8,14 @@ pub enum BoardMsg {
 	KeyEvent(KeyType),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum BoardReply {
-	Ok(u32),
+	// Ok and ko are return value for softdrop, move and rotate
+	// Ok is also used as return value of silent garbage queue push
+	Ok,
+	Ko,
+	PlainDrop(u32), // garbage generated
+	ClearDrop(u32, u32), // lineclear, atk
 	Die,
-	GarbageOverflow,
+	GarbageOverflow(u32), // garbage generated
 }

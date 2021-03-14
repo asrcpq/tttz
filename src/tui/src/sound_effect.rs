@@ -1,6 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+#[derive(PartialEq, Eq, Hash)]
 pub enum SoundEffect {
 	// 0: fail
 	// 1: success

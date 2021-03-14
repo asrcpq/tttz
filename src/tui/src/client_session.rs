@@ -158,10 +158,6 @@ impl ClientSession {
 			ServerMsg::Request(id) => {
 				self.last_request_id = id;
 			}
-			ServerMsg::SoundEffect(_id, ref se) => {
-				self.sound_manager.play(se);
-				return false; //  early return
-			}
 			_ => self.show_msg("Unknown message received!"),
 		}
 		self.show_msg(&msg.to_string());
