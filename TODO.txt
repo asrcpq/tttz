@@ -1,12 +1,11 @@
 Working:
 
-- accept serialization with json to allow clients in other languages
-
-Planned:
-
 - a real strategy mode, or make strategy ai vs work
 - write an RL ai
 - write more tests
+
+Planned:
+
 - make a stable release
 - client rendering and se
 - better sound effects
