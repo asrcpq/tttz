@@ -13,7 +13,6 @@ path = "../segen"
 
 [dependencies]
 termion = "*"
-lazy_static = "*"
 rodio = "*"
 
 [dependencies.tttz-libclient]

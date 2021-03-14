@@ -7,7 +7,7 @@ pub enum SoundEffect {
 	// 2: twist success
 	Rotate(u8),
 	Hold,
-	SoftDrop,
+	SonicDrop,
 	PlainDrop,
 	ClearDrop,
 	AttackDrop,

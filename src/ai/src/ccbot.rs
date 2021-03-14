@@ -18,7 +18,7 @@ fn map_key(pm: PieceMovement) -> KeyType {
 		PieceMovement::Right => KeyType::Right,
 		PieceMovement::Cw => KeyType::Rotate,
 		PieceMovement::Ccw => KeyType::RotateReverse,
-		PieceMovement::SonicDrop => KeyType::SoftDrop,
+		PieceMovement::SonicDrop => KeyType::SonicDrop,
 	}
 }
 

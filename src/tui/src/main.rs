@@ -4,6 +4,7 @@ mod client_session;
 use client_session::ClientSession;
 mod client_display;
 mod sound_manager;
+mod keymap;
 
 fn main() {
 	let mut iter = std::env::args();

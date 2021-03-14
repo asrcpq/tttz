@@ -66,7 +66,7 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 		ret.push_back(keycode);
 	}
 	if gkp.post_key != KeyType::Nothing {
-		ret.push_back(KeyType::SoftDrop);
+		ret.push_back(KeyType::SonicDrop);
 		ret.push_back(gkp.post_key);
 	}
 	ret.push_back(KeyType::HardDrop);

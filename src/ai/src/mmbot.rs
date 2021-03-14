@@ -21,7 +21,7 @@ fn map_key(key: char) -> KeyType {
 		'l' => KeyType::Right,
 		'H' => KeyType::LLeft,
 		'L' => KeyType::RRight,
-		'j' => KeyType::SoftDrop,
+		'j' => KeyType::SonicDrop,
 		'z' => KeyType::RotateReverse,
 		'x' => KeyType::Rotate,
 		'k' => KeyType::HardDrop,

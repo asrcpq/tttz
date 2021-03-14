@@ -7,7 +7,7 @@ pub enum KeyType {
 	Right,
 	LLeft,
 	RRight,
-	SoftDrop,
+	SonicDrop,
 	HardDrop,
 	Hold,
 	Rotate,

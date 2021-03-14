@@ -1,10 +1,11 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-use tttz_protocol::{ClientMsg, Display, KeyType, ServerMsg};
+use tttz_protocol::{ClientMsg, Display, ServerMsg, IdType};
 
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 use crate::sound_manager::SoundManager;
+use crate::keymap::TuiKey;
 
 use std::collections::HashMap;
 use std::io::{stdout, Read, Write};
@@ -14,11 +15,12 @@ pub struct ClientSession {
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
 	state: i32,
-	id: i32,
+	id: IdType,
 	mode: i32,
 	textbuffer: String,
 	bytebuf: Vec<u8>,
-	last_display: HashMap<i32, Display>,
+	last_display: HashMap<IdType, Display>,
+	last_request_id: IdType,
 }
 
 impl ClientSession {
@@ -35,6 +37,7 @@ impl ClientSession {
 			textbuffer: String::new(),
 			bytebuf: Vec::new(),
 			last_display: HashMap::new(),
+			last_request_id: 0,
 		};
 		client_session
 			.client_socket
@@ -152,7 +155,9 @@ impl ClientSession {
 				self.state = 1;
 			}
 			ServerMsg::ClientList(_) => {}
-			ServerMsg::Request(_) => {}
+			ServerMsg::Request(id) => {
+				self.last_request_id = id;
+			}
 			ServerMsg::SoundEffect(_id, ref se) => {
 				self.sound_manager.play(se);
 				return false; //  early return
@@ -229,61 +234,46 @@ impl ClientSession {
 				return false;
 			}
 		} else {
-			match byte {
-				b'' => {
-					self.bytebuf.push(b'');
-					return false;
-				}
-				b'q' => {
-					return true;
-				}
-				b'r' => {
-					if self.state == 2 {
-						self.client_socket.send(ClientMsg::Suicide).unwrap();
-						self.state = 3;
-					} else {
-						self.client_socket.send(ClientMsg::Restart).unwrap();
-						self.state = 3;
-					}
-					return false
-				}
-				b'/' => {
-					self.modeswitch(0);
-					return false
-				}
-				byte => {
-					self.bytebuf.push(byte);
-				}
+			if byte == b'' {
+				self.bytebuf.push(b'');
+				return false;
+			} else {
+				self.bytebuf.push(byte);
 			}
 		}
-		if self.state == 2 {
-			self.send_key_event(&self.bytebuf);
+		// consume bytebuf
+		self.handle_bytebuf()
+	}
+
+	// true = exit
+	fn handle_bytebuf(&mut self) -> bool {
+		match TuiKey::from_bytestring(&self.bytebuf) {
+			TuiKey::ServerKey(key_event) => {
+				// only send keyevent to server when playing
+				if self.state == 2 {
+					self.client_socket
+						.send(ClientMsg::KeyEvent(key_event))
+						.unwrap();
+				}
+			},
+			TuiKey::Quit => { return true },
+			TuiKey::Accept => {
+				self.client_socket.send(ClientMsg::Accept(self.last_request_id)).unwrap();
+			},
+			TuiKey::Restart => {
+				if self.state == 2 {
+					self.client_socket.send(ClientMsg::Suicide).unwrap();
+					self.state = 3;
+				} else {
+					self.client_socket.send(ClientMsg::Restart).unwrap();
+					self.state = 3;
+				}
+			}
+			TuiKey::Modeswitch => self.modeswitch(0),
+			TuiKey::Invalid => {},
 		}
 		self.bytebuf.clear();
 		false
-	}
-
-	fn send_key_event(&self, bytestring: &[u8]) {
-		let key_event = match bytestring {
-			b"h" => KeyType::Left,
-			b"H" => KeyType::LLeft,
-			b"l" => KeyType::Right,
-			b"L" => KeyType::RRight,
-			b" " => KeyType::Hold,
-			b"j" => KeyType::SoftDrop,
-			b"k" => KeyType::HardDrop,
-			b"x" => KeyType::Rotate,
-			b"z" => KeyType::RotateReverse,
-			b"d" => KeyType::RotateFlip,
-			b"[D" => KeyType::Left,
-			b"[C" => KeyType::Right,
-			b"[A" => KeyType::HardDrop,
-			b"[B" => KeyType::SoftDrop,
-			_ => return,
-		};
-		self.client_socket
-			.send(ClientMsg::KeyEvent(key_event))
-			.unwrap();
 	}
 
 	// true = exit

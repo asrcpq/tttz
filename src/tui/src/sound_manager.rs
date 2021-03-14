@@ -72,7 +72,7 @@ fn soundmap_init() -> SoundMap {
 			);
 		};
 	}
-	load_se!("soft_drop", SoundEffect::SoftDrop);
+	load_se!("soft_drop", SoundEffect::SonicDrop);
 	load_se!("plain_drop", SoundEffect::PlainDrop);
 	load_se!("clear_drop", SoundEffect::ClearDrop);
 	load_se!("attack_drop", SoundEffect::AttackDrop);

@@ -102,7 +102,7 @@ impl Board {
 				KeyType::HardDrop => {
 					return self.press_up()
 				}
-				KeyType::SoftDrop => {
+				KeyType::SonicDrop => {
 					return self.press_down()
 				}
 				KeyType::RotateReverse => {
@@ -427,7 +427,7 @@ impl Board {
 		if !self.soft_drop() {
 			return self.hard_drop();
 		} else {
-			self.last_se = Some(SoundEffect::SoftDrop);
+			self.last_se = Some(SoundEffect::SonicDrop);
 		}
 		BoardReply::Ok(0)
 	}
