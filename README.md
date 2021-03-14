@@ -10,7 +10,7 @@
 
 * focus on 1v1 network combat(ai use the same interface as human)
 
-* responsive and minimalist. zero-gravity, non-realtime.
+* responsive and minimalist. zero-gravity, event-blocking.
 
 * heavily modified rules to encourage fancy attack patterns,
 making stupid AI harder to win.
