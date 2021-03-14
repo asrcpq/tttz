@@ -2,6 +2,7 @@ Working:
 
 - a real strategy mode, or make strategy ai vs work
 - write more tests
+- make a stable checkpoint
 
 Planned:
 
