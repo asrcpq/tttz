@@ -19,7 +19,7 @@ impl ClientSocket {
 			addr: target_addr,
 		};
 		let id = loop {
-			client_socket.send(ClientMsg::NewClient).unwrap();
+			client_socket.socket.send_to(b"new_client bincode", addr).unwrap();
 			std::thread::sleep(std::time::Duration::from_millis(1000));
 			if let Ok(ServerMsg::AllocId(id)) = client_socket.recv() {
 				break id;

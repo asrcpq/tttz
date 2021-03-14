@@ -4,7 +4,6 @@ use crate::{GameType, IdType, KeyType};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientMsg {
-	NewClient,
 	Quit,
 	Suicide,
 	GetClients,
@@ -120,7 +119,7 @@ impl FromStr for ClientMsg {
 					}
 				}
 			}
-			_ => {}
+			_ => {},
 		}
 		Err(())
 	}

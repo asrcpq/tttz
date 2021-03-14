@@ -598,6 +598,7 @@ mod test {
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 2);
 		assert_eq!(board.floating_block.pos, (0, 0));
+		assert_eq!(board.test_twist(), 2);
 		board.floating_block.rotation = 3;
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 0);

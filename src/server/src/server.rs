@@ -1,4 +1,4 @@
-use crate::client::{Client, ClientState};
+use crate::client::{Client, ClientState, ClientMsgEncoding};
 use crate::client_manager::ClientManager;
 use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg};
 
@@ -12,6 +12,27 @@ lazy_static::lazy_static! {
 pub struct Server {
 	client_manager: ClientManager,
 	ai_threads: Vec<std::thread::JoinHandle<()>>,
+}
+
+fn new_client_msg_parse(msg: &[u8]) -> Result<ClientMsgEncoding, String> {
+	let split = String::from(
+			std::str::from_utf8(msg).map_err(|e| e.to_string())?
+		).split_whitespace()
+		.map(|x| x.to_string())
+		.collect::<Vec<String>>();
+	if split.is_empty() {
+		return Err("Message too short".to_string());
+	}
+	if split[0] == "new_client" {
+		if let Some(string) = split.get(1) {
+			if string == "json" {
+				return Ok(ClientMsgEncoding::Json);
+			}
+		}
+		Ok(ClientMsgEncoding::Bincode)
+	} else {
+		Err("Unknown command".to_string())
+	}
 }
 
 impl Server {
@@ -71,13 +92,6 @@ impl Server {
 		// get or create client
 		let mut buf = [0; 1024];
 		let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
-		let client_msg = match ClientMsg::from_serialized(&buf[..amt]) {
-			Ok(client_msg) => client_msg,
-			Err(_) => {
-				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);
-				return None;
-			}
-		};
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
 				id
@@ -87,13 +101,20 @@ impl Server {
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
-				if client_msg == ClientMsg::NewClient {
-					let new_id = self.client_manager.new_client_by_addr(src);
+				if let Ok(cme) = new_client_msg_parse(&buf[..amt]) {
+					let new_id = self.client_manager.new_client_by_addr(src, cme);
 					self.client_manager
 						.send_msg_by_id(new_id, ServerMsg::AllocId(new_id));
 				} else {
 					eprintln!("Unknown client: {:?}", src);
 				}
+				return None;
+			}
+		};
+		let client_msg = match ClientMsg::from_serialized(&buf[..amt]) {
+			Ok(client_msg) => client_msg,
+			Err(_) => {
+				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);
 				return None;
 			}
 		};
@@ -296,9 +317,6 @@ impl Server {
 					}
 				}
 			}
-			ClientMsg::NewClient => {
-				unreachable!()
-			}
 		}
 		true
 	}
@@ -326,7 +344,7 @@ mod test {
 	fn create_and_remove_client() {
 		let mut server: Server = Default::default();
 		let addr = "127.0.0.1:23124";
-		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap());
+		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap(), ClientMsgEncoding::Json);
 		let client = server.client_manager.tmp_pop_by_id(id).unwrap();
 		server.client_manager.tmp_push_by_id(id, client);
 		assert_eq!(server.client_manager.get_addr_by_id(id).unwrap(), addr.parse().unwrap());

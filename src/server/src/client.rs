@@ -5,6 +5,12 @@ use std::net::SocketAddr;
 use tttz_mpboard::Board;
 use tttz_protocol::{BoardMsg, BoardReply, Display, KeyType, ServerMsg, GameType};
 
+#[derive(Clone, Copy, Debug)]
+pub enum ClientMsgEncoding {
+	Bincode,
+	Json,
+}
+
 #[derive(PartialEq, Debug)]
 pub enum ClientState {
 	Idle,
@@ -22,10 +28,11 @@ pub struct Client {
 	pub state: ClientState,
 	pub board: Board,
 	pub attack_target: i32,
+	cme: ClientMsgEncoding,
 }
 
 impl Client {
-	pub fn new(id: i32, addr: SocketAddr) -> Client {
+	pub fn new(id: i32, addr: SocketAddr, cme: ClientMsgEncoding) -> Client {
 		Client {
 			id,
 			addr,
@@ -33,6 +40,7 @@ impl Client {
 			state: ClientState::Idle,
 			board: Board::new(id),
 			attack_target: 0,
+			cme,
 		}
 	}
 

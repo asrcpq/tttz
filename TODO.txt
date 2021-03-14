@@ -1,11 +1,11 @@
 Working:
 
-- a real strategy mode, or make strategy ai vs work
-- write more tests
-- make a stable checkpoint
+- accept serialization with json to allow clients in other languages
 
 Planned:
 
+- a real strategy mode, or make strategy ai vs work
+- write more tests
 - client rendering and se
 - write an RL ai
 - better sound effects
