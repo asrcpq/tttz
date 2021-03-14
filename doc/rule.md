@@ -2,16 +2,6 @@
 
 * Special keys: move left/right until fail(=long press in gui)
 
-* No soft drop
-
-	Although you cannot move a piece one block down,
-	you can still apply some tricks to control its y position:
-
-	* You can "hook" the piece to a higher place, then move it horizontally into a hole.
-	It is totally safe since we have infinite lock time and zero gravity.
-
-	* You can use high kicks to lift a block.
-
 * SRS kick table(with 180 degree kick)
 
 * Garbage in same attack has a 30%(or 40%) probability to shift

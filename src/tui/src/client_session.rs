@@ -258,8 +258,8 @@ impl ClientSession {
 		}
 		if self.state == 2 {
 			self.send_key_event(&self.bytebuf);
-			self.bytebuf.clear();
 		}
+		self.bytebuf.clear();
 		false
 	}
 
