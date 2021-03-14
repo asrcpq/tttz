@@ -47,6 +47,7 @@ impl ClientSession {
 
 	fn modeswitch(&mut self, new: i32) {
 		self.mode = new;
+		self.bytebuf.clear();
 		if new == 0 {
 			self.client_display.deactivate();
 			self.print_prompt();
@@ -169,7 +170,7 @@ impl ClientSession {
 				if byte == b'[' {
 					return false;
 				}
-				self.bytebuf.drain(..);
+				self.bytebuf.clear();
 				return false;
 			}
 			match byte {
@@ -222,44 +223,67 @@ impl ClientSession {
 		}
 
 		// mode == 1
-		match byte {
-			b'q' => {
-				return true;
+		if !self.bytebuf.is_empty() {
+			self.bytebuf.push(byte);
+			if byte == b'[' {
+				return false;
 			}
-			b'r' => {
-				if self.state == 2 {
-					self.client_socket.send(ClientMsg::Suicide).unwrap();
-					self.state = 3;
-				} else {
-					self.client_socket.send(ClientMsg::Restart).unwrap();
-					self.state = 3;
+		} else {
+			match byte {
+				b'' => {
+					self.bytebuf.push(b'');
+					return false;
 				}
-			}
-			b'/' => {
-				self.modeswitch(0);
-			}
-			_ => {
-				if self.state == 2 {
-					let key_event = match byte {
-						b'h' => KeyType::Left,
-						b'H' => KeyType::LLeft,
-						b'l' => KeyType::Right,
-						b'L' => KeyType::RRight,
-						b' ' => KeyType::Hold,
-						b'j' => KeyType::SoftDrop,
-						b'k' => KeyType::HardDrop,
-						b'x' => KeyType::Rotate,
-						b'z' => KeyType::RotateReverse,
-						b'd' => KeyType::RotateFlip,
-						_ => return false,
-					};
-					self.client_socket
-						.send(ClientMsg::KeyEvent(key_event))
-						.unwrap();
+				b'q' => {
+					return true;
+				}
+				b'r' => {
+					if self.state == 2 {
+						self.client_socket.send(ClientMsg::Suicide).unwrap();
+						self.state = 3;
+					} else {
+						self.client_socket.send(ClientMsg::Restart).unwrap();
+						self.state = 3;
+					}
+					return false
+				}
+				b'/' => {
+					self.modeswitch(0);
+					return false
+				}
+				byte => {
+					self.bytebuf.push(byte);
 				}
 			}
 		}
+		if self.state == 2 {
+			self.send_key_event(&self.bytebuf);
+			self.bytebuf.clear();
+		}
 		false
+	}
+
+	fn send_key_event(&self, bytestring: &[u8]) {
+		let key_event = match bytestring {
+			b"h" => KeyType::Left,
+			b"H" => KeyType::LLeft,
+			b"l" => KeyType::Right,
+			b"L" => KeyType::RRight,
+			b" " => KeyType::Hold,
+			b"j" => KeyType::SoftDrop,
+			b"k" => KeyType::HardDrop,
+			b"x" => KeyType::Rotate,
+			b"z" => KeyType::RotateReverse,
+			b"d" => KeyType::RotateFlip,
+			b"[D" => KeyType::Left,
+			b"[C" => KeyType::Right,
+			b"[A" => KeyType::HardDrop,
+			b"[B" => KeyType::SoftDrop,
+			_ => return,
+		};
+		self.client_socket
+			.send(ClientMsg::KeyEvent(key_event))
+			.unwrap();
 	}
 
 	// true = exit
@@ -293,17 +317,21 @@ impl ClientSession {
 		let stdout = stdout();
 		let mut stdout = stdout.lock().into_raw_mode().unwrap();
 		stdout.flush().unwrap();
-		loop {
+		'main_loop: loop {
 			if self.mode == 1 {
 				self.client_display.set_offset();
 			}
 			if self.recv_phase() {
 				break;
 			}
-			if let Some(Ok(byte)) = stdin.next() {
+			let mut input_flag = false;
+			while let Some(Ok(byte)) = stdin.next() {
+				input_flag = true;
 				if self.byte_handle(byte) {
-					break;
+					break 'main_loop;
 				}
+			}
+			if input_flag {
 				stdout.flush().unwrap();
 			}
 			std::thread::sleep(std::time::Duration::from_millis(10));
