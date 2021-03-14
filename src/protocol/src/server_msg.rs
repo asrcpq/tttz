@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::Display;
 use crate::IdType;
 use crate::SoundEffect;
+use crate::MsgEncoding;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum ServerMsg {
@@ -32,8 +33,11 @@ impl ServerMsg {
 		bincode::deserialize(buf)
 	}
 
-	pub fn serialized(&self) -> Vec<u8> {
-		bincode::serialize(self).unwrap()
+	pub fn serialized(&self, me: MsgEncoding) -> Vec<u8> {
+		match me {
+			MsgEncoding::Bincode => bincode::serialize(self).unwrap(),
+			MsgEncoding::Json => serde_json::to_string(self).unwrap().as_bytes().to_vec(),
+		}
 	}
 }
 

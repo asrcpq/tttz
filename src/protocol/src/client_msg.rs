@@ -1,12 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{GameType, IdType, KeyType};
-
-#[derive(Clone, Copy, Debug)]
-pub enum ClientMsgEncoding {
-	Bincode,
-	Json,
-}
+use crate::{GameType, IdType, KeyType, MsgEncoding};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientMsg {
@@ -42,10 +36,10 @@ impl ClientMsg {
 		).map_err(|e| e.to_string())
 	}
 
-	pub fn from_bytes(buf: &[u8], cme: ClientMsgEncoding) -> Result<ClientMsg, String> {
+	pub fn from_bytes(buf: &[u8], cme: MsgEncoding) -> Result<ClientMsg, String> {
 		match cme {
-			ClientMsgEncoding::Json => Self::from_json(buf),
-			ClientMsgEncoding::Bincode => Self::from_bincode(buf),
+			MsgEncoding::Json => Self::from_json(buf),
+			MsgEncoding::Bincode => Self::from_bincode(buf),
 		}
 	}
 

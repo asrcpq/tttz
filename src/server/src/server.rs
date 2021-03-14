@@ -1,8 +1,8 @@
 use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
-use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg, ClientMsgEncoding};
+use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg, MsgEncoding};
 
-use std::net::UdpSocket;
+use std::net::{UdpSocket, SocketAddr};
 
 lazy_static::lazy_static! {
 	pub static ref SOCKET: UdpSocket = UdpSocket::bind("0.0.0.0:23124").unwrap();
@@ -14,7 +14,7 @@ pub struct Server {
 	ai_threads: Vec<std::thread::JoinHandle<()>>,
 }
 
-fn new_client_msg_parse(msg: &[u8]) -> Result<ClientMsgEncoding, String> {
+fn new_client_msg_parse(msg: &[u8]) -> Result<MsgEncoding, String> {
 	let split = String::from(
 			std::str::from_utf8(msg).map_err(|e| e.to_string())?
 		).split_whitespace()
@@ -26,10 +26,10 @@ fn new_client_msg_parse(msg: &[u8]) -> Result<ClientMsgEncoding, String> {
 	if split[0] == "new_client" {
 		if let Some(string) = split.get(1) {
 			if string == "json" {
-				return Ok(ClientMsgEncoding::Json);
+				return Ok(MsgEncoding::Json);
 			}
 		}
-		Ok(ClientMsgEncoding::Bincode)
+		Ok(MsgEncoding::Bincode)
 	} else {
 		Err("Unknown command".to_string())
 	}
@@ -88,10 +88,10 @@ impl Server {
 		client.send_display(&self.client_manager, display);
 	}
 
-	fn fetch_message(&mut self) -> Option<(Client, ClientMsg)> {
+	fn parse_message(&mut self, buf: &[u8], src: SocketAddr, amt: usize)
+		-> Option<(Client, ClientMsg)>
+	{
 		// get or create client
-		let mut buf = [0; 1024];
-		let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
 				id
@@ -101,20 +101,21 @@ impl Server {
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
-				if let Ok(cme) = new_client_msg_parse(&buf[..amt]) {
-					let new_id = self.client_manager.new_client_by_addr(src, cme);
+				if let Ok(met) = new_client_msg_parse(&buf[..amt]) {
+					let new_id = self.client_manager.new_client_by_addr(src, met);
 					self.client_manager
-						.send_msg_by_id(new_id, ServerMsg::AllocId(new_id));
+						.send_msg_by_id(new_id, &ServerMsg::AllocId(new_id));
 				} else {
 					eprintln!("Unknown client: {:?}", src);
 				}
 				return None;
 			}
 		};
-		let client_msg = match ClientMsg::from_bytes(&buf[..amt], client.cme) {
+		let client_msg = match ClientMsg::from_bytes(&buf[..amt], client.met) {
 			Ok(client_msg) => client_msg,
-			Err(_) => {
-				eprintln!("[43mSERVER[0m: Parse failed from {:?}", src);
+			Err(string) => {
+				eprintln!("[43mSERVER[0m: Parse failed from {:?}: {}", src, string);
+				self.client_manager.tmp_push_by_id(client.id, client);
 				return None;
 			}
 		};
@@ -133,7 +134,7 @@ impl Server {
 				eprintln!("[32mSERVER[0m: write replay failed!");
 			}
 		}
-		client.send_msg(ServerMsg::GameOver(!die));
+		client.send_msg(&ServerMsg::GameOver(!die));
 
 		if client.attack_target == 0 {
 			return;
@@ -183,7 +184,7 @@ impl Server {
 		client.init_board();
 		client.state = ClientState::InMatch(GameType::Single);
 		client.attack_target = 0;
-		client.send_msg(ServerMsg::Start(0));
+		client.send_msg(&ServerMsg::Start(0));
 		self.post_operation(&mut client, &BoardReply::Ok(0));
 	}
 
@@ -204,14 +205,14 @@ impl Server {
 					.clients()
 					.filter(|&x| x != client.id)
 					.collect();
-				client.send_msg(ServerMsg::ClientList(list));
+				client.send_msg(&ServerMsg::ClientList(list));
 			}
 			ClientMsg::Kick(id) => {
 				let mut flag = true;
 				if id != client.id {
 					if let Some(client) = self.client_manager.pop_by_id(id)
 					{
-						client.send_msg(ServerMsg::Terminate);
+						client.send_msg(&ServerMsg::Terminate);
 						flag = false;
 					}
 				}
@@ -235,7 +236,7 @@ impl Server {
 				if let Some(opponent) = self.client_manager.view_by_id(id1)
 				{
 					if opponent.state == ClientState::Idle {
-						opponent.send_msg(ServerMsg::Invite(id2));
+						opponent.send_msg(&ServerMsg::Invite(id2));
 					} else {
 						eprintln!(
 							"SERVER: invite: invalid invited state {:?}",
@@ -250,7 +251,7 @@ impl Server {
 				if let Some(opponent) = self.client_manager.view_by_id(id) {
 					if opponent.state == ClientState::Idle {
 						client.state = ClientState::Pairing;
-						opponent.send_msg(ServerMsg::Request(client.id));
+						opponent.send_msg(&ServerMsg::Request(client.id));
 					} else {
 						eprintln!(
 							"SERVER: request: invalid opponent state {:?}",
@@ -269,7 +270,7 @@ impl Server {
 				{
 					if opponent.state == ClientState::Idle {
 						client.state = ClientState::Pairing;
-						opponent.send_msg(ServerMsg::Request(client.id));
+						opponent.send_msg(&ServerMsg::Request(client.id));
 					} else {
 						eprintln!(
 							"SERVER: request: invalid opponent state {:?}",
@@ -322,8 +323,11 @@ impl Server {
 	}
 
 	pub fn main_loop(&mut self) {
+		let mut buf = [0; 1024];
 		loop {
-			let (mut client, msg) = match self.fetch_message() {
+			// blocking
+			let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
+			let (mut client, msg) = match self.parse_message(&buf, src, amt) {
 				None => continue,
 				x => x.unwrap(),
 			};
@@ -344,7 +348,7 @@ mod test {
 	fn create_and_remove_client() {
 		let mut server: Server = Default::default();
 		let addr = "127.0.0.1:23124";
-		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap(), ClientMsgEncoding::Json);
+		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap(), MsgEncoding::Json);
 		let client = server.client_manager.tmp_pop_by_id(id).unwrap();
 		server.client_manager.tmp_push_by_id(id, client);
 		assert_eq!(server.client_manager.get_addr_by_id(id).unwrap(), addr.parse().unwrap());

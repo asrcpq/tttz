@@ -1,7 +1,7 @@
 use bimap::BiMap;
 
 use crate::client::{Client, ClientState};
-use tttz_protocol::{ServerMsg, ClientMsgEncoding};
+use tttz_protocol::{ServerMsg, MsgEncoding};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -33,7 +33,7 @@ impl ClientManager {
 		self.id_addr.iter().map(|(&x, _)| x)
 	}
 
-	pub fn send_msg_by_id(&self, id: i32, msg: ServerMsg) {
+	pub fn send_msg_by_id(&self, id: i32, msg: &ServerMsg) {
 		self.view_by_id(id).unwrap().send_msg(msg);
 	}
 
@@ -49,9 +49,9 @@ impl ClientManager {
 	pub fn new_client_by_addr(
 		&mut self,
 		src: SocketAddr,
-		cme: ClientMsgEncoding,
+		met: MsgEncoding,
 	) -> i32 {
-		let mut client = Client::new(self.id_alloc, src, cme);
+		let mut client = Client::new(self.id_alloc, src, met);
 		client.dc_ids.insert(self.id_alloc);
 		self.clients.insert(self.id_alloc, client);
 		eprintln!("Assign id {}", self.id_alloc);

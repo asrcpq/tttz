@@ -10,7 +10,7 @@ use tttz_protocol::{
 	KeyType,
 	ServerMsg,
 	GameType,
-	ClientMsgEncoding
+	MsgEncoding
 };
 
 #[derive(PartialEq, Debug)]
@@ -30,11 +30,11 @@ pub struct Client {
 	pub state: ClientState,
 	pub board: Board,
 	pub attack_target: i32,
-	pub cme: ClientMsgEncoding,
+	pub met: MsgEncoding,
 }
 
 impl Client {
-	pub fn new(id: i32, addr: SocketAddr, cme: ClientMsgEncoding) -> Client {
+	pub fn new(id: i32, addr: SocketAddr, met: MsgEncoding) -> Client {
 		Client {
 			id,
 			addr,
@@ -42,7 +42,7 @@ impl Client {
 			state: ClientState::Idle,
 			board: Board::new(id),
 			attack_target: 0,
-			cme,
+			met,
 		}
 	}
 
@@ -55,11 +55,11 @@ impl Client {
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
 		self.init_board();
-		self.send_msg(ServerMsg::Start(target_id));
+		self.send_msg(&ServerMsg::Start(target_id));
 	}
 
-	pub fn send_msg(&self, msg: ServerMsg) {
-		SOCKET.send_to(&msg.serialized(), self.addr).unwrap();
+	pub fn send_msg(&self, msg: &ServerMsg) {
+		SOCKET.send_to(&msg.serialized(self.met), self.addr).unwrap();
 	}
 
 	pub fn broadcast_msg(
@@ -68,18 +68,16 @@ impl Client {
 		msg: &ServerMsg,
 	) {
 		for &dc_id in self.dc_ids.iter() {
-			let dc_addr =
-				if let Some(addr) = client_manager.get_addr_by_id(dc_id) {
-					addr
-				} else {
-					eprintln!(
-						"A removed client: {} was viewing {}",
-						dc_id, self.id
-					);
-					continue;
-				};
-			SOCKET.send_to(&msg.serialized(), dc_addr).unwrap();
+			if let Some(client) = client_manager.view_by_id(dc_id) {
+				client.send_msg(msg);
+			} else if self.id != dc_id {
+				eprintln!(
+					"A removed client: {} is viewing {}",
+					dc_id, self.id
+				);
+			};
 		}
+		self.send_msg(msg);
 	}
 
 	pub fn send_display(
@@ -106,6 +104,6 @@ impl Client {
 
 impl Drop for Client {
 	fn drop(&mut self) {
-		self.send_msg(ServerMsg::Terminate);
+		self.send_msg(&ServerMsg::Terminate);
 	}
 }
