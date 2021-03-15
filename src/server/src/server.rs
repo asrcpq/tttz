@@ -63,7 +63,7 @@ impl Server {
 		} else {
 			client_target.send_display(
 				&self.client_manager,
-				client_target.board.generate_display(reply.clone()),
+				client_target.generate_display(reply.clone()),
 			);
 			if reply == BoardReply::Die {
 				flag = true
@@ -101,7 +101,7 @@ impl Server {
 				}
 			}
 		}
-		let display = client.board.generate_display(board_reply.clone());
+		let display = client.generate_display(board_reply.clone());
 		client.send_display(&self.client_manager, display);
 	}
 
@@ -212,7 +212,7 @@ impl Server {
 		client.state = ClientState::InMatch(GameType::Single);
 		client.attack_target = 0;
 		client.send_msg(&ServerMsg::Start(0));
-		let display = client.board.generate_display(BoardReply::Ok);
+		let display = client.generate_display(BoardReply::Ok);
 		client.send_display(&self.client_manager, display);
 	}
 

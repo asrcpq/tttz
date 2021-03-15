@@ -35,14 +35,14 @@ impl Client {
 			addr,
 			dc_ids: HashSet::new(),
 			state: ClientState::Idle,
-			board: Board::new(id),
+			board: Default::default(),
 			attack_target: 0,
 			met,
 		}
 	}
 
 	pub fn init_board(&mut self) {
-		self.board = Board::new(self.id);
+		self.board = Default::default();
 	}
 
 	pub fn pair_success(&mut self, target_id: IdType) {
@@ -87,6 +87,10 @@ impl Client {
 		let ret = self.board.handle_msg(BoardMsg::KeyEvent(key_type));
 		self.board.calc_shadow();
 		ret
+	}
+
+	pub fn generate_display(&self, board_reply: BoardReply) -> Display {
+		self.board.generate_display(self.id, board_reply)
 	}
 }
 

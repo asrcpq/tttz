@@ -11,7 +11,6 @@ use rand::Rng;
 use std::collections::HashSet;
 
 pub struct Board {
-	id: IdType,
 	pub(in crate) floating_block: Block,
 	shadow_block: Block,
 	pub(in crate) rg: RandomGenerator,
@@ -35,11 +34,10 @@ impl fmt::Debug for Board {
 	}
 }
 
-impl Board {
-	pub fn new(id: IdType) -> Board {
+impl Default for Board {
+	fn default() -> Board {
 		let replay = Default::default();
 		let mut board = Board {
-			id,
 			floating_block: Block::new(0), // immediately overwritten
 			shadow_block: Block::new(0),   // immediately overwritten
 			rg: Default::default(),
@@ -53,7 +51,9 @@ impl Board {
 		board.calc_shadow();
 		board
 	}
+}
 
+impl Board {
 	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {
 		if pos.0 < 0 || pos.1 < 0 {
 			return false;
@@ -414,8 +414,8 @@ impl Board {
 		}
 	}
 
-	pub fn generate_display(&self, board_reply: BoardReply) -> Display {
-		let mut display = Display::new(self.id);
+	pub fn generate_display(&self, id: IdType, board_reply: BoardReply) -> Display {
+		let mut display = Display::new(id);
 		for i in 0..20 {
 			display.color[i] = self.color[i];
 		}
@@ -440,7 +440,7 @@ mod test {
 
 	#[test]
 	fn test_is_pos_inside() {
-		let board = Board::new(1);
+		let board: Board = Default::default();
 		assert_eq!(board.is_pos_inside((10, 40)), false);
 		assert_eq!(board.is_pos_inside((10, 5)), false);
 		assert_eq!(board.is_pos_inside((0, 0)), true);
@@ -537,7 +537,7 @@ mod test {
 
 	#[test]
 	fn test_i_kick() {
-		let mut board = Board::new(0);
+		let mut board: Board = Default::default();
 		board.floating_block = Block::new(0);
 		board.floating_block.pos.0 = 3;
 		board.floating_block.pos.1 = 5;
@@ -616,7 +616,7 @@ mod test {
 
 	#[test]
 	fn test_pc() {
-		let mut board = Board::new(0);
+		let mut board: Board = Default::default();
 		test::oracle(&mut board, 0, &[0; 10]);
 		eprintln!("{:?}", board.rg.bag);
 		for _ in 0..4 {
