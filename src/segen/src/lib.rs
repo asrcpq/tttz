@@ -34,10 +34,10 @@ pub fn segen(path: PathBuf) {
 		cutoff_from_frequency(700.0, 44_100),
 		0.01,
 	);
-	write_sound!("rotate_regular", &convolve(&pass, &sample));
+	write_sound!("garbage_overflow", &convolve(&pass, &sample));
 
 	write_sound!(
-		"rotate_fail",
+		"badmove",
 		&make_samples(0.1, 44_100, |t| 0.5
 			* ((0.6 * sawtooth_wave(100.)(t) + sawtooth_wave(70.)(t))
 				* (1. - t * 10.)))

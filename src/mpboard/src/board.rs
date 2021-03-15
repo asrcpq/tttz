@@ -78,6 +78,7 @@ impl Board {
 	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		self.replay.push_operation(board_msg.clone());
+		let mut okflag = true;
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
 				KeyType::Nothing => {}
@@ -85,16 +86,16 @@ impl Board {
 					self.hold();
 				}
 				KeyType::Left => {
-					self.move1(-1);
+					okflag = self.move1(-1);
 				}
 				KeyType::LLeft => {
-					self.move2(-1);
+					okflag = self.move2(-1);
 				}
 				KeyType::Right => {
-					self.move1(1);
+					okflag = self.move1(1);
 				}
 				KeyType::RRight => {
-					self.move2(1);
+					okflag = self.move2(1);
 				}
 				KeyType::HardDrop => {
 					return self.press_up()
@@ -103,13 +104,13 @@ impl Board {
 					return self.press_down()
 				}
 				KeyType::RotateReverse => {
-					self.rotate(-1);
+					return self.rotate(-1)
 				}
 				KeyType::Rotate => {
-					self.rotate(1);
+					return self.rotate(1)
 				}
 				KeyType::RotateFlip => {
-					self.rotate(2);
+					return self.rotate(2)
 				}
 			},
 			BoardMsg::Attacked(amount) => {
@@ -125,7 +126,11 @@ impl Board {
 				}
 			}
 		}
-		BoardReply::Ok
+		if okflag {
+			BoardReply::Ok
+		} else {
+			BoardReply::BadMove
+		}
 	}
 
 	fn move1(&mut self, dx: i32) -> bool {
@@ -137,15 +142,20 @@ impl Board {
 		true
 	}
 
-	fn move2(&mut self, dx: i32) {
-		while self.move1(dx) {}
+	fn move2(&mut self, dx: i32) -> bool {
+		if self.move1(dx) {
+			while self.move1(dx) {}
+			true
+		} else {
+			false
+		}
 	}
 
-	fn rotate2(&mut self, dr: i8) -> u8 {
+	fn rotate2(&mut self, dr: i8) -> BoardReply {
 		let code = self.floating_block.code;
 		let rotation = self.floating_block.rotation;
 		if code == 3 {
-			return 0;
+			return BoardReply::BadMove;
 		}
 		self.floating_block.rotation = (rotation + dr).rem_euclid(4);
 		let std_pos = self.floating_block.pos;
@@ -154,21 +164,22 @@ impl Board {
 			self.floating_block.pos.1 = std_pos.1 + wkp.1 as i32;
 			if self.floating_block.test(self) {
 				if self.test_twist() > 0 {
-					return 2;
+					return BoardReply::RotateTwist;
 				} else {
-					return 1;
+					return BoardReply::Ok;
 				}
 			}
 		}
-		0
+		BoardReply::BadMove
 	}
 
-	fn rotate(&mut self, dr: i8) {
+	fn rotate(&mut self, dr: i8) -> BoardReply {
 		let revert_block = self.floating_block.clone();
 		let ret = self.rotate2(dr);
-		if ret == 0 {
+		if ret == BoardReply::BadMove {
 			self.floating_block = revert_block;
 		}
+		ret
 	}
 
 	fn spawn_block(&mut self) {

@@ -6,6 +6,7 @@ use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
 use crate::sound_manager::SoundManager;
 use crate::keymap::TuiKey;
+use crate::sound_effect::SoundEffect;
 
 use std::collections::HashMap;
 use std::io::{stdout, Read, Write};
@@ -281,6 +282,9 @@ impl ClientSession {
 					if self.last_display.remove(&id).is_some() {
 						if self.mode == 1 {
 							self.client_display.disp_by_id(&display);
+							self.sound_manager.play(
+								&SoundEffect::from_board_reply(&display.board_reply)
+							);
 						}
 						self.last_display.insert(id, display);
 					} else {

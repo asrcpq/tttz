@@ -1,16 +1,36 @@
+use tttz_protocol::BoardReply;
+
 #[derive(PartialEq, Eq, Hash)]
 pub enum SoundEffect {
 	// 0: fail
 	// 1: success
 	// 2: twist success
-	Rotate(u8),
-	Hold,
+	RotateTwist,
+	Fail,
 	SonicDrop,
 	PlainDrop,
 	ClearDrop,
 	AttackDrop,
 	AttackDrop2,
-	PerfectClear,
 	GarbageOverflow,
-	AttackReceived,
+	Silence,
+}
+
+impl SoundEffect {
+	pub fn from_board_reply(board_reply: &BoardReply) -> SoundEffect {
+		match board_reply {
+			&BoardReply::ClearDrop(_lc, atk) => {
+				if atk == 0 {
+					SoundEffect::ClearDrop
+				} else if atk < 4 {
+					SoundEffect::AttackDrop
+				} else {
+					SoundEffect::AttackDrop2
+				}
+			}
+			BoardReply::RotateTwist => SoundEffect::RotateTwist,
+			BoardReply::BadMove => SoundEffect::Fail,
+			_ => SoundEffect::Silence,
+		}
+	}
 }
