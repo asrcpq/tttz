@@ -1,4 +1,4 @@
-use tttz_libclient::client_socket::ClientSocket;
+use tttz_libclient::ClientSocket;
 use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg};
 
 use std::collections::VecDeque;

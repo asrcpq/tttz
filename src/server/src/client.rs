@@ -84,9 +84,7 @@ impl Client {
 
 	// true = die
 	pub fn process_key(&mut self, key_type: KeyType) -> BoardReply {
-		let ret = self.board.handle_msg(BoardMsg::KeyEvent(key_type));
-		self.board.calc_shadow();
-		ret
+		self.board.handle_msg(BoardMsg::KeyEvent(key_type))
 	}
 
 	pub fn generate_display(&self, board_reply: BoardReply) -> Display {

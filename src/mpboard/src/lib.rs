@@ -8,4 +8,5 @@ mod random_generator;
 pub use random_generator::RandomGenerator;
 mod garbage_attack_manager;
 mod replay;
-pub mod test;
+pub use replay::Replay;
+pub mod utils;

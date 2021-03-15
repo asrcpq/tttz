@@ -8,9 +8,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Replay {
-	start_time: SystemTime,
-	data: Vec<(u128, BoardMsg)>,
-	block_seq: Vec<CodeType>,
+	pub start_time: SystemTime,
+	pub data: Vec<(u128, BoardMsg)>,
+	pub block_seq: Vec<CodeType>,
 }
 
 impl Default for Replay {

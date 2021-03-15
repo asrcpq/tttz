@@ -223,7 +223,7 @@ impl ClientDisplay {
 		self.disp_by_panel(display, panel);
 	}
 
-	fn disp_by_panel(&mut self, display: &Display, panel: usize) {
+	pub fn disp_by_panel(&mut self, display: &Display, panel: usize) {
 		if panel >= 2 {
 			panic!("Only support 2 panels");
 		}

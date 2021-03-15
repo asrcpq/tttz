@@ -8,9 +8,6 @@ edition = "2018"
 
 [dependencies]
 termion = "*"
-
-[dependencies.tttz-mpboard]
-path = "../mpboard"
-
-[dependencies.tttz-protocol]
-path = "../protocol"
+tttz-mpboard = {path = "../mpboard"}
+tttz-protocol = {path = "../protocol"}
+tttz-ruleset = {path = "../ruleset"}

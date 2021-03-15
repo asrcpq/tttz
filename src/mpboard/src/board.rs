@@ -76,6 +76,7 @@ impl Board {
 	fn rotate(&mut self, dr: i8) -> BoardReply {
 		let revert_block = self.floating_block.clone();
 		let ret = self.field.rotate(&mut self.floating_block, dr);
+		self.calc_shadow();
 		match ret {
 			1 => BoardReply::Ok,
 			2 => BoardReply::RotateTwist,
@@ -91,6 +92,11 @@ impl Board {
 		let mut okflag = true;
 		match board_msg {
 			BoardMsg::KeyEvent(key_type) => match key_type {
+				KeyType::HardDrop => return self.press_up(),
+				KeyType::SonicDrop => return self.press_down(),
+				KeyType::RotateReverse => return self.rotate(-1),
+				KeyType::Rotate => return self.rotate(1),
+				KeyType::RotateFlip => return self.rotate(2),
 				KeyType::Nothing => {}
 				KeyType::Hold => {
 					self.hold();
@@ -107,11 +113,6 @@ impl Board {
 				KeyType::RRight => {
 					okflag = self.move2(1);
 				}
-				KeyType::HardDrop => return self.press_up(),
-				KeyType::SonicDrop => return self.press_down(),
-				KeyType::RotateReverse => return self.rotate(-1),
-				KeyType::Rotate => return self.rotate(1),
-				KeyType::RotateFlip => return self.rotate(2),
 			},
 			BoardMsg::Attacked(amount) => {
 				self.gaman.push_garbage(amount);
@@ -126,6 +127,7 @@ impl Board {
 				}
 			}
 		}
+		self.calc_shadow();
 		if okflag {
 			BoardReply::Ok
 		} else {
@@ -133,7 +135,7 @@ impl Board {
 		}
 	}
 
-	fn spawn_block(&mut self) {
+	pub fn spawn_block(&mut self) {
 		let code = self.rg.get();
 		self.replay.push_block(code);
 		self.floating_block = Piece::new(code);
@@ -320,7 +322,7 @@ impl Board {
 	}
 
 	// true: die
-	pub fn calc_shadow(&mut self) -> bool {
+	pub(in crate) fn calc_shadow(&mut self) -> bool {
 		self.shadow_block = self.floating_block.clone();
 		loop {
 			self.shadow_block.pos.1 -= 1;
@@ -355,7 +357,7 @@ impl Board {
 #[cfg(test)]
 mod test {
 	use super::*;
-	use crate::test::*;
+	use crate::utils::*;
 
 	#[test]
 	fn test_test_tspin() {

@@ -13,7 +13,12 @@ pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 }
 
 pub fn oracle(mut board: &mut Board, floating_code: CodeType, bag: &[CodeType]) {
-	board.floating_block = Piece::new(floating_code);
+	if floating_code != 7 {
+		board.floating_block = Piece::new(floating_code);
+	} else {
+		board.floating_block.code = 7;
+		board.spawn_block();
+	}
 	board.calc_shadow();
 	board.rg.bag.drain(..);
 	board.rg.bag.extend(bag.iter());

@@ -1,0 +1,11 @@
+[package]
+name = "tttz-replayer"
+version = "0.1.0"
+authors = ["asrcpq <asrcpq@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+bincode = "*"
+termion = "*"
+tttz-mpboard = {path = "../mpboard"}
+tttz-libclient = {path = "../libclient"}
