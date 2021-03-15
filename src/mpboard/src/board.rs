@@ -76,14 +76,14 @@ impl Board {
 	fn rotate(&mut self, dr: i8) -> BoardReply {
 		let revert_block = self.floating_block.clone();
 		let ret = self.field.rotate(&mut self.floating_block, dr);
+		if ret == 0 {
+			self.floating_block = revert_block;
+		}
 		self.calc_shadow();
 		match ret {
 			1 => BoardReply::Ok,
 			2 => BoardReply::RotateTwist,
-			_ => {
-				self.floating_block = revert_block;
-				BoardReply::BadMove
-			}
+			_ => BoardReply::BadMove,
 		}
 	}
 
