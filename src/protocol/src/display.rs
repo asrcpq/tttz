@@ -1,5 +1,9 @@
-use crate::{BoardReply, IdType};
+use arrayvec::ArrayVec;
 use serde::{Deserialize, Serialize};
+
+use tttz_ruleset::CodeType;
+use crate::{BoardReply, IdType, Piece};
+
 use std::collections::VecDeque;
 
 pub const BOARD_WIDTH: usize = 10;
@@ -9,10 +13,10 @@ pub const BOARD_WIDTH: usize = 10;
 pub struct Display {
 	pub id: IdType,
 	pub color: Vec<[u8; BOARD_WIDTH]>,
-	pub shadow_block: [u8; 4], // posx, posy, code, rotation
-	pub floating_block: [u8; 4],
-	pub hold: u8,
-	pub bag_preview: [u8; 6],
+	pub shadow_block: Piece,
+	pub floating_block: Piece,
+	pub hold: CodeType,
+	pub bag_preview: ArrayVec<[CodeType; 6]>,
 	pub cm: u32,
 	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
@@ -23,11 +27,11 @@ impl Display {
 	pub fn new(id: IdType) -> Display {
 		Display {
 			id,
-			color: vec![[7; BOARD_WIDTH]; 20],
-			shadow_block: [5, 30, 0, 0],
-			floating_block: [5, 30, 0, 0],
+			color: vec![[b' '; BOARD_WIDTH]; 20],
+			shadow_block: Piece::new(0),
+			floating_block: Piece::new(0),
 			hold: 7,
-			bag_preview: [7; 6],
+			bag_preview: ArrayVec::from([7; 6]),
 			cm: 0,
 			tcm: 0,
 			garbages: VecDeque::new(),

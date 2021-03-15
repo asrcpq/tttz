@@ -10,8 +10,9 @@ mod key_type;
 pub use key_type::KeyType;
 mod game_type;
 pub use game_type::GameType;
-
 mod display;
 pub use display::Display;
+mod piece;
+pub use piece::Piece;
 
 pub type IdType = i32;

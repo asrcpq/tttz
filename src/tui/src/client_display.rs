@@ -1,4 +1,3 @@
-use tttz_mpboard::Block;
 use tttz_protocol::{Display, IdType};
 use tttz_ruleset::*;
 
@@ -135,7 +134,7 @@ impl ClientDisplay {
 		}
 	}
 
-	fn mini_blockp(&mut self, x: u32, double_y: u32, code: u8, panel: usize) {
+	fn mini_blockp(&mut self, x: u32, double_y: u32, code: CodeType, panel: usize) {
 		let mut print_info: HashMap<(u32, u32), i32> = HashMap::new();
 		for i in 0..4 {
 			let tmp = BPT[code as usize][0][i as usize];
@@ -244,8 +243,8 @@ impl ClientDisplay {
 				);
 			}
 		}
-		let shadow_block = Block::decompress(&display.shadow_block);
-		let floating_block = Block::decompress(&display.floating_block);
+		let shadow_block = display.shadow_block.clone();
+		let floating_block = display.floating_block.clone();
 		let shadow_pos = shadow_block.getpos();
 		// show shadow_block first
 		print!("[0m");

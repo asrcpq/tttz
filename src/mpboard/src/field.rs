@@ -1,5 +1,5 @@
 use tttz_ruleset::*;
-use crate::Block;
+use tttz_protocol::Piece;
 use std::ops::{Deref, Index, IndexMut};
 
 type Colors = Vec<[u8; 10]>;
@@ -38,7 +38,7 @@ impl IndexMut<usize> for Field {
 }
 
 impl Field {
-	pub fn test(&self, block: &Block) -> bool {
+	pub fn test(&self, block: &Piece) -> bool {
 		for block_id in 0..4 {
 			let tmp = BPT[block.code as usize][block.rotation as usize]
 				[block_id as usize];
@@ -51,7 +51,7 @@ impl Field {
 		true
 	}
 
-	fn test_twist2(&self, block: &mut Block) -> bool {
+	fn test_twist2(&self, block: &mut Piece) -> bool {
 		block.pos.0 -= 1;
 		if self.test(&block) {
 			block.pos.0 += 1;
@@ -73,7 +73,7 @@ impl Field {
 	}
 
 	// return 0: none, 1: mini, 2: regular
-	pub fn rotate(&self, block: &mut Block, dr: i8) -> u32 {
+	pub fn rotate(&self, block: &mut Piece, dr: i8) -> u32 {
 		let code = block.code;
 		let rotation = block.rotation;
 		if code == 3 {
@@ -97,7 +97,7 @@ impl Field {
 
 	// test all types of twists
 	// return 0: none, 1: mini, 2: regular
-	pub fn test_twist(&self, block: &mut Block) -> u32 {
+	pub fn test_twist(&self, block: &mut Piece) -> u32 {
 		// No o spin
 		if block.code == 3 {
 			return 0;
@@ -136,5 +136,19 @@ impl Field {
 			return false;
 		}
 		self.color[pos.1 as usize][pos.0 as usize] == b' '
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_is_pos_inside() {
+		let field: Field = Default::default();
+		assert_eq!(field.is_pos_inside((10, 40)), false);
+		assert_eq!(field.is_pos_inside((10, 5)), false);
+		assert_eq!(field.is_pos_inside((0, 0)), true);
+		assert_eq!(field.is_pos_inside((4, 20)), true);
 	}
 }

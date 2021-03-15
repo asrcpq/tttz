@@ -66,7 +66,7 @@ impl Thinker for MMBot {
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
 		self.write_msg(&format!(
 			"update game this_piece_type {}\n",
-			ID_TO_CHAR_MM[display.floating_block[2] as usize],
+			ID_TO_CHAR_MM[display.floating_block.code as usize],
 		));
 		self.write_msg(&format!(
 			"update game next_pieces {}\n",

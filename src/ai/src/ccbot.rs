@@ -1,4 +1,7 @@
+use arrayvec::ArrayVec;
+
 use tttz_protocol::{BoardReply, Display, KeyType};
+use tttz_ruleset::CodeType;
 
 use crate::Thinker;
 use cold_clear::Interface;
@@ -8,7 +11,7 @@ use std::collections::VecDeque;
 
 pub struct CCBot {
 	interface: Interface,
-	preview_list: [u8; 6],
+	preview_list: ArrayVec<[CodeType; 6]>,
 }
 
 fn map_key(pm: PieceMovement) -> KeyType {
@@ -48,12 +51,12 @@ impl Default for CCBot {
 		let interface = get_if();
 		CCBot {
 			interface,
-			preview_list: [7u8; 6],
+			preview_list: ArrayVec::from([7; 6]),
 		}
 	}
 }
 
-fn code_to_piece(code: u8) -> libtetris::Piece {
+fn code_to_piece(code: CodeType) -> libtetris::Piece {
 	use libtetris::Piece::*;
 	match code {
 		0 => I,
@@ -73,12 +76,12 @@ impl Thinker for CCBot {
 	fn reset(&mut self) {
 		eprintln!("CCBOT: Reset");
 		self.interface = get_if();
-		self.preview_list = [7u8; 6];
+		self.preview_list = ArrayVec::from([7; 6]);
 	}
 
 	// TODO: handle garbages
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
-		self.update_preview(&display.bag_preview, display.floating_block[2]);
+		self.update_preview(&display.bag_preview, display.floating_block.code);
 		if let BoardReply::GarbageOverflow(_) = display.board_reply {
 			let mut field = [[false; 10]; 40];
 			for (row, each_row) in field.iter_mut().take(20).enumerate() {
@@ -101,7 +104,7 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
-	fn update_preview(&mut self, new_list: &[u8; 6], current: u8) {
+	fn update_preview(&mut self, new_list: &ArrayVec<[CodeType; 6]>, current: CodeType) {
 		if self.preview_list[0] == 7 {
 			// feed previews
 			self.interface.add_next_piece(code_to_piece(current));
@@ -109,7 +112,7 @@ impl CCBot {
 				// eprintln!("add {}", code);
 				self.interface.add_next_piece(code_to_piece(code));
 			}
-			self.preview_list = *new_list;
+			self.preview_list = new_list.clone();
 		} else {
 			// the head of new preview is index of last preview
 			'a: for last_pos in 0..6 {
@@ -133,7 +136,7 @@ impl CCBot {
 					}
 				}
 			}
-			self.preview_list = *new_list;
+			self.preview_list = new_list.clone();
 		}
 	}
 }

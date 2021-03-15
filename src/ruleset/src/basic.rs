@@ -1,3 +1,4 @@
+use crate::PosType;
 use enum_map::{enum_map, EnumMap};
 
 pub const ID_TO_CHAR: [u8; 8] =
@@ -5,7 +6,7 @@ pub const ID_TO_CHAR: [u8; 8] =
 
 // block pos table
 // code * rotation * block * (x, y)
-pub const BPT: [[[(i8, i8); 4]; 4]; 7] = [
+pub const BPT: [[[(PosType, PosType); 4]; 4]; 7] = [
 	[
 		[(0, 0), (1, 0), (2, 0), (3, 0)],
 		[(0, 0), (0, 1), (0, 2), (0, 3)],
@@ -50,11 +51,11 @@ pub const BPT: [[[(i8, i8); 4]; 4]; 7] = [
 	],
 ];
 
-pub const INITIAL_POS: [i32; 7] = [3, 3, 3, 4, 3, 3, 3];
+pub const INITIAL_POS: [PosType; 7] = [3, 3, 3, 4, 3, 3, 3];
 
 type BlockScalar<T> = [[T; 4]; 7];
 
-pub const BLOCK_HEIGHT: BlockScalar<i32> = [
+pub const BLOCK_HEIGHT: BlockScalar<PosType> = [
 	[1, 4, 1, 4],
 	[2, 3, 2, 3],
 	[2, 3, 2, 3],
@@ -64,7 +65,7 @@ pub const BLOCK_HEIGHT: BlockScalar<i32> = [
 	[2, 3, 2, 3],
 ];
 
-pub const BLOCK_WIDTH: BlockScalar<i32> = [
+pub const BLOCK_WIDTH: BlockScalar<PosType> = [
 	[4, 1, 4, 1],
 	[3, 2, 3, 2],
 	[3, 2, 3, 2],
@@ -105,8 +106,8 @@ mod test {
 
 	#[test]
 	fn test_block_height_width() {
-		let mut height: BlockScalar<i32> = Default::default();
-		let mut width: BlockScalar<i32> = Default::default();
+		let mut height: BlockScalar<PosType> = Default::default();
+		let mut width: BlockScalar<PosType> = Default::default();
 		for code in 0..7 {
 			for rot in 0..4 {
 				height[code][rot] =
@@ -116,14 +117,14 @@ mod test {
 						} else {
 							max
 						}
-					}) as i32 + 1;
+					}) as PosType + 1;
 				width[code][rot] = BPT[code][rot].iter().fold(0, |max, data| {
 					if data.0 > max {
 						data.0
 					} else {
 						max
 					}
-				}) as i32 + 1;
+				}) as PosType + 1;
 			}
 		}
 		assert_eq!(height, BLOCK_HEIGHT);

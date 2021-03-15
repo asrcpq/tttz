@@ -1,8 +1,8 @@
-use tttz_protocol::Display;
+use tttz_protocol::{Piece, Display};
 use tttz_protocol::{BoardMsg, BoardReply, IdType, KeyType};
 use tttz_ruleset::*;
 
-use crate::{Block, Field};
+use crate::Field;
 use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
@@ -11,8 +11,8 @@ use rand::Rng;
 use std::collections::HashSet;
 
 pub struct Board {
-	pub(in crate) floating_block: Block,
-	shadow_block: Block,
+	pub(in crate) floating_block: Piece,
+	shadow_block: Piece,
 	pub(in crate) rg: RandomGenerator,
 	// pub(in crate) field: Vec<[u8; 10]>,
 	pub(in crate) field: Field,
@@ -39,8 +39,8 @@ impl Default for Board {
 	fn default() -> Board {
 		let replay = Default::default();
 		let mut board = Board {
-			floating_block: Block::new(0), // immediately overwritten
-			shadow_block: Block::new(0),   // immediately overwritten
+			floating_block: Piece::new(0), // immediately overwritten
+			shadow_block: Piece::new(0),   // immediately overwritten
 			rg: Default::default(),
 			field: Default::default(),
 			hold: 7,
@@ -136,7 +136,7 @@ impl Board {
 	fn spawn_block(&mut self) {
 		let code = self.rg.get();
 		self.replay.push_block(code);
-		self.floating_block = Block::new(code);
+		self.floating_block = Piece::new(code);
 	}
 
 	fn hold(&mut self) {
@@ -146,7 +146,7 @@ impl Board {
 		} else {
 			let tmp = self.hold;
 			self.hold = self.floating_block.code;
-			self.floating_block = Block::new(tmp);
+			self.floating_block = Piece::new(tmp);
 		}
 	}
 
@@ -332,19 +332,21 @@ impl Board {
 	}
 
 	pub fn generate_display(&self, id: IdType, board_reply: BoardReply) -> Display {
-		let mut display = Display::new(id);
-		for i in 0..20 {
-			display.color[i] = self.field[i];
-		}
-		display.shadow_block = self.shadow_block.compress();
-		display.floating_block = self.floating_block.compress();
-		display.garbages = self.gaman.garbages.clone();
-		display.hold = self.hold as u8;
-		display.board_reply = board_reply;
-		display.floating_block = self.floating_block.compress();
+		let mut display = Display {
+			id,
+			color: self.field.iter().take(20).cloned().collect(),
+			shadow_block: self.shadow_block.clone(),
+			floating_block: self.floating_block.clone(),
+			hold: self.hold,
+			bag_preview: self.rg.bag.iter().take(6).cloned().collect(),
+			cm: 0,
+			tcm: 0,
+			garbages: Default::default(),
+			board_reply,
+		};
 		self.gaman.set_display(&mut display);
 		for i in 0..6 {
-			display.bag_preview[i] = self.rg.bag[i] as u8;
+			display.bag_preview[i] = self.rg.bag[i];
 		}
 		display
 	}
@@ -356,24 +358,15 @@ mod test {
 	use crate::test::*;
 
 	#[test]
-	fn test_is_pos_inside() {
-		let board: Board = Default::default();
-		assert_eq!(board.is_pos_inside((10, 40)), false);
-		assert_eq!(board.is_pos_inside((10, 5)), false);
-		assert_eq!(board.is_pos_inside((0, 0)), true);
-		assert_eq!(board.is_pos_inside((4, 20)), true);
-	}
-
-	#[test]
 	fn test_test_tspin() {
 		let mut board =
 			test::generate_solidlines([1, 0, 3, 0, 0, 0, 0, 0, 0, 0]);
 		board.field[38][2] = b' ';
-		board.floating_block = Block::new(5);
+		board.floating_block = Piece::new(5);
 		board.floating_block.pos.0 = 0;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 2;
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 	}
 
 	#[test]
@@ -383,83 +376,83 @@ mod test {
 			test::generate_solidlines([2, 3, 0, 3, 2, 0, 0, 0, 0, 0]);
 		board.field[39][1] = b' ';
 		board.field[39][3] = b' ';
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 3;
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 		board.floating_block.code = 2;
 		board.floating_block.pos.0 = 2;
 		board.floating_block.rotation = 1;
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 
 		// It is a regular twist, as long as its center is blocked
 		let mut board =
 			test::generate_solidlines([2, 2, 0, 2, 2, 0, 0, 0, 0, 0]);
 		board.field[0][1] = b' ';
 		board.field[0][3] = b' ';
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 3;
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 		board.floating_block.code = 2;
 		board.floating_block.pos.0 = 2;
 		board.floating_block.rotation = 1;
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 
 		// mini-twist
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 0, 3, 2, 0, 0, 0, 0]);
 		board.field[0][1] = b' ';
 		board.field[0][4] = b' ';
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 2;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 0;
-		assert_eq!(board.test_twist(), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 		board.floating_block.code = 2;
 		board.floating_block.pos.0 = 1;
-		assert_eq!(board.test_twist(), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 
 		// no twist
 		let mut board =
 			test::generate_solidlines([2, 1, 1, 1, 2, 2, 2, 2, 2, 2]);
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 1;
 		board.floating_block.rotation = 0;
-		assert_eq!(board.test_twist(), 0);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 0);
 		board.floating_block.code = 2;
-		assert_eq!(board.test_twist(), 0);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 0);
 
 		// in-place 180 kick
 		let mut board =
 			test::generate_solidlines([4, 0, 0, 4, 2, 2, 2, 2, 2, 2]);
 		board.field[3][2] = b'i';
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 1;
-		assert_eq!(board.test_twist(), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 		board.rotate(2);
 		assert_eq!(board.floating_block.pos, (1, 0));
-		assert_eq!(board.test_twist(), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 		board.floating_block.code = 2;
 		board.floating_block.rotation = 1;
 		board.rotate(2);
 		assert_eq!(board.floating_block.pos, (1, 0));
-		assert_eq!(board.test_twist(), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 	}
 
 	#[test]
 	fn test_i_kick() {
 		let mut board: Board = Default::default();
-		board.floating_block = Block::new(0);
+		board.floating_block = Piece::new(0);
 		board.floating_block.pos.0 = 3;
 		board.floating_block.pos.1 = 5;
 		board.floating_block.rotation = 0;
-		assert_eq!(board.test_twist(), 0);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 0);
 
 		board.floating_block.pos.1 = 0;
 		board.rotate(2);
@@ -473,26 +466,26 @@ mod test {
 			board.field[0][i] = b' ';
 		}
 		eprintln!("{:?}", board);
-		board.floating_block = Block::new(0);
+		board.floating_block = Piece::new(0);
 		board.floating_block.pos.0 = 0;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 1;
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 2);
 		assert_eq!(board.floating_block.pos, (0, 0));
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 		board.floating_block.rotation = 3;
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 0);
 		assert_eq!(board.floating_block.pos, (0, 0));
-		assert_eq!(board.test_twist(), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 	}
 
 	#[test]
 	fn test_calc_shadow() {
 		let mut board =
 			test::generate_solidlines([1, 3, 2, 5, 4, 1, 2, 5, 2, 0]);
-		board.floating_block = Block::new(1); // █▄▄
+		board.floating_block = Piece::new(1); // █▄▄
 		assert!(!board.calc_shadow());
 		use std::collections::HashSet;
 		let mut blocks: HashSet<(i32, i32)> = HashSet::new();
@@ -524,7 +517,7 @@ mod test {
 	fn test_shadow_die() {
 		let mut board =
 			test::generate_solidlines([1, 20, 20, 19, 0, 0, 0, 0, 0, 0]);
-		board.floating_block = Block::new(1);
+		board.floating_block = Piece::new(1);
 		board.floating_block.pos.0 = 1;
 		assert!(board.calc_shadow());
 		board.floating_block.rotation = 2;

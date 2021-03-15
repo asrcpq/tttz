@@ -8,3 +8,7 @@ edition = "2018"
 serde = "*"
 serde_json = "*"
 bincode = "*"
+arrayvec = "*"
+
+[dependencies.tttz-ruleset]
+path = "../ruleset"

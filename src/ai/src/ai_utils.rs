@@ -5,10 +5,10 @@ use std::collections::VecDeque;
 
 pub struct GenerateKeyParam {
 	pub hold_swap: bool,
-	pub code: u8,
+	pub code: CodeType,
 	pub rotation: i8,
 	pub post_key: KeyType,
-	pub dx: i32,
+	pub dx: PosType,
 }
 
 impl Default for GenerateKeyParam {
@@ -26,7 +26,7 @@ impl Default for GenerateKeyParam {
 // standard rotation pos
 // each line is for a type of block, 4 pairs of pos(left up) indicates 4 directions
 // each pos is the difference to first pair
-const SRP: [[(i32, i32); 4]; 7] = [
+const SRP: [[(PosType, PosType); 4]; 7] = [
 	[(0, 0), (2, -2), (0, -1), (1, -2)],
 	[(0, 0), (1, -1), (0, -1), (0, -1)],
 	[(0, 0), (1, -1), (0, -1), (0, -1)],
@@ -75,43 +75,43 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 
 // return a list of possible drop pos
 pub fn convolve_height(
-	heights: &[u8],
-	code: u8,
+	heights: &[PosType],
+	code: CodeType,
 	rot: i8,
-) -> (Vec<(u8, u8)>, [u8; 4], [u8; 4]) {
+) -> (Vec<(PosType, PosType)>, [PosType; 4], [PosType; 4]) {
 	let mut ret = Vec::new();
 	let mut dx = 0;
 	let mut posx = [0; 4];
 	let mut posy = [0; 4];
 	for block in 0..4usize {
 		let tmp = BPT[code as usize][rot as usize][block];
-		posx[block] = tmp.0 as u8;
-		posy[block] = tmp.1 as u8;
+		posx[block] = tmp.0;
+		posy[block] = tmp.1;
 	}
 	loop {
-		if dx + BLOCK_WIDTH[code as usize][rot as usize] as u8 > 10 {
+		if dx + BLOCK_WIDTH[code as usize][rot as usize] > 10 {
 			break (ret, posx, posy);
 		}
 
 		let mut highest = 0;
 		for block in 0..4usize {
-			let height = heights[dx as usize + posx[block] as usize] as i32
-				- posy[block] as i32
+			let height = heights[dx as usize + posx[block] as usize]
+				- posy[block]
 				+ 1;
 			if height > highest {
 				highest = height;
 			}
 		}
-		ret.push((dx, highest as u8));
+		ret.push((dx, highest));
 		dx += 1;
 	}
 }
 
-pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
+pub fn get_height_and_hole(display: &Display) -> ([PosType; 10], PosType, usize) {
 	// calc height
-	let mut heights = [0u8; 10];
+	let mut heights: [PosType; 10] = [0; 10];
 	let mut highest_hole = 0;
-	let mut highest_hole_x: i32 = -1;
+	let mut highest_hole_x: PosType = -1;
 	for i in 0..10 {
 		let mut j: usize = 19;
 		let mut state = 0;
@@ -122,7 +122,7 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 				}
 			} else if state == 0 {
 				state = 1;
-				heights[i as usize] = j as u8 + 1;
+				heights[i as usize] = j as PosType + 1;
 			}
 			if j == 0 {
 				break;
@@ -131,7 +131,7 @@ pub fn get_height_and_hole(display: &Display) -> ([u8; 10], i32, usize) {
 		}
 		if j > highest_hole {
 			highest_hole = j;
-			highest_hole_x = i as i32;
+			highest_hole_x = i as PosType;
 		}
 	}
 	(heights, highest_hole_x, highest_hole)
