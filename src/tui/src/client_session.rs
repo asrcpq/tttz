@@ -1,7 +1,8 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
 
-use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg};
+use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg, BoardMsg};
+use tttz_mpboard::Board;
 use tttz_libclient::{ClientSocket, ClientDisplay};
 use crate::keymap::TuiKey;
 use crate::sound_effect::SoundEffect;
@@ -9,6 +10,9 @@ use crate::sound_manager::SoundManager;
 
 use std::collections::HashMap;
 use std::io::{stdout, Read, Write};
+
+// enable it under slow connection
+const CLIENT_RENDER: bool = true;
 
 pub struct ClientSession {
 	sound_manager: SoundManager,
@@ -21,6 +25,7 @@ pub struct ClientSession {
 	history: Vec<String>, // text mode history
 	bytebuf: Vec<u8>,
 	last_display: HashMap<IdType, Display>,
+	crb: Board, // client render board
 	last_request_id: IdType,
 }
 
@@ -39,6 +44,7 @@ impl ClientSession {
 			history: Vec::new(),
 			bytebuf: Vec::new(),
 			last_display: HashMap::new(),
+			crb: Default::default(),
 			last_request_id: 0,
 		};
 		client_session
@@ -257,6 +263,11 @@ impl ClientSession {
 			TuiKey::ServerKey(key_event) => {
 				// only send keyevent to server when playing
 				if self.state == 2 {
+					if CLIENT_RENDER {
+						let rep = self.crb.handle_msg(BoardMsg::KeyEvent(key_event));
+						let disp = self.crb.generate_display(self.id, rep);
+						self.client_display.disp_by_id(&disp);
+					}
 					self.client_socket
 						.send(ClientMsg::KeyEvent(key_event))
 						.unwrap();
@@ -292,6 +303,9 @@ impl ClientSession {
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
 						if self.mode == 1 {
+							if CLIENT_RENDER && id == self.id {
+								self.crb.update_from_display(&display);
+							}
 							self.client_display.disp_by_id(&display);
 							self.sound_manager.play(
 								&SoundEffect::from_board_reply(

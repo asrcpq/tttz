@@ -1,12 +1,12 @@
-Working:
+Working(high latency):
 
-- single play client_display
-- wrap replayer
-- specify playing speed
+- backtracking
+- use tcp
+- unknown garbage & preview for high latency
 
 Planned:
 
-- client rendering
+- replay two panels
 - a real strategy mode, or make strategy ai vs work
 - write an ai
 - write more tests

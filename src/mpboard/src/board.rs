@@ -331,6 +331,27 @@ impl Board {
 		}
 	}
 
+	// when no garbage flush everything is simple
+	pub fn update_from_display_minor(&mut self, display: &Display) {
+		self.rg.bag = display.bag_preview.clone().to_vec();
+		self.rg.bag_id = 0;
+		self.rg.bag.push(7); // prevent get method generating new bag
+	}
+
+	// used for client rendering
+	pub fn update_from_display(&mut self, display: &Display) {
+		self.hold = display.hold;
+		self.shadow_block = display.shadow_block.clone();
+		self.floating_block = display.floating_block.clone();
+		self.gaman.read_display(display);
+		self.rg.bag = display.bag_preview.clone().to_vec();
+		self.rg.bag_id = 0;
+		self.rg.bag.push(7); // prevent get method generating new bag
+		for i in 0..20 {
+			self.field[i] = display.color[i];
+		}
+	}
+
 	pub fn generate_display(&self, id: IdType, board_reply: BoardReply) -> Display {
 		let mut display = Display {
 			id,
@@ -344,7 +365,7 @@ impl Board {
 			garbages: Default::default(),
 			board_reply,
 		};
-		self.gaman.set_display(&mut display);
+		self.gaman.write_display(&mut display);
 		display
 	}
 

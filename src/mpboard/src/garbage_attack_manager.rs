@@ -76,7 +76,13 @@ impl GarbageAttackManager {
 		self.counter_attack(atk)
 	}
 
-	pub fn set_display(&self, mut display: &mut Display) {
+	pub fn read_display(&mut self, display: &Display) {
+		self.garbages = display.garbages.clone();
+		self.cm = display.cm;
+		self.tcm = self.tcm;
+	}
+
+	pub fn write_display(&self, mut display: &mut Display) {
 		display.garbages = self.garbages.clone();
 		display.cm = self.cm;
 		display.tcm = self.tcm;
