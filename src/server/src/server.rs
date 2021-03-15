@@ -78,6 +78,7 @@ impl Server {
 		client: &mut Client,
 		board_reply: &BoardReply,
 	) {
+		let mut dieflag = false;
 		// note the size effect of counter_attack
 		if let BoardReply::ClearDrop(_line_clear, atk) = *board_reply {
 			if atk > 0 {
@@ -91,7 +92,7 @@ impl Server {
 						client.id, client.attack_target, atk,
 					);
 					if self.send_attack(client.attack_target, atk) {
-						self.die(client, false);
+						dieflag = true;
 					};
 				} else {
 					eprintln!(
@@ -103,6 +104,9 @@ impl Server {
 		}
 		let display = client.generate_display(board_reply.clone());
 		client.send_display(&self.client_manager, display);
+		if dieflag {
+			self.die(client, false);
+		}
 	}
 
 	fn parse_message(
