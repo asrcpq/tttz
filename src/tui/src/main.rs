@@ -1,5 +1,7 @@
 mod client_session;
 use client_session::ClientSession;
+mod client_renderer;
+use client_renderer::ClientRenderer;
 mod keymap;
 mod sound_effect;
 mod sound_manager;

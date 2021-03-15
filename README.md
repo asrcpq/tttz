@@ -8,7 +8,8 @@
 
 ## Features
 
-* focus on 1v1 network combat(ai use the same interface as human)
+* focus on 1v1 network combat(ai use the same interface as human),
+optimized for high latency environment
 
 * responsive and minimalist. zero-gravity, event-blocking.
 

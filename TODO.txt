@@ -1,13 +1,10 @@
-Working(high latency):
-
-- backtracking
-- tcp
-- unknown garbage & preview for high latency
-
-Planned:
+Working:
 
 - replay two panels
 - a real strategy mode, or make strategy ai vs work
+
+Planned:
+
 - write an ai
 - write more tests
 - better sound effects
