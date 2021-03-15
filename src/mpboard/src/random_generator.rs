@@ -70,7 +70,6 @@ impl RandomGenerator {
 	}
 
 	pub fn get_code(&mut self) -> CodeType {
-		eprintln!("{:?}", self.bag);
 		if self.bag.len() - self.bag_id <= 7 {
 			self.generate_bag();
 		}

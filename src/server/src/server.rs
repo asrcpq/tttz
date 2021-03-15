@@ -220,7 +220,9 @@ impl Server {
 		match msg {
 			ClientMsg::Quit => {
 				eprintln!("Client {} quit", client.id);
-				self.die(&mut client, true);
+				if let ClientState::InMatch(_) = client.state {
+					self.die(&mut client, true);
+				}
 				assert!(self.client_manager.pop_by_id(client.id).is_none());
 				return false;
 			}

@@ -30,6 +30,7 @@ fn main() {
 
 	let mut board: Board = Default::default();
 	tttz_mpboard::utils::oracle(&mut board, 7, &replay.block_seq);
+	assert!(!replay.block_seq.is_empty());
 	tttz_mpboard::utils::oracle_garbage(
 		&mut board,
 		&replay.garbage_shift_check,
