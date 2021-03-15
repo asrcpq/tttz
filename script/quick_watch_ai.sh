@@ -9,7 +9,7 @@ sleep 1
 cargo run --release --bin tttz-tui \
 execute "spawnai algo mm speed 100" \
 execute "sleep 100" \
-execute "spawnai algo cc speed 100" \
+execute "spawnai algo cc speed 90" \
 execute "sleep 100" \
 execute "invite 2 3" \
 execute "view 2" \

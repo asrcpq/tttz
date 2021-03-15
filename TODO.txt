@@ -1,12 +1,15 @@
 Working:
 
+- single play client_display
+- wrap replayer
+- specify playing speed
+
+Planned:
+
 - client rendering
 - a real strategy mode, or make strategy ai vs work
 - write an ai
 - write more tests
-
-Planned:
-
 - better sound effects
 - id system(for replay)
 - replay statistics
