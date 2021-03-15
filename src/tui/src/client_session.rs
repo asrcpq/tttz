@@ -19,6 +19,7 @@ pub struct ClientSession {
 	id: IdType,
 	mode: i32,
 	textbuffer: String,
+	history: Vec<String>, // text mode history
 	bytebuf: Vec<u8>,
 	last_display: HashMap<IdType, Display>,
 	last_request_id: IdType,
@@ -36,6 +37,7 @@ impl ClientSession {
 			id,
 			mode: 0,
 			textbuffer: String::new(),
+			history: Vec::new(),
 			bytebuf: Vec::new(),
 			last_display: HashMap::new(),
 			last_request_id: 0,
@@ -75,6 +77,8 @@ impl ClientSession {
 			self.modeswitch(1);
 			return false;
 		}
+		// push history if non empty
+		self.history.push(line.to_string());
 		if split[0] == "quit" {
 			// no need to send server quit, which is done in client_socket's drop
 			return true;
@@ -173,6 +177,14 @@ impl ClientSession {
 					return false;
 				}
 				self.bytebuf.clear();
+				if byte == b'A' {
+					if let Some(string) = self.history.pop() {
+						self.textbuffer = string;
+					}
+				}
+				print!("{}", termion::clear::CurrentLine);
+				self.print_prompt();
+				print!("{}", self.textbuffer);
 				return false;
 			}
 			match byte {

@@ -1,15 +1,14 @@
 Working:
 
 - a real strategy mode, or make strategy ai vs work
-- write an RL ai
+- write an ai
 - write more tests
 
 Planned:
 
-- make a stable release
-- client rendering and se
+- client rendering
 - better sound effects
-- better ui(readline history, redraw key, arrow key)
 - id system(for replay)
 - replay statistics
 - load and play replay file
+- make a stable release
