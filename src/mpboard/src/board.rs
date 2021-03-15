@@ -2,7 +2,7 @@ use tttz_protocol::Display;
 use tttz_protocol::{BoardMsg, BoardReply, IdType, KeyType};
 use tttz_ruleset::*;
 
-use crate::block::Block;
+use crate::{Block, Field};
 use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
@@ -14,7 +14,8 @@ pub struct Board {
 	pub(in crate) floating_block: Block,
 	shadow_block: Block,
 	pub(in crate) rg: RandomGenerator,
-	pub(in crate) color: Vec<[u8; 10]>,
+	// pub(in crate) field: Vec<[u8; 10]>,
+	pub(in crate) field: Field,
 	hold: u8,
 	gaman: GarbageAttackManager,
 	height: i32,
@@ -24,7 +25,7 @@ pub struct Board {
 use std::fmt;
 impl fmt::Debug for Board {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		for row in self.color.iter().rev() {
+		for row in self.field.iter().rev() {
 			for &ch in row.iter() {
 				write!(f, "{} ", if ch == b' ' { '0' } else { ch as char })?;
 			}
@@ -41,7 +42,7 @@ impl Default for Board {
 			floating_block: Block::new(0), // immediately overwritten
 			shadow_block: Block::new(0),   // immediately overwritten
 			rg: Default::default(),
-			color: vec![[b' '; 10]; 40],
+			field: Default::default(),
 			hold: 7,
 			gaman: Default::default(),
 			height: 0,
@@ -68,10 +69,9 @@ impl Board {
 		if !self.is_pos_inside(pos) {
 			return false;
 		}
-		self.color[pos.1 as usize][pos.0 as usize] == b' '
+		self.field[pos.1 as usize][pos.0 as usize] == b' '
 	}
 
-	// true = die
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
 		self.replay.push_operation(board_msg.clone());
 		let mut okflag = true;
@@ -199,7 +199,7 @@ impl Board {
 		for &each_ln in ln.iter() {
 			let mut flag = true;
 			for x in 0..10 {
-				if self.color[each_ln][x] == b' ' {
+				if self.field[each_ln][x] == b' ' {
 					flag = false;
 				}
 			}
@@ -227,7 +227,7 @@ impl Board {
 			if movedown == 0 {
 				continue;
 			}
-			self.color[i - movedown] = self.color[i];
+			self.field[i - movedown] = self.field[i];
 		}
 	}
 
@@ -272,7 +272,7 @@ impl Board {
 		for mini_pos in tmp.iter() {
 			let check_x = self.floating_block.pos.0 + mini_pos.0;
 			let check_y = self.floating_block.pos.1 + mini_pos.1;
-			if self.color[check_y as usize][check_x as usize] == b' ' {
+			if self.field[check_y as usize][check_x as usize] == b' ' {
 				return 1;
 			}
 		}
@@ -292,9 +292,9 @@ impl Board {
 		garbage_line as i32
 	}
 
-	// set color, update height
+	// set field, update height
 	// return lines to check
-	fn hard_drop_set_color(&mut self) -> HashSet<usize> {
+	fn hard_drop_set_field(&mut self) -> HashSet<usize> {
 		let tmppos = self.floating_block.getpos();
 		let mut lines_tocheck = HashSet::new();
 		for each_square in tmppos.iter() {
@@ -307,12 +307,12 @@ impl Board {
 
 			// generate lines that changed
 			lines_tocheck.insert(py);
-			self.color[py][px] = ID_TO_CHAR[self.floating_block.code as usize];
+			self.field[py][px] = ID_TO_CHAR[self.floating_block.code as usize];
 		}
 		lines_tocheck
 	}
 
-	// pull pending garbages and write to board color
+	// pull pending garbages and write to board field
 	pub fn generate_garbage(&mut self, keep: usize) -> i32 {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0;
@@ -332,7 +332,7 @@ impl Board {
 			ret += count;
 			for y in (count..40).rev() {
 				for x in 0..10 {
-					self.color[y][x] = self.color[y - count][x];
+					self.field[y][x] = self.field[y - count][x];
 				}
 			}
 			for y in 0..count {
@@ -341,9 +341,9 @@ impl Board {
 					slot = self.rg.rng.gen_range(0..10);
 				}
 				for x in 0..10 {
-					self.color[y][x] = b'g';
+					self.field[y][x] = b'g';
 				}
-				self.color[y][slot] = b' ';
+				self.field[y][slot] = b' ';
 				if !self.floating_block.test(self) {
 					self.floating_block.pos.1 -= 1;
 				}
@@ -353,9 +353,9 @@ impl Board {
 	}
 
 	fn hard_drop(&mut self) -> BoardReply {
-		// check twist before setting color
+		// check twist before setting field
 		let twist = self.test_twist();
-		let lines_tocheck = self.hard_drop_set_color();
+		let lines_tocheck = self.hard_drop_set_field();
 
 		let elim = self.checkline(lines_tocheck);
 		let line_count = elim.len() as u32;
@@ -417,7 +417,7 @@ impl Board {
 	pub fn generate_display(&self, id: IdType, board_reply: BoardReply) -> Display {
 		let mut display = Display::new(id);
 		for i in 0..20 {
-			display.color[i] = self.color[i];
+			display.color[i] = self.field[i];
 		}
 		display.shadow_block = self.shadow_block.compress();
 		display.floating_block = self.floating_block.compress();
@@ -451,7 +451,7 @@ mod test {
 	fn test_test_tspin() {
 		let mut board =
 			test::generate_solidlines([1, 0, 3, 0, 0, 0, 0, 0, 0, 0]);
-		board.color[38][2] = b' ';
+		board.field[38][2] = b' ';
 		board.floating_block = Block::new(5);
 		board.floating_block.pos.0 = 0;
 		board.floating_block.pos.1 = 0;
@@ -464,8 +464,8 @@ mod test {
 		// The famous 180
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 3, 2, 0, 0, 0, 0, 0]);
-		board.color[39][1] = b' ';
-		board.color[39][3] = b' ';
+		board.field[39][1] = b' ';
+		board.field[39][3] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -479,8 +479,8 @@ mod test {
 		// It is a regular twist, as long as its center is blocked
 		let mut board =
 			test::generate_solidlines([2, 2, 0, 2, 2, 0, 0, 0, 0, 0]);
-		board.color[0][1] = b' ';
-		board.color[0][3] = b' ';
+		board.field[0][1] = b' ';
+		board.field[0][3] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -494,8 +494,8 @@ mod test {
 		// mini-twist
 		let mut board =
 			test::generate_solidlines([2, 3, 0, 0, 3, 2, 0, 0, 0, 0]);
-		board.color[0][1] = b' ';
-		board.color[0][4] = b' ';
+		board.field[0][1] = b' ';
+		board.field[0][4] = b' ';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 2;
 		board.floating_block.pos.1 = 0;
@@ -519,7 +519,7 @@ mod test {
 		// in-place 180 kick
 		let mut board =
 			test::generate_solidlines([4, 0, 0, 4, 2, 2, 2, 2, 2, 2]);
-		board.color[3][2] = b'i';
+		board.field[3][2] = b'i';
 		board.floating_block = Block::new(1);
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
@@ -553,7 +553,7 @@ mod test {
 		let mut board =
 			test::generate_solidlines([0, 4, 4, 4, 1, 0, 0, 0, 0, 0]);
 		for i in 1..4 {
-			board.color[0][i] = b' ';
+			board.field[0][i] = b' ';
 		}
 		eprintln!("{:?}", board);
 		board.floating_block = Block::new(0);

@@ -2,6 +2,8 @@ mod block;
 pub use block::Block;
 mod board;
 pub use board::Board;
+mod field;
+pub use field::Field;
 mod random_generator;
 pub use random_generator::RandomGenerator;
 mod garbage_attack_manager;

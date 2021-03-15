@@ -5,3 +5,6 @@
 *.wav
 perf.*
 *.svg
+
+# not ready
+/src/libai
