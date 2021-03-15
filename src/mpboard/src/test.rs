@@ -1,5 +1,6 @@
 use crate::block::Block;
 use crate::board::Board;
+use tttz_ruleset::CodeType;
 
 pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 	let mut board: Board = Default::default();
@@ -11,7 +12,7 @@ pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 	board
 }
 
-pub fn oracle(mut board: &mut Board, floating_code: u8, bag: &[u8]) {
+pub fn oracle(mut board: &mut Board, floating_code: CodeType, bag: &[CodeType]) {
 	board.floating_block = Block::new(floating_code);
 	board.calc_shadow();
 	board.rg.bag.drain(..);

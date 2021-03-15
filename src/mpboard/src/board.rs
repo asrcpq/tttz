@@ -16,7 +16,7 @@ pub struct Board {
 	pub(in crate) rg: RandomGenerator,
 	// pub(in crate) field: Vec<[u8; 10]>,
 	pub(in crate) field: Field,
-	hold: u8,
+	hold: CodeType,
 	gaman: GarbageAttackManager,
 	height: i32,
 	pub replay: Replay,
@@ -55,21 +55,35 @@ impl Default for Board {
 }
 
 impl Board {
-	fn is_pos_inside(&self, pos: (i32, i32)) -> bool {
-		if pos.0 < 0 || pos.1 < 0 {
-			return false;
-		}
-		if pos.0 >= 10 || pos.1 >= 40 {
+	fn move1(&mut self, dx: i8) -> bool {
+		self.floating_block.pos.0 += dx;
+		if !self.field.test(&self.floating_block) {
+			self.floating_block.pos.0 -= dx;
 			return false;
 		}
 		true
 	}
 
-	pub fn is_pos_vacant(&self, pos: (i32, i32)) -> bool {
-		if !self.is_pos_inside(pos) {
-			return false;
+	fn move2(&mut self, dx: i8) -> bool {
+		if self.move1(dx) {
+			while self.move1(dx) {}
+			true
+		} else {
+			false
 		}
-		self.field[pos.1 as usize][pos.0 as usize] == b' '
+	}
+
+	fn rotate(&mut self, dr: i8) -> BoardReply {
+		let revert_block = self.floating_block.clone();
+		let ret = self.field.rotate(&mut self.floating_block, dr);
+		match ret {
+			1 => BoardReply::Ok,
+			2 => BoardReply::RotateTwist,
+			_ => {
+				self.floating_block = revert_block;
+				BoardReply::BadMove
+			}
+		}
 	}
 
 	pub fn handle_msg(&mut self, board_msg: BoardMsg) -> BoardReply {
@@ -117,55 +131,6 @@ impl Board {
 		} else {
 			BoardReply::BadMove
 		}
-	}
-
-	fn move1(&mut self, dx: i32) -> bool {
-		self.floating_block.pos.0 += dx;
-		if !self.floating_block.test(self) {
-			self.floating_block.pos.0 -= dx;
-			return false;
-		}
-		true
-	}
-
-	fn move2(&mut self, dx: i32) -> bool {
-		if self.move1(dx) {
-			while self.move1(dx) {}
-			true
-		} else {
-			false
-		}
-	}
-
-	fn rotate2(&mut self, dr: i8) -> BoardReply {
-		let code = self.floating_block.code;
-		let rotation = self.floating_block.rotation;
-		if code == 3 {
-			return BoardReply::BadMove;
-		}
-		self.floating_block.rotation = (rotation + dr).rem_euclid(4);
-		let std_pos = self.floating_block.pos;
-		for wkp in kick_iter(code, rotation, dr) {
-			self.floating_block.pos.0 = std_pos.0 + wkp.0 as i32;
-			self.floating_block.pos.1 = std_pos.1 + wkp.1 as i32;
-			if self.floating_block.test(self) {
-				if self.test_twist() > 0 {
-					return BoardReply::RotateTwist;
-				} else {
-					return BoardReply::Ok;
-				}
-			}
-		}
-		BoardReply::BadMove
-	}
-
-	fn rotate(&mut self, dr: i8) -> BoardReply {
-		let revert_block = self.floating_block.clone();
-		let ret = self.rotate2(dr);
-		if ret == BoardReply::BadMove {
-			self.floating_block = revert_block;
-		}
-		ret
 	}
 
 	fn spawn_block(&mut self) {
@@ -229,54 +194,6 @@ impl Board {
 			}
 			self.field[i - movedown] = self.field[i];
 		}
-	}
-
-	// moving test
-	fn test_twist2(&mut self) -> bool {
-		self.floating_block.pos.0 -= 1;
-		if self.floating_block.test(self) {
-			self.floating_block.pos.0 += 1;
-			return false;
-		}
-		self.floating_block.pos.0 += 2;
-		if self.floating_block.test(self) {
-			self.floating_block.pos.0 -= 1;
-			return false;
-		}
-		self.floating_block.pos.0 -= 1;
-		self.floating_block.pos.1 += 1;
-		if self.floating_block.test(self) {
-			self.floating_block.pos.1 -= 1;
-			return false;
-		}
-		self.floating_block.pos.1 -= 1;
-		true
-	}
-
-	// test all types of twists
-	// return 0: none, 1: mini, 2: regular
-	fn test_twist(&mut self) -> u32 {
-		// No o spin
-		if self.floating_block.code == 3 {
-			return 0;
-		}
-		if !self.test_twist2() {
-			return 0;
-		}
-		// No mini i spin
-		if self.floating_block.code == 0 {
-			return 2;
-		}
-		let tmp = &TWIST_MINI_CHECK[self.floating_block.code as usize]
-			[self.floating_block.rotation as usize];
-		for mini_pos in tmp.iter() {
-			let check_x = self.floating_block.pos.0 + mini_pos.0;
-			let check_y = self.floating_block.pos.1 + mini_pos.1;
-			if self.field[check_y as usize][check_x as usize] == b' ' {
-				return 1;
-			}
-		}
-		2
 	}
 
 	// -1 = death
@@ -344,7 +261,7 @@ impl Board {
 					self.field[y][x] = b'g';
 				}
 				self.field[y][slot] = b' ';
-				if !self.floating_block.test(self) {
+				if !self.field.test(&self.floating_block) {
 					self.floating_block.pos.1 -= 1;
 				}
 			}
@@ -354,7 +271,7 @@ impl Board {
 
 	fn hard_drop(&mut self) -> BoardReply {
 		// check twist before setting field
-		let twist = self.test_twist();
+		let twist = self.field.test_twist(&mut self.floating_block);
 		let lines_tocheck = self.hard_drop_set_field();
 
 		let elim = self.checkline(lines_tocheck);
@@ -407,7 +324,7 @@ impl Board {
 		self.shadow_block = self.floating_block.clone();
 		loop {
 			self.shadow_block.pos.1 -= 1;
-			if !self.shadow_block.test(self) {
+			if !self.field.test(&self.shadow_block) {
 				self.shadow_block.pos.1 += 1;
 				break self.shadow_block.pos.1 >= 20;
 			}
@@ -422,12 +339,12 @@ impl Board {
 		display.shadow_block = self.shadow_block.compress();
 		display.floating_block = self.floating_block.compress();
 		display.garbages = self.gaman.garbages.clone();
-		display.hold = self.hold;
+		display.hold = self.hold as u8;
 		display.board_reply = board_reply;
 		display.floating_block = self.floating_block.compress();
 		self.gaman.set_display(&mut display);
 		for i in 0..6 {
-			display.bag_preview[i] = self.rg.bag[i];
+			display.bag_preview[i] = self.rg.bag[i] as u8;
 		}
 		display
 	}

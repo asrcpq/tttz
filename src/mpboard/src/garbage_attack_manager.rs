@@ -42,7 +42,7 @@ impl GarbageAttackManager {
 		&mut self,
 		tspin: u32,
 		line_count: u32,
-		code: u8,
+		code: CodeType,
 		pc: bool,
 	) -> u32 {
 		if line_count == 0 {

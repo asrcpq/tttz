@@ -1,6 +1,7 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use tttz_protocol::BoardMsg;
+use tttz_ruleset::CodeType;
 
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -9,7 +10,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct Replay {
 	start_time: SystemTime,
 	data: Vec<(u128, BoardMsg)>,
-	block_seq: Vec<u8>,
+	block_seq: Vec<CodeType>,
 }
 
 impl Default for Replay {
@@ -23,7 +24,7 @@ impl Default for Replay {
 }
 
 impl Replay {
-	pub fn push_block(&mut self, code: u8) {
+	pub fn push_block(&mut self, code: CodeType) {
 		self.block_seq.push(code);
 	}
 

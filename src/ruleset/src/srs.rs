@@ -1,6 +1,8 @@
+use crate::PosType;
+
 // Mini check for J and l: only check center square
 lazy_static::lazy_static! {
-pub static ref TWIST_MINI_CHECK: [[Vec<(i32, i32)>; 4]; 7] = [
+pub static ref TWIST_MINI_CHECK: [[Vec<(PosType, PosType)>; 4]; 7] = [
 	[
 		vec![],
 		vec![],
@@ -81,7 +83,7 @@ static ref FWKD: [Vec<(i8, i8)>; 4] = [
 
 // assume dr = 1, -1, 2
 pub fn kick_iter(
-	code: u8,
+	code: i8,
 	start: i8,
 	dr: i8,
 ) -> impl Iterator<Item = &'static (i8, i8)> {

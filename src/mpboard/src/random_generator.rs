@@ -1,12 +1,13 @@
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use tttz_ruleset::CodeType;
 use std::collections::VecDeque;
 
 #[derive(Clone)]
 pub struct RandomGenerator {
 	pub rng: ThreadRng, // directly called for garbage generation
-	pub bag: VecDeque<u8>,
+	pub bag: VecDeque<CodeType>,
 }
 
 impl Default for RandomGenerator {
@@ -28,7 +29,7 @@ impl RandomGenerator {
 		self.bag.extend(b.into_iter());
 	}
 
-	pub fn get(&mut self) -> u8 {
+	pub fn get(&mut self) -> CodeType {
 		if self.bag.len() <= 7 {
 			self.generate_bag();
 		}
