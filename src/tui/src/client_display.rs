@@ -148,7 +148,7 @@ impl ClientDisplay {
 			}
 			print_info.insert((x1, y1), mod2);
 		}
-		print!("[3{}m", COLORMAP[ID_TO_CHAR[code as usize]]);
+		print!("[38;5;{}m", COLORMAP[ID_TO_CHAR[code as usize]]);
 
 		for ((x, y), value) in print_info.into_iter() {
 			// value should not be zero
