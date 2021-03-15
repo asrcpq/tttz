@@ -1,7 +1,7 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
 
-use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg, BoardMsg};
+use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg, BoardMsg, KeyType};
 use tttz_mpboard::Board;
 use tttz_libclient::{ClientSocket, ClientDisplay};
 use crate::keymap::TuiKey;
@@ -19,7 +19,8 @@ pub struct ClientSession {
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
 	state: i32,
-	// gamekey_history: Vec<KeyType>,
+	gamekey_history: Vec<KeyType>,
+	// disruptive_checkpoints: Vec<u32>,
 	id: IdType,
 	mode: i32,
 	textbuffer: String,
@@ -39,6 +40,8 @@ impl ClientSession {
 			client_socket,
 			client_display,
 			state: 1,
+			gamekey_history: Vec::new(),
+			// disruptive_checkpoints: Vec::new(),
 			id,
 			mode: 0,
 			textbuffer: String::new(),
@@ -163,6 +166,8 @@ impl ClientSession {
 				}
 			}
 			ServerMsg::GameOver(_) => {
+				self.gamekey_history.clear();
+				// self.disruptive_checkpoints.clear();
 				self.state = 1;
 			}
 			ServerMsg::ClientList(_) => {}
@@ -264,14 +269,18 @@ impl ClientSession {
 			TuiKey::ServerKey(key_event) => {
 				// only send keyevent to server when playing
 				if self.state == 2 {
+					self.gamekey_history.push(key_event);
 					if CLIENT_RENDER {
 						let rep = self.crb.handle_msg(BoardMsg::KeyEvent(key_event));
 						let disp = self.crb.generate_display(self.id, rep);
 						self.client_display.disp_by_id(&disp);
 					}
 					self.client_socket
-						.send(ClientMsg::KeyEvent(0, key_event))
-						.unwrap();
+						// notice that we send last id plus 1
+						.send(ClientMsg::KeyEvent(
+							self.gamekey_history.len() as u32,
+							key_event)
+						).unwrap();
 				}
 			}
 			TuiKey::Quit => return true,
@@ -300,12 +309,21 @@ impl ClientSession {
 	fn recv_phase(&mut self) -> bool {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
-				ServerMsg::Display(seq, display) => {
+				ServerMsg::Display(seq, mut display) => {
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
 						if self.mode == 1 {
 							if CLIENT_RENDER && id == self.id {
 								self.crb.update_from_display(&display);
+								(seq as usize..self.gamekey_history.len()).map(|id| {
+									// self.show_msg(&format!("redo id {} seq {}", id, seq));
+									self.crb.handle_msg(
+										BoardMsg::KeyEvent(self.gamekey_history[id])
+									)
+								}).last()
+								.map(|rep| 
+									display = self.crb.generate_display(self.id, rep)
+								);
 							}
 							self.client_display.disp_by_id(&display);
 							self.sound_manager.play(
