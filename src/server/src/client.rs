@@ -4,13 +4,8 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use tttz_mpboard::Board;
 use tttz_protocol::{
-	BoardMsg,
-	BoardReply,
-	Display,
-	KeyType,
+	BoardMsg, BoardReply, Display, GameType, IdType, KeyType, MsgEncoding,
 	ServerMsg,
-	GameType,
-	MsgEncoding
 };
 
 #[derive(PartialEq, Debug)]
@@ -21,20 +16,20 @@ pub enum ClientState {
 }
 
 pub struct Client {
-	pub id: i32,
+	pub id: IdType,
 	addr: SocketAddr,
-	pub dc_ids: HashSet<i32>,
+	pub dc_ids: HashSet<IdType>,
 	// 1: waiting
 	// 2: in-game
 	// 3: pairing
 	pub state: ClientState,
 	pub board: Board,
-	pub attack_target: i32,
+	pub attack_target: IdType,
 	pub met: MsgEncoding,
 }
 
 impl Client {
-	pub fn new(id: i32, addr: SocketAddr, met: MsgEncoding) -> Client {
+	pub fn new(id: IdType, addr: SocketAddr, met: MsgEncoding) -> Client {
 		Client {
 			id,
 			addr,
@@ -50,7 +45,7 @@ impl Client {
 		self.board = Board::new(self.id);
 	}
 
-	pub fn pair_success(&mut self, target_id: i32) {
+	pub fn pair_success(&mut self, target_id: IdType) {
 		self.state = ClientState::InMatch(GameType::Speed);
 		self.dc_ids.insert(target_id);
 		self.attack_target = target_id;
@@ -59,7 +54,9 @@ impl Client {
 	}
 
 	pub fn send_msg(&self, msg: &ServerMsg) {
-		SOCKET.send_to(&msg.serialized(self.met), self.addr).unwrap();
+		SOCKET
+			.send_to(&msg.serialized(self.met), self.addr)
+			.unwrap();
 	}
 
 	pub fn broadcast_msg(
@@ -71,10 +68,7 @@ impl Client {
 			if let Some(client) = client_manager.view_by_id(dc_id) {
 				client.send_msg(msg);
 			} else if self.id != dc_id {
-				eprintln!(
-					"A removed client: {} is viewing {}",
-					dc_id, self.id
-				);
+				eprintln!("A removed client: {} is viewing {}", dc_id, self.id);
 			};
 		}
 		self.send_msg(msg);

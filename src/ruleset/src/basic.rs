@@ -1,6 +1,7 @@
 use enum_map::{enum_map, EnumMap};
 
-pub const ID_TO_CHAR: [u8; 8] = [b'i', b'j', b'l', b'o', b's', b't', b'z', b' '];
+pub const ID_TO_CHAR: [u8; 8] =
+	[b'i', b'j', b'l', b'o', b's', b't', b'z', b' '];
 
 // block pos table
 // code * rotation * block * (x, y)

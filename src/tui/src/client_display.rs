@@ -1,5 +1,5 @@
 use tttz_mpboard::Block;
-use tttz_protocol::Display;
+use tttz_protocol::{Display, IdType};
 use tttz_ruleset::*;
 
 use std::collections::HashMap;
@@ -13,7 +13,7 @@ pub struct ClientDisplay {
 	offset0: (u16, u16),
 	offset_x: Vec<i32>,
 	offset_y: Vec<i32>,
-	id_panel: HashMap<i32, usize>,
+	id_panel: HashMap<IdType, usize>,
 }
 
 impl Default for ClientDisplay {
@@ -34,7 +34,7 @@ impl Default for ClientDisplay {
 }
 
 impl ClientDisplay {
-	pub fn setpanel(&mut self, panel: usize, id: i32) {
+	pub fn setpanel(&mut self, panel: usize, id: IdType) {
 		self.id_panel.insert(id, panel);
 	}
 
@@ -81,7 +81,11 @@ impl ClientDisplay {
 	}
 
 	fn blockp(&self, i: u16, j: u16, piece: u8, style: u8) {
-		let (ch1, ch2) = if piece != b' ' { ('[', ']') } else { (' ', ' ') };
+		let (ch1, ch2) = if piece != b' ' {
+			('[', ']')
+		} else {
+			(' ', ' ')
+		};
 		let fgbg = 4 - style; // 0 bg 1 fg
 		print!(
 			"[{}8;5;{}m{}{}{}{}",
@@ -288,10 +292,7 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[panel] + 20;
 		let offsety = self.offset_y[panel];
 		let mut dy = 0;
-		for (mut ind, &each_garbage) in display.garbages
-			.iter()
-			.enumerate()
-		{
+		for (mut ind, &each_garbage) in display.garbages.iter().enumerate() {
 			let mut each_garbage = each_garbage as u16;
 			let flag = dy + each_garbage > 20;
 			if flag {

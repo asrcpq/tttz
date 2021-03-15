@@ -1,5 +1,5 @@
-use crate::board::Board;
 use crate::block::Block;
+use crate::board::Board;
 
 pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 	let mut board = Board::new(0);

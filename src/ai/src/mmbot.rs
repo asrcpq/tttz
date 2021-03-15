@@ -4,8 +4,8 @@ use tttz_protocol::KeyType;
 use crate::Thinker;
 
 use std::collections::VecDeque;
+use std::io::{BufRead, BufReader, Write};
 use std::process::{ChildStdin, ChildStdout, Stdio};
-use std::io::{Write, BufReader, BufRead};
 
 pub struct MMBot {
 	child_in: ChildStdin,
@@ -46,11 +46,7 @@ fn convert_field(field: &[[u8; 10]]) -> String {
 	for i in (0..height).rev() {
 		let mut row = [" "; 10];
 		for j in 0..10 {
-			row[9 - j] = if field[i][j] == b' ' {
-				"0"
-			} else {
-				"2"
-			};
+			row[9 - j] = if field[i][j] == b' ' { "0" } else { "2" };
 		}
 		ret.push(row.join(","));
 	}
@@ -74,24 +70,17 @@ impl Thinker for MMBot {
 		));
 		self.write_msg(&format!(
 			"update game next_pieces {}\n",
-			display.bag_preview
+			display
+				.bag_preview
 				.iter()
 				.map(|&x| String::from(ID_TO_CHAR_MM[x as usize]))
 				.collect::<Vec<String>>()
 				.join(",")
 		));
-		let garbage_sum: u32 = display.garbages
-			.iter()
-			.sum();
-		self.write_msg(&format!(
-			"update bot1 inAtt {}\n",
-			garbage_sum
-		));
+		let garbage_sum: u32 = display.garbages.iter().sum();
+		self.write_msg(&format!("update bot1 inAtt {}\n", garbage_sum));
 		let field_string = convert_field(&display.color);
-		self.write_msg(&format!(
-			"update bot1 field {}\n",
-			field_string,
-		));
+		self.write_msg(&format!("update bot1 field {}\n", field_string,));
 		self.write_msg("action2 moves 10000\n");
 		let mut buf = String::new();
 		self.child_out.read_line(&mut buf).unwrap();
@@ -106,8 +95,9 @@ impl MMBot {
 			match std::env::var("TTTZ_MMBOT_PATH") {
 				Ok(string) => string,
 				Err(_) => "tttz_mmbot".to_string(),
-			}
-		).stdin(Stdio::piped())
+			},
+		)
+		.stdin(Stdio::piped())
 		.stdout(Stdio::piped())
 		.spawn()?;
 		let child_in = process.stdin.take().unwrap();
@@ -119,7 +109,7 @@ impl MMBot {
 	}
 
 	pub fn write_msg(&mut self, string: &str) {
-		self.child_in.write(string.as_bytes()).unwrap();
+		self.child_in.write_all(string.as_bytes()).unwrap();
 		eprint!("mmm {}", string);
 	}
 }

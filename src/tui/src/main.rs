@@ -3,9 +3,9 @@ use tttz_libclient::client_socket;
 mod client_session;
 use client_session::ClientSession;
 mod client_display;
-mod sound_manager;
 mod keymap;
 mod sound_effect;
+mod sound_manager;
 
 fn main() {
 	let mut iter = std::env::args();

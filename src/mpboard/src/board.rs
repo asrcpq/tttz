@@ -1,5 +1,5 @@
 use tttz_protocol::Display;
-use tttz_protocol::{BoardMsg, BoardReply, KeyType};
+use tttz_protocol::{BoardMsg, BoardReply, IdType, KeyType};
 use tttz_ruleset::*;
 
 use crate::block::Block;
@@ -11,7 +11,7 @@ use rand::Rng;
 use std::collections::HashSet;
 
 pub struct Board {
-	id: i32,
+	id: IdType,
 	pub(in crate) floating_block: Block,
 	shadow_block: Block,
 	pub(in crate) rg: RandomGenerator,
@@ -27,11 +27,7 @@ impl fmt::Debug for Board {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		for row in self.color.iter().rev() {
 			for &ch in row.iter() {
-				write!(f, "{} ", if ch == b' ' {
-					'0'
-				} else {
-					ch as char
-				})?;
+				write!(f, "{} ", if ch == b' ' { '0' } else { ch as char })?;
 			}
 			writeln!(f)?;
 		}
@@ -40,7 +36,7 @@ impl fmt::Debug for Board {
 }
 
 impl Board {
-	pub fn new(id: i32) -> Board {
+	pub fn new(id: IdType) -> Board {
 		let replay = Default::default();
 		let mut board = Board {
 			id,
@@ -97,21 +93,11 @@ impl Board {
 				KeyType::RRight => {
 					okflag = self.move2(1);
 				}
-				KeyType::HardDrop => {
-					return self.press_up()
-				}
-				KeyType::SonicDrop => {
-					return self.press_down()
-				}
-				KeyType::RotateReverse => {
-					return self.rotate(-1)
-				}
-				KeyType::Rotate => {
-					return self.rotate(1)
-				}
-				KeyType::RotateFlip => {
-					return self.rotate(2)
-				}
+				KeyType::HardDrop => return self.press_up(),
+				KeyType::SonicDrop => return self.press_down(),
+				KeyType::RotateReverse => return self.rotate(-1),
+				KeyType::Rotate => return self.rotate(1),
+				KeyType::RotateFlip => return self.rotate(2),
 			},
 			BoardMsg::Attacked(amount) => {
 				self.gaman.push_garbage(amount);
@@ -298,10 +284,10 @@ impl Board {
 		let garbage_line = self.generate_garbage(max);
 		self.height += garbage_line;
 		if self.calc_shadow() {
-			return -1
+			return -1;
 		}
 		if self.height == 40 {
-			return -1
+			return -1;
 		}
 		garbage_line as i32
 	}
@@ -385,7 +371,7 @@ impl Board {
 			self.height -= line_count as i32;
 			self.spawn_block();
 			self.calc_shadow(); // cannot die from a clear drop!
-			return BoardReply::ClearDrop(line_count, atk);
+			BoardReply::ClearDrop(line_count, atk)
 		} else {
 			// plain drop: attack execution
 			let ret = self.generate_garbage(0);
@@ -398,7 +384,7 @@ impl Board {
 			if self.calc_shadow() {
 				return BoardReply::Die;
 			}
-			return BoardReply::PlainDrop(ret as u32);
+			BoardReply::PlainDrop(ret as u32)
 		}
 	}
 
@@ -564,7 +550,8 @@ mod test {
 		board.rotate(2);
 		assert_eq!(board.floating_block.pos.1, 1);
 
-		let mut board = test::generate_solidlines([0, 4, 4, 4, 1, 0, 0, 0, 0, 0]);
+		let mut board =
+			test::generate_solidlines([0, 4, 4, 4, 1, 0, 0, 0, 0, 0]);
 		for i in 1..4 {
 			board.color[0][i] = b' ';
 		}
@@ -637,7 +624,9 @@ mod test {
 			eprintln!("height: {}", board.height);
 		}
 		for t in -1..=1 {
-			if t == 0 { continue }
+			if t == 0 {
+				continue;
+			}
 			for i in 0..3 {
 				// eprintln!("{:?}", board);
 				board.rotate(1);

@@ -1,12 +1,12 @@
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-use tttz_protocol::{ClientMsg, Display, ServerMsg, IdType};
+use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg};
 
 use crate::client_display::ClientDisplay;
 use crate::client_socket::ClientSocket;
-use crate::sound_manager::SoundManager;
 use crate::keymap::TuiKey;
 use crate::sound_effect::SoundEffect;
+use crate::sound_manager::SoundManager;
 
 use std::collections::HashMap;
 use std::io::{stdout, Read, Write};
@@ -230,13 +230,11 @@ impl ClientSession {
 			if byte == b'[' {
 				return false;
 			}
+		} else if byte == b'' {
+			self.bytebuf.push(b'');
+			return false;
 		} else {
-			if byte == b'' {
-				self.bytebuf.push(b'');
-				return false;
-			} else {
-				self.bytebuf.push(byte);
-			}
+			self.bytebuf.push(byte);
 		}
 		// consume bytebuf
 		self.handle_bytebuf()
@@ -252,11 +250,13 @@ impl ClientSession {
 						.send(ClientMsg::KeyEvent(key_event))
 						.unwrap();
 				}
-			},
-			TuiKey::Quit => { return true },
+			}
+			TuiKey::Quit => return true,
 			TuiKey::Accept => {
-				self.client_socket.send(ClientMsg::Accept(self.last_request_id)).unwrap();
-			},
+				self.client_socket
+					.send(ClientMsg::Accept(self.last_request_id))
+					.unwrap();
+			}
 			TuiKey::Restart => {
 				if self.state == 2 {
 					self.client_socket.send(ClientMsg::Suicide).unwrap();
@@ -267,7 +267,7 @@ impl ClientSession {
 				}
 			}
 			TuiKey::Modeswitch => self.modeswitch(0),
-			TuiKey::Invalid => {},
+			TuiKey::Invalid => {}
 		}
 		self.bytebuf.clear();
 		false
@@ -283,7 +283,9 @@ impl ClientSession {
 						if self.mode == 1 {
 							self.client_display.disp_by_id(&display);
 							self.sound_manager.play(
-								&SoundEffect::from_board_reply(&display.board_reply)
+								&SoundEffect::from_board_reply(
+									&display.board_reply,
+								),
 							);
 						}
 						self.last_display.insert(id, display);

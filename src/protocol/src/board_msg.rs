@@ -15,7 +15,7 @@ pub enum BoardReply {
 	Ok,
 	BadMove,
 	RotateTwist,
-	PlainDrop(u32), // garbage generated
+	PlainDrop(u32),      // garbage generated
 	ClearDrop(u32, u32), // lineclear, atk
 	Die,
 	GarbageOverflow(u32), // garbage generated

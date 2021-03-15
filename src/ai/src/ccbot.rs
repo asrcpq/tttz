@@ -1,4 +1,4 @@
-use tttz_protocol::{Display, KeyType, BoardReply};
+use tttz_protocol::{BoardReply, Display, KeyType};
 
 use crate::Thinker;
 use cold_clear::Interface;
@@ -63,7 +63,9 @@ fn code_to_piece(code: u8) -> libtetris::Piece {
 		4 => S,
 		5 => T,
 		6 => Z,
-		_ => { panic!("Empty is not allowed"); }
+		_ => {
+			panic!("Empty is not allowed");
+		}
 	}
 }
 
@@ -86,16 +88,14 @@ impl Thinker for CCBot {
 			}
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
-		let garbage_sum = display.garbages
-			.iter()
-			.sum();
+		let garbage_sum = display.garbages.iter().sum();
 		self.interface.request_next_move(garbage_sum);
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),
 			Some((moves, _info)) => {
 				// eprintln!("{:?}", moves.inputs);
 				proc_moves(moves.hold, &moves.inputs)
-			},
+			}
 		}
 	}
 }
@@ -117,17 +117,19 @@ impl CCBot {
 				let mut new_pos = 0;
 				loop {
 					if self.preview_list[old_id] != new_list[new_pos] {
-						continue 'a
+						continue 'a;
 					}
 					new_pos += 1;
 					old_id += 1;
 					if old_id == 6 {
 						while new_pos < 6 {
 							eprintln!("add {}", new_list[new_pos]);
-							self.interface.add_next_piece(code_to_piece(new_list[new_pos]));
+							self.interface.add_next_piece(code_to_piece(
+								new_list[new_pos],
+							));
 							new_pos += 1;
 						}
-						break 'a
+						break 'a;
 					}
 				}
 			}

@@ -1,5 +1,5 @@
 use tttz_libclient::client_socket::ClientSocket;
-use tttz_protocol::{ClientMsg, Display, KeyType, ServerMsg, GameType};
+use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg};
 
 use std::collections::VecDeque;
 
@@ -8,7 +8,12 @@ pub trait Thinker {
 
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType>;
 
-	fn main_loop(&mut self, addr: &str, sleep_millis: u64, game_type: GameType) {
+	fn main_loop(
+		&mut self,
+		addr: &str,
+		sleep_millis: u64,
+		game_type: GameType,
+	) {
 		let strategy = game_type != GameType::Speed;
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let main_sleep = 10;

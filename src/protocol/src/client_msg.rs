@@ -21,22 +21,21 @@ pub enum ClientMsg {
 }
 
 impl ClientMsg {
-	fn from_bincode(
-		buf: &[u8],
-	) -> Result<ClientMsg, String> {
+	fn from_bincode(buf: &[u8]) -> Result<ClientMsg, String> {
 		bincode::deserialize(buf).map_err(|e| e.to_string())
 	}
 
-	fn from_json(
-		buf: &[u8],
-	) -> Result<ClientMsg, String> {
+	fn from_json(buf: &[u8]) -> Result<ClientMsg, String> {
 		serde_json::from_str::<ClientMsg>(
-			std::str::from_utf8(buf)
-				.map_err(|e| e.to_string())?
-		).map_err(|e| e.to_string())
+			std::str::from_utf8(buf).map_err(|e| e.to_string())?,
+		)
+		.map_err(|e| e.to_string())
 	}
 
-	pub fn from_bytes(buf: &[u8], cme: MsgEncoding) -> Result<ClientMsg, String> {
+	pub fn from_bytes(
+		buf: &[u8],
+		cme: MsgEncoding,
+	) -> Result<ClientMsg, String> {
 		match cme {
 			MsgEncoding::Json => Self::from_json(buf),
 			MsgEncoding::Bincode => Self::from_bincode(buf),
@@ -91,16 +90,16 @@ impl FromStr for ClientMsg {
 			"spawnai" => return Ok(Self::from_str_spawnai(split)),
 			"request" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
+					if let Ok(id) = keyword.parse::<IdType>() {
 						return Ok(ClientMsg::Request(id));
 					}
 				}
 			}
 			"invite" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id1) = keyword.parse::<i32>() {
+					if let Ok(id1) = keyword.parse::<IdType>() {
 						if let Some(keyword) = split.get(2) {
-							if let Ok(id2) = keyword.parse::<i32>() {
+							if let Ok(id2) = keyword.parse::<IdType>() {
 								return Ok(ClientMsg::Invite(id1, id2));
 							}
 						}
@@ -109,33 +108,33 @@ impl FromStr for ClientMsg {
 			}
 			"accept" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
+					if let Ok(id) = keyword.parse::<IdType>() {
 						return Ok(ClientMsg::Accept(id));
 					}
 				}
 			}
 			"view" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
+					if let Ok(id) = keyword.parse::<IdType>() {
 						return Ok(ClientMsg::View(id));
 					}
 				}
 			}
 			"noview" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
+					if let Ok(id) = keyword.parse::<IdType>() {
 						return Ok(ClientMsg::NoView(id));
 					}
 				}
 			}
 			"kick" => {
 				if let Some(keyword) = split.get(1) {
-					if let Ok(id) = keyword.parse::<i32>() {
+					if let Ok(id) = keyword.parse::<IdType>() {
 						return Ok(ClientMsg::Kick(id));
 					}
 				}
 			}
-			_ => {},
+			_ => {}
 		}
 		Err(())
 	}

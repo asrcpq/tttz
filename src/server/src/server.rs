@@ -2,9 +2,11 @@ use once_cell::sync::Lazy;
 
 use crate::client::{Client, ClientState};
 use crate::client_manager::ClientManager;
-use tttz_protocol::{GameType, BoardMsg, BoardReply, ClientMsg, ServerMsg, MsgEncoding};
+use tttz_protocol::{
+	BoardMsg, BoardReply, ClientMsg, GameType, MsgEncoding, ServerMsg,
+};
 
-use std::net::{UdpSocket, SocketAddr};
+use std::net::{SocketAddr, UdpSocket};
 
 pub static SOCKET: Lazy<UdpSocket> = Lazy::new(|| {
 	let mut addr = "0.0.0.0:23124".to_string();
@@ -26,11 +28,11 @@ pub struct Server {
 }
 
 fn new_client_msg_parse(msg: &[u8]) -> Result<MsgEncoding, String> {
-	let split = String::from(
-			std::str::from_utf8(msg).map_err(|e| e.to_string())?
-		).split_whitespace()
-		.map(|x| x.to_string())
-		.collect::<Vec<String>>();
+	let split =
+		String::from(std::str::from_utf8(msg).map_err(|e| e.to_string())?)
+			.split_whitespace()
+			.map(|x| x.to_string())
+			.collect::<Vec<String>>();
 	if split.is_empty() {
 		return Err("Message too short".to_string());
 	}
@@ -71,7 +73,11 @@ impl Server {
 		flag
 	}
 
-	fn post_operation(&mut self, client: &mut Client, board_reply: &BoardReply) {
+	fn post_operation(
+		&mut self,
+		client: &mut Client,
+		board_reply: &BoardReply,
+	) {
 		// note the size effect of counter_attack
 		if let BoardReply::ClearDrop(_line_clear, atk) = *board_reply {
 			if atk > 0 {
@@ -99,9 +105,12 @@ impl Server {
 		client.send_display(&self.client_manager, display);
 	}
 
-	fn parse_message(&mut self, buf: &[u8], src: SocketAddr, amt: usize)
-		-> Option<(Client, ClientMsg)>
-	{
+	fn parse_message(
+		&mut self,
+		buf: &[u8],
+		src: SocketAddr,
+		amt: usize,
+	) -> Option<(Client, ClientMsg)> {
 		// get or create client
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
@@ -113,7 +122,8 @@ impl Server {
 			Some(client) => client,
 			None => {
 				if let Ok(met) = new_client_msg_parse(&buf[..amt]) {
-					let new_id = self.client_manager.new_client_by_addr(src, met);
+					let new_id =
+						self.client_manager.new_client_by_addr(src, met);
 					self.client_manager
 						.send_msg_by_id(new_id, &ServerMsg::AllocId(new_id));
 				} else {
@@ -125,7 +135,10 @@ impl Server {
 		let client_msg = match ClientMsg::from_bytes(&buf[..amt], client.met) {
 			Ok(client_msg) => client_msg,
 			Err(string) => {
-				eprintln!("[43mSERVER[0m: Parse failed from {:?}: {}", src, string);
+				eprintln!(
+					"[43mSERVER[0m: Parse failed from {:?}: {}",
+					src, string
+				);
 				self.client_manager.tmp_push_by_id(client.id, client);
 				return None;
 			}
@@ -186,7 +199,10 @@ impl Server {
 				self.client_manager.tmp_push_by_id(to_id, viewed_client);
 			}
 			None => {
-				eprintln!("Client {} try to unview nonexist {}", from_id, to_id);
+				eprintln!(
+					"Client {} try to unview nonexist {}",
+					from_id, to_id
+				);
 			}
 		}
 	}
@@ -222,8 +238,7 @@ impl Server {
 			ClientMsg::Kick(id) => {
 				let mut flag = true;
 				if id != client.id {
-					if let Some(client) = self.client_manager.pop_by_id(id)
-					{
+					if let Some(client) = self.client_manager.pop_by_id(id) {
 						client.send_msg(&ServerMsg::Terminate);
 						flag = false;
 					}
@@ -245,8 +260,7 @@ impl Server {
 				}
 			}
 			ClientMsg::Invite(id1, id2) => {
-				if let Some(opponent) = self.client_manager.view_by_id(id1)
-				{
+				if let Some(opponent) = self.client_manager.view_by_id(id1) {
 					if opponent.state == ClientState::Idle {
 						opponent.send_msg(&ServerMsg::Invite(id2));
 					} else {
@@ -296,7 +310,9 @@ impl Server {
 					self.client_manager.tmp_pop_by_id(id)
 				{
 					if opponent.state != ClientState::Pairing {
-						eprintln!("SERVER: accept: but the sender is not pairing.");
+						eprintln!(
+							"SERVER: accept: but the sender is not pairing."
+						);
 					} else {
 						self.client_manager
 							.pair_apply(&mut client, &mut opponent);
@@ -313,7 +329,7 @@ impl Server {
 			ClientMsg::PlaySingle => {
 				// terminate current game
 				match client.state {
-					ClientState::InMatch(_) => {},
+					ClientState::InMatch(_) => {}
 					_ => {
 						self.start_single(&mut client);
 					}
@@ -360,10 +376,15 @@ mod test {
 	fn create_and_remove_client() {
 		let mut server: Server = Default::default();
 		let addr = "127.0.0.1:23124";
-		let id = server.client_manager.new_client_by_addr(addr.parse().unwrap(), MsgEncoding::Json);
+		let id = server
+			.client_manager
+			.new_client_by_addr(addr.parse().unwrap(), MsgEncoding::Json);
 		let client = server.client_manager.tmp_pop_by_id(id).unwrap();
 		server.client_manager.tmp_push_by_id(id, client);
-		assert_eq!(server.client_manager.get_addr_by_id(id).unwrap(), addr.parse().unwrap());
+		assert_eq!(
+			server.client_manager.get_addr_by_id(id).unwrap(),
+			addr.parse().unwrap()
+		);
 		assert!(server.client_manager.pop_by_id(id).is_some());
 	}
 }

@@ -1,5 +1,5 @@
+use crate::{BoardReply, IdType};
 use serde::{Deserialize, Serialize};
-use crate::BoardReply;
 use std::collections::VecDeque;
 
 pub const BOARD_WIDTH: usize = 10;
@@ -7,7 +7,7 @@ pub const BOARD_WIDTH: usize = 10;
 // interface between server and client
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Display {
-	pub id: i32,
+	pub id: IdType,
 	pub color: Vec<[u8; BOARD_WIDTH]>,
 	pub shadow_block: [u8; 4], // posx, posy, code, rotation
 	pub floating_block: [u8; 4],
@@ -20,7 +20,7 @@ pub struct Display {
 }
 
 impl Display {
-	pub fn new(id: i32) -> Display {
+	pub fn new(id: IdType) -> Display {
 		Display {
 			id,
 			color: vec![[7; BOARD_WIDTH]; 20],

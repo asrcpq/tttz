@@ -34,7 +34,9 @@ impl ServerMsg {
 	pub fn serialized(&self, me: MsgEncoding) -> Vec<u8> {
 		match me {
 			MsgEncoding::Bincode => bincode::serialize(self).unwrap(),
-			MsgEncoding::Json => serde_json::to_string(self).unwrap().as_bytes().to_vec(),
+			MsgEncoding::Json => {
+				serde_json::to_string(self).unwrap().as_bytes().to_vec()
+			}
 		}
 	}
 }
