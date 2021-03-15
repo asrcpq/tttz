@@ -9,3 +9,4 @@ bincode = "*"
 termion = "*"
 tttz-mpboard = {path = "../mpboard"}
 tttz-libclient = {path = "../libclient"}
+tttz-protocol = {path = "../protocol"}

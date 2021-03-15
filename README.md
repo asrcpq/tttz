@@ -15,6 +15,8 @@
 * heavily modified rules to encourage fancy attack patterns,
 making stupid AI harder to win.
 
+* Replay is automatically saved. KPP, APP and PPS are computed by replayer.
+
 See doc/rule.md for more
 
 ## Default Keybind
