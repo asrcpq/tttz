@@ -1,5 +1,3 @@
-use arrayvec::ArrayVec;
-
 use tttz_protocol::{BoardReply, Display, KeyType};
 use tttz_ruleset::CodeType;
 
@@ -11,7 +9,7 @@ use std::collections::VecDeque;
 
 pub struct CCBot {
 	interface: Interface,
-	preview_list: ArrayVec<[CodeType; 6]>,
+	preview_list: [CodeType; 6],
 }
 
 fn map_key(pm: PieceMovement) -> KeyType {
@@ -51,7 +49,7 @@ impl Default for CCBot {
 		let interface = get_if();
 		CCBot {
 			interface,
-			preview_list: ArrayVec::from([7; 6]),
+			preview_list: [7; 6],
 		}
 	}
 }
@@ -76,7 +74,7 @@ impl Thinker for CCBot {
 	fn reset(&mut self) {
 		eprintln!("CCBOT: Reset");
 		self.interface = get_if();
-		self.preview_list = ArrayVec::from([7; 6]);
+		self.preview_list = [7; 6];
 	}
 
 	// TODO: handle garbages
@@ -104,7 +102,7 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
-	fn update_preview(&mut self, new_list: &ArrayVec<[CodeType; 6]>, current: CodeType) {
+	fn update_preview(&mut self, new_list: &[CodeType; 6], current: CodeType) {
 		if self.preview_list[0] == 7 {
 			// feed previews
 			self.interface.add_next_piece(code_to_piece(current));

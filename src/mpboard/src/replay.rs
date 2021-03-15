@@ -1,7 +1,8 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use tttz_protocol::BoardMsg;
-use tttz_ruleset::CodeType;
+use tttz_ruleset::{CodeType, PosType};
+use crate::RandomGenerator;
 
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -11,6 +12,8 @@ pub struct Replay {
 	pub start_time: SystemTime,
 	pub data: Vec<(u128, BoardMsg)>,
 	pub block_seq: Vec<CodeType>,
+	pub garbage_slots: Vec<PosType>,
+	pub garbage_shift_check: Vec<f32>,
 }
 
 impl Default for Replay {
@@ -19,6 +22,8 @@ impl Default for Replay {
 			start_time: SystemTime::now(),
 			data: Vec::new(),
 			block_seq: Vec::new(),
+			garbage_slots: Vec::new(),
+			garbage_shift_check: Vec::new(),
 		}
 	}
 }
@@ -36,9 +41,13 @@ impl Replay {
 	}
 
 	pub fn save(
-		&self,
+		&mut self,
 		filename: &str,
+		rg: &mut RandomGenerator,
 	) -> Result<bool, Box<dyn std::error::Error>> {
+		self.block_seq = std::mem::replace(&mut rg.bag, Vec::new());
+		self.garbage_slots = std::mem::replace(&mut rg.slots, Vec::new());
+		self.garbage_shift_check = std::mem::replace(&mut rg.shift, Vec::new());
 		if let Some(proj_dirs) = ProjectDirs::from("", "asrcpq", "tttz") {
 			let path = proj_dirs.data_dir().join("replay");
 			std::fs::create_dir_all(&path)?;

@@ -6,7 +6,6 @@ use crate::Field;
 use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
-use rand::Rng;
 
 use std::collections::HashSet;
 
@@ -136,8 +135,7 @@ impl Board {
 	}
 
 	pub fn spawn_block(&mut self) {
-		let code = self.rg.get();
-		self.replay.push_block(code);
+		let code = self.rg.get_code();
 		self.floating_block = Piece::new(code);
 	}
 
@@ -243,7 +241,6 @@ impl Board {
 				Some(x) => x,
 				None => break,
 			} as usize;
-			let mut slot = self.rg.rng.gen_range(0..10);
 			// assert!(count != 0);
 			if count > 40 {
 				count = 40;
@@ -254,15 +251,16 @@ impl Board {
 					self.field[y][x] = self.field[y - count][x];
 				}
 			}
+			let mut slot = self.rg.get_slot(); // initial pos
 			for y in 0..count {
-				let same = self.rg.rng.gen::<f32>();
+				let same = self.rg.get_shift();
 				if same >= SAME_LINE {
-					slot = self.rg.rng.gen_range(0..10);
+					slot = self.rg.get_slot();
 				}
 				for x in 0..10 {
 					self.field[y][x] = b'g';
 				}
-				self.field[y][slot] = b' ';
+				self.field[y][slot as usize] = b' ';
 				if !self.field.test(&self.floating_block) {
 					self.floating_block.pos.1 -= 1;
 				}
@@ -340,17 +338,20 @@ impl Board {
 			shadow_block: self.shadow_block.clone(),
 			floating_block: self.floating_block.clone(),
 			hold: self.hold,
-			bag_preview: self.rg.bag.iter().take(6).cloned().collect(),
+			bag_preview: self.rg.preview_code(),
 			cm: 0,
 			tcm: 0,
 			garbages: Default::default(),
 			board_reply,
 		};
 		self.gaman.set_display(&mut display);
-		for i in 0..6 {
-			display.bag_preview[i] = self.rg.bag[i];
-		}
 		display
+	}
+
+	pub fn save_replay(&mut self, filename: &str)
+		-> Result<bool, Box<dyn std::error::Error>>
+	{
+		self.replay.save(filename, &mut self.rg)
 	}
 }
 

@@ -149,7 +149,7 @@ impl Server {
 	pub fn die(&mut self, client: &mut Client, die: bool) {
 		eprintln!("SERVER: client {} gameover", client.id);
 		client.state = ClientState::Idle;
-		match client.board.replay.save(&format!("{}", client.id)) {
+		match client.board.save_replay(&format!("{}", client.id)) {
 			Ok(true) => {}
 			Ok(false) => {
 				eprintln!("[32mSERVER[0m: cannot find path to write replay!");

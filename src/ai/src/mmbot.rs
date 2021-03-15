@@ -84,7 +84,6 @@ impl Thinker for MMBot {
 		self.write_msg("action2 moves 10000\n");
 		let mut buf = String::new();
 		self.child_out.read_line(&mut buf).unwrap();
-		eprintln!("mmm {}", buf);
 		parse_moves(buf)
 	}
 }
@@ -110,6 +109,5 @@ impl MMBot {
 
 	pub fn write_msg(&mut self, string: &str) {
 		self.child_in.write_all(string.as_bytes()).unwrap();
-		eprint!("mmm {}", string);
 	}
 }

@@ -1,4 +1,3 @@
-use arrayvec::ArrayVec;
 use serde::{Deserialize, Serialize};
 
 use tttz_ruleset::CodeType;
@@ -16,7 +15,7 @@ pub struct Display {
 	pub shadow_block: Piece,
 	pub floating_block: Piece,
 	pub hold: CodeType,
-	pub bag_preview: ArrayVec<[CodeType; 6]>,
+	pub bag_preview: [CodeType; 6],
 	pub cm: u32,
 	pub tcm: u32,
 	pub garbages: VecDeque<u32>,
@@ -31,7 +30,7 @@ impl Display {
 			shadow_block: Piece::new(0),
 			floating_block: Piece::new(0),
 			hold: 7,
-			bag_preview: ArrayVec::from([7; 6]),
+			bag_preview: [7; 6],
 			cm: 0,
 			tcm: 0,
 			garbages: VecDeque::new(),
