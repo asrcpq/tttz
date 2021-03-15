@@ -1,7 +1,7 @@
 Working(high latency):
 
 - backtracking
-- use tcp
+- tcp
 - unknown garbage & preview for high latency
 
 Planned:

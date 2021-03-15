@@ -17,7 +17,8 @@ pub enum ClientMsg {
 	Restart,
 	Accept(IdType),
 	Pair,
-	KeyEvent(KeyType),
+	// message id(used for reply matching), key
+	KeyEvent(u32, KeyType),
 }
 
 impl ClientMsg {

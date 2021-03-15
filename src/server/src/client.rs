@@ -78,8 +78,9 @@ impl Client {
 		&mut self,
 		client_manager: &ClientManager,
 		display: Display,
+		seq: u32,
 	) {
-		self.broadcast_msg(client_manager, &ServerMsg::Display(display));
+		self.broadcast_msg(client_manager, &ServerMsg::Display(seq, display));
 	}
 
 	// true = die

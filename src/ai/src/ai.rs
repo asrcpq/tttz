@@ -27,7 +27,7 @@ pub trait Thinker {
 			// read until last screen
 			while let Ok(server_msg) = client_socket.recv() {
 				match server_msg {
-					ServerMsg::Display(display) => {
+					ServerMsg::Display(_, display) => {
 						if display.id == id {
 							last_display = Some(display);
 						} else {
@@ -68,6 +68,7 @@ pub trait Thinker {
 						}
 						client_socket
 							.send(ClientMsg::KeyEvent(
+								0,
 								operation_queue.pop_front().unwrap(),
 							))
 							.unwrap();
@@ -79,7 +80,7 @@ pub trait Thinker {
 					operation_queue = self.main_think(decoded);
 					while let Some(key_type) = operation_queue.pop_front() {
 						client_socket
-							.send(ClientMsg::KeyEvent(key_type))
+							.send(ClientMsg::KeyEvent(0, key_type))
 							.unwrap();
 						std::thread::sleep(std::time::Duration::from_millis(
 							sleep_millis,

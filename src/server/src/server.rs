@@ -64,6 +64,7 @@ impl Server {
 			client_target.send_display(
 				&self.client_manager,
 				client_target.generate_display(reply.clone()),
+				0,
 			);
 			if reply == BoardReply::Die {
 				flag = true
@@ -77,6 +78,7 @@ impl Server {
 		&mut self,
 		client: &mut Client,
 		board_reply: &BoardReply,
+		seq: u32,
 	) {
 		let mut dieflag = false;
 		// note the size effect of counter_attack
@@ -103,7 +105,7 @@ impl Server {
 			}
 		}
 		let display = client.generate_display(board_reply.clone());
-		client.send_display(&self.client_manager, display);
+		client.send_display(&self.client_manager, display, seq);
 		if dieflag {
 			self.die(client, false);
 		}
@@ -217,7 +219,7 @@ impl Server {
 		client.attack_target = 0;
 		client.send_msg(&ServerMsg::Start(0));
 		let display = client.generate_display(BoardReply::Ok);
-		client.send_display(&self.client_manager, display);
+		client.send_display(&self.client_manager, display, 0);
 	}
 
 	fn handle_msg(&mut self, msg: ClientMsg, mut client: &mut Client) -> bool {
@@ -341,11 +343,11 @@ impl Server {
 					}
 				}
 			}
-			ClientMsg::KeyEvent(key_type) => {
+			ClientMsg::KeyEvent(seq, key_type) => {
 				if let ClientState::InMatch(_) = client.state {
 					let ret = client.process_key(key_type);
 					// display is included in after_operation
-					self.post_operation(&mut client, &ret);
+					self.post_operation(&mut client, &ret, seq);
 					// update display before die
 					if ret == BoardReply::Die {
 						self.die(&mut client, true);

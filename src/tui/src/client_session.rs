@@ -19,6 +19,7 @@ pub struct ClientSession {
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
 	state: i32,
+	// gamekey_history: Vec<KeyType>,
 	id: IdType,
 	mode: i32,
 	textbuffer: String,
@@ -269,7 +270,7 @@ impl ClientSession {
 						self.client_display.disp_by_id(&disp);
 					}
 					self.client_socket
-						.send(ClientMsg::KeyEvent(key_event))
+						.send(ClientMsg::KeyEvent(0, key_event))
 						.unwrap();
 				}
 			}
@@ -299,7 +300,7 @@ impl ClientSession {
 	fn recv_phase(&mut self) -> bool {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
-				ServerMsg::Display(display) => {
+				ServerMsg::Display(seq, display) => {
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
 						if self.mode == 1 {

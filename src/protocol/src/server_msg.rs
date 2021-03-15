@@ -21,7 +21,7 @@ pub enum ServerMsg {
 	GameOver(bool),
 	// or kicked
 	Terminate,
-	Display(Display),
+	Display(u32, Display),
 }
 
 impl ServerMsg {
@@ -63,7 +63,9 @@ impl std::fmt::Display for ServerMsg {
 			}
 			Self::GameOver(true) => "win".to_string(),
 			Self::GameOver(false) => "die".to_string(),
-			Self::Display(_) => "display".to_string(),
+			Self::Display(id, display) => {
+				format!("display id: {} seq: {}", display.id, id)
+			}
 		};
 		write!(f, "{}", string)
 	}
