@@ -301,7 +301,7 @@ impl ClientDisplay {
 				ind = 4;
 			}
 			print!("[4{}m", 5 - ind);
-			for i in dy..(dy + each_garbage as u16) {
+			for i in dy..(dy + each_garbage) {
 				print!(
 					"{} ",
 					termion::cursor::Goto(
@@ -310,10 +310,10 @@ impl ClientDisplay {
 					),
 				)
 			}
+			dy += each_garbage;
 			if flag {
 				break;
 			}
-			dy += each_garbage;
 		}
 		print!("{}", termion::style::Reset);
 		for i in dy..20 {
