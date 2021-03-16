@@ -9,3 +9,4 @@ Planned:
 - replay seek
 - better sound effects
 - id system(for replay)
+- new ui, real time stats

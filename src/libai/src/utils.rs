@@ -96,8 +96,7 @@ pub fn convolve_height(
 		let mut highest = 0;
 		for block in 0..4usize {
 			let height = heights[dx as usize + posx[block] as usize]
-				- posy[block]
-				+ 1;
+				- posy[block];
 			if height > highest {
 				highest = height;
 			}

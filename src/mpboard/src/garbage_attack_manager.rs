@@ -40,7 +40,7 @@ impl GarbageAttackManager {
 
 	pub fn calc_attack(
 		&mut self,
-		tspin: u32,
+		twist: u32,
 		line_count: u32,
 		code: CodeType,
 		pc: bool,
@@ -53,16 +53,16 @@ impl GarbageAttackManager {
 			return 0;
 		}
 		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
-		let twist_mult = if tspin > 0 {
+		let twist_mult = if twist > 0 {
 			ATTACK_BASE_TWIST_MULTIPLIER
-				[(tspin as usize - 1) * 7 + code as usize]
+				[(twist as usize - 1) * 7 + code as usize]
 		} else {
 			10
 		};
 		let mut total_mult = 10;
 		total_mult += self.cm;
 		self.cm += ATTACK_COMBO_INC;
-		self.tcm = if tspin > 0 || line_count == 4 {
+		self.tcm = if twist > 0 || line_count == 4 {
 			total_mult += self.tcm;
 			self.tcm + ATTACK_B2B_INC
 		} else {

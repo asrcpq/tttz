@@ -13,8 +13,9 @@ optimized for high latency environment
 
 * Responsive and minimalist. zero-gravity, event-blocking.
 
-* Special attack rules, including all-spin bonus and twist combo multiplier
-to encourage fancy attack patterns, making stupid AI harder to win.
+* Optimized attack rules, including
+immobile twist check, all-spin bonus and twist combo multiplier.
+These rules further encourage fancy attack patterns and challenge current AI implementations.
 
 * Replay is automatically saved. KPP, APP and PPS are computed by replayer.
 

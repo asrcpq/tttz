@@ -38,6 +38,12 @@ impl IndexMut<usize> for Field {
 }
 
 impl Field {
+	pub fn from_color(color: &[[u8; 10]]) -> Self {
+		Field {
+			color: color.iter().cloned().collect(),
+		}
+	}
+	
 	pub fn test(&self, block: &Piece) -> bool {
 		for block_id in 0..4 {
 			let tmp = BPT[block.code as usize][block.rotation as usize]
@@ -72,7 +78,7 @@ impl Field {
 		true
 	}
 
-	// return 0: none, 1: mini, 2: regular
+	// return 0: fail, 1: normal, 2: twist(both)
 	pub fn rotate(&self, block: &mut Piece, dr: i8) -> u32 {
 		let code = block.code;
 		let rotation = block.rotation;
@@ -125,7 +131,7 @@ impl Field {
 		if pos.0 < 0 || pos.1 < 0 {
 			return false;
 		}
-		if pos.0 >= 10 || pos.1 >= 40 {
+		if pos.0 >= 10 || pos.1 >= self.color.len() as PosType {
 			return false;
 		}
 		true

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tttz_ruleset::*;
 
 // clone is used when revert rotation test
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, Hash)]
 pub struct Piece {
 	pub code: CodeType,
 	pub rotation: i8,
