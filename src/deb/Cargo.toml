@@ -1,0 +1,13 @@
+[package]
+name = "tttz-deb"
+version = "0.1.0"
+authors = ["asrcpq <asrcpq@outlook.com>"]
+edition = "2018"
+
+[package.metadata.deb]
+name = "tttz"
+assets = [
+    ["../../target/release/tttz-server", "usr/bin/tttz-server", "755"],
+    ["../../target/release/tttz-tui", "usr/bin/tttz-tui", "755"],
+    ["../../target/release/tttz-replayer", "usr/bin/tttz-replayer", "755"],
+]
