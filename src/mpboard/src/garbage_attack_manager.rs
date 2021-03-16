@@ -79,7 +79,7 @@ impl GarbageAttackManager {
 	pub fn read_display(&mut self, display: &Display) {
 		self.garbages = display.garbages.clone();
 		self.cm = display.cm;
-		self.tcm = self.tcm;
+		self.tcm = display.tcm;
 	}
 
 	pub fn write_display(&self, mut display: &mut Display) {

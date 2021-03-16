@@ -33,15 +33,14 @@ impl ClientRenderer {
 
 	pub fn backtrack(&mut self, seq: u32, display: &mut Display) {
 		self.crb.update_from_display(&display);
-		(seq as usize..self.gamekey_history.len()).map(|id| {
+		if let Some(rep) = (seq as usize..self.gamekey_history.len()).map(|id| {
 			// self.show_msg(&format!("redo id {} seq {}", id, seq));
 			self.crb.handle_msg(
 				BoardMsg::KeyEvent(self.gamekey_history[id])
 			)
-		}).last()
-		.map(|rep| 
+		}).last() {
 			*display = self.crb.generate_display(self.id, rep)
-		);
+		}
 	}
 
 	pub fn get_seq(&self) -> u32 {

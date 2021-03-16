@@ -1,6 +1,7 @@
 Working:
 
 - replay two panels
+- replay seek
 - a real strategy mode, or make strategy ai vs work
 
 Planned:
