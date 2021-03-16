@@ -17,8 +17,8 @@ pub enum ServerMsg {
 	Request(IdType),
 	// ask someone to request a match to id
 	Invite(IdType),
-	// true = win
-	GameOver(bool),
+	// winner
+	GameOver(IdType),
 	// or kicked
 	Terminate,
 	Display(u32, Display),
@@ -61,8 +61,9 @@ impl std::fmt::Display for ServerMsg {
 			Self::ClientList(list) => {
 				format!("Client list {:?}", list)
 			}
-			Self::GameOver(true) => "win".to_string(),
-			Self::GameOver(false) => "die".to_string(),
+			Self::GameOver(id) => {
+				format!("winner: {}", id)
+			}
 			Self::Display(id, display) => {
 				format!("display id: {} seq: {}", display.id, id)
 			}

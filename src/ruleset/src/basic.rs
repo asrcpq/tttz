@@ -85,7 +85,7 @@ pub static ref COLORMAP: EnumMap<u8, u8> = enum_map! {
 	b't' => 5,
 	b'z' => 1,
 	b'g' => 250,
-	b' ' => 234,
+	b' ' => 235,
 	_ => 0,
 };
 }

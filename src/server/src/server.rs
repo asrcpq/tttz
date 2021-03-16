@@ -153,6 +153,22 @@ impl Server {
 	}
 
 	pub fn die(&mut self, client: &mut Client, die: bool) {
+		client.broadcast_msg(&self.client_manager, &ServerMsg::GameOver(if die {
+			client.attack_target
+		} else {
+			client.id
+		}));
+		self.die1(client);
+		if let Some(mut opponent) =
+			self.client_manager.tmp_pop_by_id(client.attack_target)
+		{
+			self.die1(&mut opponent);
+			self.client_manager
+				.tmp_push_by_id(client.attack_target, opponent);
+		} // or the opponent has gone
+	}
+
+	fn die1(&mut self, client: &mut Client) {
 		eprintln!("SERVER: client {} gameover", client.id);
 		client.state = ClientState::Idle;
 		match client.board.save_replay(&format!("{}", client.id)) {
@@ -164,21 +180,6 @@ impl Server {
 				eprintln!("[32mSERVER[0m: write replay failed!");
 			}
 		}
-		client.send_msg(&ServerMsg::GameOver(!die));
-
-		if client.attack_target == 0 {
-			return;
-		}
-		// calc win by attack target works only in pair match mode
-		if let Some(mut opponent) =
-			self.client_manager.tmp_pop_by_id(client.attack_target)
-		{
-			self.die(&mut opponent, !die);
-			self.client_manager
-				.tmp_push_by_id(client.attack_target, opponent);
-		} // or the opponent has gone
-
-		// attack_target is used before
 		client.dc_ids.remove(&client.attack_target);
 	}
 
