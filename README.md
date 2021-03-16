@@ -8,17 +8,15 @@
 
 ## Features
 
-* focus on 1v1 network combat(ai use the same interface as human),
+* Focus on 1v1 network combat(ai use the same interface as human),
 optimized for high latency environment
 
-* responsive and minimalist. zero-gravity, event-blocking.
+* Responsive and minimalist. zero-gravity, event-blocking.
 
-* heavily modified rules to encourage fancy attack patterns,
-making stupid AI harder to win.
+* Special attack rules, including all-spin bonus and twist combo multiplier
+to encourage fancy attack patterns, making stupid AI harder to win.
 
 * Replay is automatically saved. KPP, APP and PPS are computed by replayer.
-
-See doc/rule.md for more
 
 ## Default Keybind
 
@@ -60,6 +58,6 @@ See doc/rule.md for more
 
 * `pair` start pairing
 
-* \<Enter\> or \<EOF\> exit cmd mode
+* `<CR>` or `<EOF>` exit cmd mode
 
 * `quit`
