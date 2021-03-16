@@ -20,23 +20,23 @@ to encourage fancy attack patterns, making stupid AI harder to win.
 
 ## Default Keybind
 
-* h/l: move left/right
+* hjkl/arrow key: Move
 
-* H/L: move left/right until fail
+* H/L: move until fail
 
-* k: hard drop(hard drop + lock)
-
-* j: sonic drop(hard drop without lock)
+* z, x, d: rotate ccw, cw, 180
 
 * Space: hold
 
 * r: give up/restart
 
+* a: accept battle request
+
 * /: enter cmd mode
 
 ## Commands:
 
-* `spawnai {commands}`, subcommands list:
+* `spawnai <commands>*`, subcommands list:
 
 	`algo <basic | cc | mm>` specify algorithm: dummy bot, cold-clear or MisaMino
 

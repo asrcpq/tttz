@@ -13,3 +13,4 @@ Planned:
 - replay statistics
 - load and play replay file
 - make a stable release
+- read terminfo and support fallback mode: 16color, monochrome, ascii
