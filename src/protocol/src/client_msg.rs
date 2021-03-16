@@ -16,7 +16,7 @@ pub enum ClientMsg {
 	Invite(IdType, IdType),
 	Restart,
 	Accept(IdType),
-	Pair,
+	ForceMatch(IdType),
 	// message id(used for reply matching), key
 	KeyEvent(u32, KeyType),
 }
@@ -89,7 +89,6 @@ impl FromStr for ClientMsg {
 		match split[0] {
 			"clients" => return Ok(ClientMsg::GetClients),
 			"restart" => return Ok(ClientMsg::Restart),
-			"pair" => return Ok(ClientMsg::Pair),
 			"free" => return Ok(ClientMsg::PlaySingle),
 			"spawnai" => return Ok(Self::from_str_spawnai(split)),
 			"request" => {

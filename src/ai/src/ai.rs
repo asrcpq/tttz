@@ -1,3 +1,5 @@
+// interactive ai interface
+
 use tttz_libclient::ClientSocket;
 use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg};
 

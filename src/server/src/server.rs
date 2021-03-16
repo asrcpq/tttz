@@ -340,9 +340,15 @@ impl Server {
 					eprintln!("SERVER: accept: cannot find client {}", id);
 				}
 			}
-			ClientMsg::Pair => {
-				client.state = ClientState::Pairing;
-				self.client_manager.pair_attempt(&mut client);
+			// should only used for training
+			ClientMsg::ForceMatch(id) => {
+				if let Some(mut opponent) =
+					self.client_manager.tmp_pop_by_id(id)
+				{
+					self.client_manager
+						.pair_apply(&mut client, &mut opponent);
+					self.client_manager.tmp_push_by_id(id, opponent);
+				}
 			}
 			ClientMsg::PlaySingle => {
 				// terminate current game

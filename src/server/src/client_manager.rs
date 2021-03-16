@@ -10,7 +10,6 @@ pub struct ClientManager {
 	id_alloc: IdType,
 	clients: HashMap<IdType, Client>,
 	id_addr: BiMap<IdType, SocketAddr>,
-	pending_client: IdType,
 }
 
 impl Default for ClientManager {
@@ -19,7 +18,6 @@ impl Default for ClientManager {
 			id_alloc: 1,
 			clients: HashMap::new(),
 			id_addr: BiMap::new(),
-			pending_client: 0,
 		}
 	}
 }
@@ -87,36 +85,5 @@ impl ClientManager {
 			.send_display(self, client2.generate_display(BoardReply::Ok), 0);
 		client1
 			.send_display(self, client1.generate_display(BoardReply::Ok), 0);
-	}
-
-	pub fn pair_attempt(&mut self, mut client: &mut Client) {
-		if self.pending_client == client.id {
-			// the pending client is just ourselves
-			return;
-		}
-		if client.state == ClientState::Pairing && self.pending_client != 0 {
-			// pairing succeed
-			let target_id = self.pending_client;
-			let another_client = self.tmp_pop_by_id(target_id);
-			match another_client {
-				None => {}
-				Some(mut pending_client) => {
-					eprintln!(
-						"{}:{:?} vs {}:{:?}",
-						target_id,
-						pending_client.state,
-						client.id,
-						client.state,
-					);
-					if pending_client.state == ClientState::Pairing {
-						self.pending_client = 0;
-						self.pair_apply(&mut client, &mut pending_client);
-						self.tmp_push_by_id(target_id, pending_client);
-						return;
-					}
-				}
-			}
-		}
-		self.pending_client = client.id;
 	}
 }
