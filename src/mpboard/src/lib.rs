@@ -1,5 +1,3 @@
-mod block;
-pub use block::Block;
 mod board;
 pub use board::Board;
 mod field;

@@ -107,6 +107,24 @@ pub fn convolve_height(
 	}
 }
 
+pub fn get_heights(color: &[[u8; 10]]) -> [PosType; 10] {
+	let mut heights: [PosType; 10] = [0; 10];
+	'outer: for i in 0..10 {
+		let mut j: usize = 19;
+		loop {
+			if color[j][i] != b' ' {
+				heights[i as usize] = j as PosType + 1;
+				continue 'outer;
+			}
+			if j == 0 {
+				continue 'outer;
+			}
+			j -= 1;
+		}
+	}
+	heights
+}
+
 pub fn get_height_and_hole(color: &[[u8; 10]]) -> ([PosType; 10], PosType, usize) {
 	// calc height
 	let mut heights: [PosType; 10] = [0; 10];
