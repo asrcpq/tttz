@@ -2,9 +2,8 @@
 use tttz_protocol::Display;
 use tttz_protocol::KeyType;
 use tttz_ruleset::*;
-
+use tttz_libai::utils::*;
 use crate::ai::Thinker;
-use crate::ai_utils::*;
 
 use std::collections::VecDeque;
 
@@ -39,7 +38,7 @@ impl Thinker for BasicAi {
 		}
 
 		let (heights, highest_hole_x, _highest_hole) =
-			get_height_and_hole(&display);
+			get_height_and_hole(&display.color);
 
 		let mut best_score = f32::INFINITY;
 		let mut best_rotation = 0;

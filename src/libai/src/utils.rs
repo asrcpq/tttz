@@ -1,4 +1,4 @@
-use tttz_protocol::{Display, KeyType};
+use tttz_protocol::KeyType;
 use tttz_ruleset::*;
 
 use std::collections::VecDeque;
@@ -107,7 +107,7 @@ pub fn convolve_height(
 	}
 }
 
-pub fn get_height_and_hole(display: &Display) -> ([PosType; 10], PosType, usize) {
+pub fn get_height_and_hole(color: &[[u8; 10]]) -> ([PosType; 10], PosType, usize) {
 	// calc height
 	let mut heights: [PosType; 10] = [0; 10];
 	let mut highest_hole = 0;
@@ -116,7 +116,7 @@ pub fn get_height_and_hole(display: &Display) -> ([PosType; 10], PosType, usize)
 		let mut j: usize = 19;
 		let mut state = 0;
 		loop {
-			if display.color[j][i] == b' ' {
+			if color[j][i] == b' ' {
 				if state == 1 {
 					break;
 				}
