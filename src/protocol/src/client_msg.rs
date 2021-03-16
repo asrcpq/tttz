@@ -51,7 +51,10 @@ impl ClientMsg {
 		while let Some(&word) = iter.next() {
 			match word {
 				"strategy" => {
-					game_type = GameType::Strategy(1000); // currently no time limit
+					game_type = GameType::Strategy(1000, false); // currently no time limit
+				}
+				"strategy_initiator" => {
+					game_type = GameType::Strategy(1000, true); // currently no time limit
 				}
 				"speed" => {
 					game_type = GameType::Speed;

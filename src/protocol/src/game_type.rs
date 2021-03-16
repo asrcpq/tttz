@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum GameType {
-	Strategy(u64),
+	// true = initiator
+	Strategy(u64, bool),
 	Speed,
 	Single,
 }

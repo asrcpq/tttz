@@ -14,13 +14,22 @@ pub trait Thinker {
 		sleep_millis: u64,
 		game_type: GameType,
 	) {
-		let strategy = game_type != GameType::Speed;
+		let mut strategy = true;
+		let mut moveflag = false;
+		match game_type {
+			GameType::Speed => {
+				strategy = false
+			}
+			GameType::Strategy(_round_sleep, initiator) => {
+				moveflag = initiator;
+			}
+			_ => unreachable!(),
+		}
 		let (client_socket, id) = ClientSocket::new(&addr);
 		let main_sleep = 10;
 
 		let mut state = 3;
 		let mut last_display: Option<Display> = None;
-		let mut moveflag = false;
 		let mut operation_queue: VecDeque<KeyType> = VecDeque::new();
 		loop {
 			std::thread::sleep(std::time::Duration::from_millis(main_sleep));

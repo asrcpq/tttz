@@ -1,11 +1,9 @@
 Working:
 
-- logging
-- a real strategy mode for ai benchmarking
+- write an ai
 
 Planned:
 
-- write an ai
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
