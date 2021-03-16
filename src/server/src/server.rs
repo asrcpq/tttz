@@ -27,7 +27,8 @@ pub struct Server {
 	ai_threads: Vec<std::thread::JoinHandle<()>>,
 }
 
-fn new_client_msg_parse(msg: &[u8]) -> Result<MsgEncoding, String> {
+// encoding, client_type
+fn new_client_msg_parse(msg: &[u8]) -> Result<(MsgEncoding, String), String> {
 	let split =
 		String::from(std::str::from_utf8(msg).map_err(|e| e.to_string())?)
 			.split_whitespace()
@@ -36,16 +37,22 @@ fn new_client_msg_parse(msg: &[u8]) -> Result<MsgEncoding, String> {
 	if split.is_empty() {
 		return Err("Message too short".to_string());
 	}
-	if split[0] == "new_client" {
-		if let Some(string) = split.get(1) {
-			if string == "json" {
-				return Ok(MsgEncoding::Json);
-			}
-		}
-		Ok(MsgEncoding::Bincode)
-	} else {
-		Err("Unknown command".to_string())
+	if split[0] != "new_client" {
+		return Err("Unknown command".to_string())
 	}
+	let mut iter = split.iter();
+	let mut met = MsgEncoding::Bincode;
+	let mut client_type = "regular".to_string();
+	while let Some(word) = iter.next() {
+		match word.as_ref() {
+			"json" => met = MsgEncoding::Json,
+			"client_type" => if let Some(word) = iter.next() {
+				client_type = word.to_string();
+			}
+			_ => {},
+		}
+	}
+	Ok((met, client_type))
 }
 
 impl Server {
@@ -127,9 +134,9 @@ impl Server {
 		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
 			Some(client) => client,
 			None => {
-				if let Ok(met) = new_client_msg_parse(&buf[..amt]) {
+				if let Ok((met, string)) = new_client_msg_parse(&buf[..amt]) {
 					let new_id =
-						self.client_manager.new_client_by_addr(src, met);
+						self.client_manager.new_client_by_addr(src, met, &string);
 					self.client_manager
 						.send_msg_by_id(new_id, &ServerMsg::AllocId(new_id));
 				} else {
@@ -171,13 +178,15 @@ impl Server {
 	fn die1(&mut self, client: &mut Client) {
 		eprintln!("SERVER: client {} gameover", client.id);
 		client.state = ClientState::Idle;
-		match client.board.save_replay(&format!("{}", client.id)) {
-			Ok(true) => {}
-			Ok(false) => {
-				eprintln!("[32mSERVER[0m: cannot find path to write replay!");
-			}
-			Err(_) => {
-				eprintln!("[32mSERVER[0m: write replay failed!");
+		if client.save_replay {
+			match client.board.save_replay(&format!("{}", client.id)) {
+				Ok(true) => {}
+				Ok(false) => {
+					eprintln!("[32mSERVER[0m: cannot find path to write replay!");
+				}
+				Err(_) => {
+					eprintln!("[32mSERVER[0m: write replay failed!");
+				}
 			}
 		}
 		client.dc_ids.remove(&client.attack_target);

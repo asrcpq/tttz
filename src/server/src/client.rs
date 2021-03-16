@@ -26,10 +26,12 @@ pub struct Client {
 	pub board: Board,
 	pub attack_target: IdType,
 	pub met: MsgEncoding,
+	pub save_replay: bool,
 }
 
 impl Client {
-	pub fn new(id: IdType, addr: SocketAddr, met: MsgEncoding) -> Client {
+	pub fn new(id: IdType, addr: SocketAddr, met: MsgEncoding, client_type: &str) -> Client {
+		let save_replay = client_type != "train";
 		Client {
 			id,
 			addr,
@@ -38,6 +40,7 @@ impl Client {
 			board: Default::default(),
 			attack_target: 0,
 			met,
+			save_replay,
 		}
 	}
 

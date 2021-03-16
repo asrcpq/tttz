@@ -50,8 +50,9 @@ impl ClientManager {
 		&mut self,
 		src: SocketAddr,
 		met: MsgEncoding,
+		client_type: &str,
 	) -> IdType {
-		let mut client = Client::new(self.id_alloc, src, met);
+		let mut client = Client::new(self.id_alloc, src, met, client_type);
 		client.dc_ids.insert(self.id_alloc);
 		self.clients.insert(self.id_alloc, client);
 		eprintln!("Assign id {}", self.id_alloc);
