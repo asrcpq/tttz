@@ -69,7 +69,6 @@ impl GarbageAttackManager {
 			0
 		};
 		let mut atk = base_atk * twist_mult * total_mult / 1000;
-		eprintln!("Attack parts: {} {} {}", base_atk, twist_mult, total_mult);
 		if pc {
 			atk += 10;
 		}

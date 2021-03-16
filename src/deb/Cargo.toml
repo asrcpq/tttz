@@ -10,4 +10,5 @@ assets = [
     ["../../target/release/tttz-server", "usr/bin/tttz-server", "755"],
     ["../../target/release/tttz-tui", "usr/bin/tttz-tui", "755"],
     ["../../target/release/tttz-replayer", "usr/bin/tttz-replayer", "755"],
+    ["../../thirdparty/MisaMinoBot/tetris_ai/dist/Release/GNU-Linux/tetris_ai", "usr/bin/tttz-mmbot", "755"],
 ]

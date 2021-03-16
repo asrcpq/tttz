@@ -1,16 +1,13 @@
 Working:
 
-- replay two panels
-- replay seek
-- a real strategy mode, or make strategy ai vs work
+- logging
+- a real strategy mode for ai benchmarking
 
 Planned:
 
 - write an ai
 - write more tests
+- read terminfo and support fallback mode: 16color, monochrome, ascii
+- replay seek
 - better sound effects
 - id system(for replay)
-- replay statistics
-- load and play replay file
-- make a stable release
-- read terminfo and support fallback mode: 16color, monochrome, ascii

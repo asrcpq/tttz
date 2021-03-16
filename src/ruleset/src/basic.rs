@@ -79,12 +79,13 @@ lazy_static::lazy_static! {
 pub static ref COLORMAP: EnumMap<u8, u8> = enum_map! {
 	b'i' => 6,
 	b'j' => 4,
-	b'l' => 202,
+	b'l' => 208,
 	b'o' => 3,
 	b's' => 2,
 	b't' => 5,
 	b'z' => 1,
 	b'g' => 250,
+	b' ' => 234,
 	_ => 0,
 };
 }
