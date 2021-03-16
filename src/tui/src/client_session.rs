@@ -4,8 +4,8 @@ use termion::raw::IntoRawMode;
 use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg};
 use tttz_libclient::{ClientSocket, ClientDisplay};
 use crate::keymap::TuiKey;
-use crate::sound_effect::SoundEffect;
 use crate::sound_manager::SoundManager;
+use crate::sound_effect::SoundEffect;
 use crate::ClientRenderer;
 
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ pub struct ClientSession {
 	sound_manager: SoundManager,
 	client_socket: ClientSocket,
 	client_display: ClientDisplay,
-	client_renderer: ClientRenderer, // handle high latency
+	client_renderer: ClientRenderer,
 	state: i32,
 	id: IdType,
 	mode: i32,
@@ -261,7 +261,7 @@ impl ClientSession {
 			TuiKey::ServerKey(key_event) => {
 				// only send keyevent to server when playing
 				if self.state == 2 {
-					let disp = self.client_renderer.push_key(key_event);
+					let disp = self.client_renderer.push_key(key_event, &self.sound_manager);
 					self.client_display.disp_by_id(&disp);
 					self.client_socket
 						// notice that we send last id plus 1
@@ -303,13 +303,14 @@ impl ClientSession {
 						if self.mode == 1 {
 							if id == self.id {
 								self.client_renderer.backtrack(seq, &mut display);
+							} else {
+								self.sound_manager.play(
+									&SoundEffect::from_board_reply(
+										&display.board_reply,
+									),
+								);
 							}
 							self.client_display.disp_by_id(&display);
-							self.sound_manager.play(
-								&SoundEffect::from_board_reply(
-									&display.board_reply,
-								),
-							);
 						}
 						self.last_display.insert(id, display);
 					} else {

@@ -1,3 +1,5 @@
+use crate::sound_manager::SoundManager;
+use crate::sound_effect::SoundEffect;
 use tttz_protocol::{Display, IdType, BoardMsg, KeyType};
 use tttz_mpboard::Board;
 
@@ -22,9 +24,10 @@ impl ClientRenderer {
 		self.gamekey_history.clear();
 	}
 
-	pub fn push_key(&mut self, key_type: KeyType) -> Display {
+	pub fn push_key(&mut self, key_type: KeyType, sm: &SoundManager) -> Display {
 		self.gamekey_history.push(key_type);
 		let rep = self.crb.handle_msg(BoardMsg::KeyEvent(key_type));
+		sm.play(&SoundEffect::from_board_reply(&rep));
 		self.crb.generate_display(self.id, rep)
 	}
 
