@@ -1,7 +1,7 @@
 use rand::rngs::ThreadRng;
-use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use rand::Rng;
 use tttz_ruleset::{CodeType, PosType};
 
 // TODO: use trait "ReproducibleSequence"?
@@ -84,5 +84,5 @@ impl RandomGenerator {
 			ret[i] = self.bag[self.bag_id + i];
 		}
 		ret
-	} 
+	}
 }

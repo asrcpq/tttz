@@ -1,5 +1,5 @@
-use tttz_protocol::BoardReply;
 use std::fmt;
+use tttz_protocol::BoardReply;
 
 #[derive(Default)]
 pub struct ReplayCounter {
@@ -33,22 +33,22 @@ impl ReplayCounter {
 			BoardReply::PlainDrop(_) => {
 				self.piece += 1;
 				self.key += 1;
-			},
+			}
 			BoardReply::ClearDrop(_, atk2) => {
 				self.atk += atk2;
 				self.piece += 1;
 				self.key += 1;
-			},
+			}
 			BoardReply::Ok => {
 				self.key += 1;
-			},
+			}
 			BoardReply::BadMove => {
 				self.key += 1;
-			},
+			}
 			BoardReply::RotateTwist => {
 				self.key += 1;
-			},
-			_ => {},
+			}
+			_ => {}
 		}
 	}
 }

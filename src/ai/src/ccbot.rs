@@ -110,7 +110,7 @@ impl CCBot {
 				// eprintln!("add {}", code);
 				self.interface.add_next_piece(code_to_piece(code));
 			}
-			self.preview_list = new_list.clone();
+			self.preview_list = *new_list;
 		} else {
 			// the head of new preview is index of last preview
 			'a: for last_pos in 0..6 {
@@ -134,7 +134,7 @@ impl CCBot {
 					}
 				}
 			}
-			self.preview_list = new_list.clone();
+			self.preview_list = *new_list;
 		}
 	}
 }

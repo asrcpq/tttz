@@ -1,7 +1,7 @@
-use crate::sound_manager::SoundManager;
 use crate::sound_effect::SoundEffect;
-use tttz_protocol::{Display, IdType, BoardMsg, KeyType};
+use crate::sound_manager::SoundManager;
 use tttz_mpboard::Board;
+use tttz_protocol::{BoardMsg, Display, IdType, KeyType};
 
 pub struct ClientRenderer {
 	gamekey_history: Vec<KeyType>,
@@ -11,7 +11,7 @@ pub struct ClientRenderer {
 }
 
 impl ClientRenderer {
-	pub fn new(id: IdType) -> ClientRenderer{
+	pub fn new(id: IdType) -> ClientRenderer {
 		ClientRenderer {
 			gamekey_history: Vec::new(),
 			crb: Default::default(),
@@ -24,21 +24,28 @@ impl ClientRenderer {
 		self.gamekey_history.clear();
 	}
 
-	pub fn push_key(&mut self, key_type: KeyType, sm: &SoundManager) -> Display {
+	pub fn push_key(
+		&mut self,
+		key_type: KeyType,
+		sm: &SoundManager,
+	) -> Display {
 		self.gamekey_history.push(key_type);
 		let rep = self.crb.handle_msg(BoardMsg::KeyEvent(key_type));
 		sm.play(&SoundEffect::from_board_reply(&rep));
-		self.crb.generate_display(self.id, self.gamekey_history.len(), rep)
+		self.crb
+			.generate_display(self.id, self.gamekey_history.len(), rep)
 	}
 
 	pub fn backtrack(&mut self, seq: usize, display: &mut Display) {
 		self.crb.update_from_display(&display);
-		if let Some(rep) = (seq..self.gamekey_history.len()).map(|id| {
-			// self.show_msg(&format!("redo id {} seq {}", id, seq));
-			self.crb.handle_msg(
-				BoardMsg::KeyEvent(self.gamekey_history[id])
-			)
-		}).last() {
+		if let Some(rep) = (seq..self.gamekey_history.len())
+			.map(|id| {
+				// self.show_msg(&format!("redo id {} seq {}", id, seq));
+				self.crb
+					.handle_msg(BoardMsg::KeyEvent(self.gamekey_history[id]))
+			})
+			.last()
+		{
 			*display = self.crb.generate_display(self.id, 0, rep)
 		}
 	}

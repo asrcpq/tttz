@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use tttz_ruleset::CodeType;
 use crate::{BoardReply, IdType, Piece};
+use tttz_ruleset::CodeType;
 
 use std::collections::VecDeque;
 

@@ -24,7 +24,12 @@ pub struct Client {
 }
 
 impl Client {
-	pub fn new(id: IdType, addr: SocketAddr, met: MsgEncoding, client_type: &str) -> Client {
+	pub fn new(
+		id: IdType,
+		addr: SocketAddr,
+		met: MsgEncoding,
+		client_type: &str,
+	) -> Client {
 		let save_replay = client_type != "train";
 		Client {
 			id,

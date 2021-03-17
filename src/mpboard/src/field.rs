@@ -1,6 +1,6 @@
-use tttz_ruleset::*;
-use tttz_protocol::Piece;
 use std::ops::{Deref, Index, IndexMut};
+use tttz_protocol::Piece;
+use tttz_ruleset::*;
 
 type Colors = Vec<[u8; 10]>;
 
@@ -43,7 +43,7 @@ impl Field {
 			color: color.to_vec(),
 		}
 	}
-	
+
 	pub fn test(&self, block: &Piece) -> bool {
 		for block_id in 0..4 {
 			let tmp = BPT[block.code as usize][block.rotation as usize]
@@ -115,8 +115,8 @@ impl Field {
 		if block.code == 0 {
 			return 2;
 		}
-		let tmp = &TWIST_MINI_CHECK[block.code as usize]
-			[block.rotation as usize];
+		let tmp =
+			&TWIST_MINI_CHECK[block.code as usize][block.rotation as usize];
 		for mini_pos in tmp.iter() {
 			let check_x = block.pos.0 + mini_pos.0;
 			let check_y = block.pos.1 + mini_pos.1;

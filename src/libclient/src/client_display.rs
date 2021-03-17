@@ -134,7 +134,13 @@ impl ClientDisplay {
 		}
 	}
 
-	fn mini_blockp(&mut self, x: u32, double_y: u32, code: CodeType, panel: usize) {
+	fn mini_blockp(
+		&mut self,
+		x: u32,
+		double_y: u32,
+		code: CodeType,
+		panel: usize,
+	) {
 		let mut print_info: HashMap<(u32, u32), i32> = HashMap::new();
 		for i in 0..4 {
 			let tmp = BPT[code as usize][0][i as usize];

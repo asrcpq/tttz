@@ -1,6 +1,6 @@
-use tttz_protocol::{Display, IdType};
-use tttz_mpboard::{Board, Replay};
 use crate::replay_counter::ReplayCounter;
+use tttz_mpboard::{Board, Replay};
+use tttz_protocol::{Display, IdType};
 
 pub struct ReplaySimulator {
 	id: IdType,
@@ -42,12 +42,13 @@ impl ReplaySimulator {
 		let mut ret = None;
 		loop {
 			if self.idx == self.replay.data.len() {
-				break SeekResult::End
+				break SeekResult::End;
 			}
 			if t < self.replay.data[self.idx].0 {
-				return SeekResult::Ok(ret)
+				return SeekResult::Ok(ret);
 			}
-			let br = self.board.handle_msg(self.replay.data[self.idx].1.clone());
+			let br =
+				self.board.handle_msg(self.replay.data[self.idx].1.clone());
 			self.rc.count(&br, t);
 			ret = Some(self.board.generate_display(self.id, 0, br)); // what's seq
 			self.idx += 1;

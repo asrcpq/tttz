@@ -1,11 +1,11 @@
-use tttz_protocol::{Piece, Display};
 use tttz_protocol::{BoardMsg, BoardReply, IdType, KeyType};
+use tttz_protocol::{Display, Piece};
 use tttz_ruleset::*;
 
-use crate::Field;
 use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
+use crate::Field;
 
 use std::collections::HashSet;
 
@@ -352,7 +352,12 @@ impl Board {
 		}
 	}
 
-	pub fn generate_display(&self, id: IdType, seq: usize, board_reply: BoardReply) -> Display {
+	pub fn generate_display(
+		&self,
+		id: IdType,
+		seq: usize,
+		board_reply: BoardReply,
+	) -> Display {
 		let mut display = Display {
 			seq,
 			id,
@@ -370,9 +375,10 @@ impl Board {
 		display
 	}
 
-	pub fn save_replay(&mut self, filename: &str)
-		-> Result<bool, Box<dyn std::error::Error>>
-	{
+	pub fn save_replay(
+		&mut self,
+		filename: &str,
+	) -> Result<bool, Box<dyn std::error::Error>> {
 		self.replay.save(filename, &mut self.rg)
 	}
 }

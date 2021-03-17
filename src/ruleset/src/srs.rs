@@ -107,17 +107,15 @@ mod test {
 			($wkd: expr) => {
 				for i in 0..4 {
 					let mut j = i + 5;
-					if j == 8 { j = 4; } 
-					assert!($wkd[i].iter()
-						.zip($wkd[j].iter())
-						.all(|(x, y)| 
-							$wkd[i][0].0 + x.0 +
-							$wkd[j][0].0 + y.0 == 0 &&
-							$wkd[i][0].1 + x.1 +
-							$wkd[j][0].1 + y.1 == 0
-						));
+					if j == 8 {
+						j = 4;
+					}
+					assert!($wkd[i].iter().zip($wkd[j].iter()).all(
+						|(x, y)| $wkd[i][0].0 + x.0 + $wkd[j][0].0 + y.0 == 0
+							&& $wkd[i][0].1 + x.1 + $wkd[j][0].1 + y.1 == 0
+					));
 				}
-			}
+			};
 		}
 		test_wkd!(WKD);
 		test_wkd!(IWKD);

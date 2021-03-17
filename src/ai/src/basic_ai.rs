@@ -1,9 +1,9 @@
 // stupid ai, put block to make least holes and lowest height
+use crate::ai::Thinker;
+use tttz_libai::utils::*;
 use tttz_protocol::Display;
 use tttz_protocol::KeyType;
 use tttz_ruleset::*;
-use tttz_libai::utils::*;
-use crate::ai::Thinker;
 
 use std::collections::VecDeque;
 
@@ -44,20 +44,23 @@ impl Thinker for BasicAi {
 		let mut best_rotation = 0;
 		let mut best_posx = 0;
 		let mut best_id = 0;
-		for (id, &option_code) in
-			[display.floating_block.code, display.hold].iter().enumerate()
+		for (id, &option_code) in [display.floating_block.code, display.hold]
+			.iter()
+			.enumerate()
 		{
 			for rot in 0..4 {
 				let (possible_pos, posx, posy) =
 					convolve_height(&heights, option_code, rot);
-				for (dx, height) in
-					possible_pos.iter().map(|&(x, y)| (x as PosType, y as PosType))
+				for (dx, height) in possible_pos
+					.iter()
+					.map(|&(x, y)| (x as PosType, y as PosType))
 				{
 					let mut delta_heights = [0; 4];
 					let mut block_count = [0; 4];
 					for block in 0..4 {
 						let dh = posy[block] + height as PosType
-							- heights[dx as usize + posx[block] as usize] as PosType;
+							- heights[dx as usize + posx[block] as usize]
+								as PosType;
 						block_count[posx[block] as usize] += 1;
 						if dh > delta_heights[posx[block] as usize] {
 							delta_heights[posx[block] as usize] = dh;

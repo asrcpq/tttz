@@ -2,13 +2,11 @@ use once_cell::sync::Lazy;
 
 use crate::client::ClientState;
 use crate::client_manager::ClientManager;
-use tttz_protocol::{
-	ClientMsg, IdType, MsgEncoding, ServerMsg,
-};
 use tttz_mpboard::Game;
+use tttz_protocol::{ClientMsg, IdType, MsgEncoding, ServerMsg};
 
-use std::net::{SocketAddr, UdpSocket};
 use std::collections::HashMap;
+use std::net::{SocketAddr, UdpSocket};
 
 type GameIdType = i32;
 
@@ -29,8 +27,8 @@ pub static SOCKET: Lazy<UdpSocket> = Lazy::new(|| {
 pub struct Server {
 	client_manager: ClientManager,
 	ai_threads: Vec<std::thread::JoinHandle<()>>,
-	client_in_game: HashMap::<IdType, GameIdType>,
-	game_map: HashMap::<GameIdType, Game>,
+	client_in_game: HashMap<IdType, GameIdType>,
+	game_map: HashMap<GameIdType, Game>,
 	game_id_alloc: GameIdType,
 }
 
@@ -45,7 +43,7 @@ fn new_client_msg_parse(msg: &[u8]) -> Result<(MsgEncoding, String), String> {
 		return Err("Message too short".to_string());
 	}
 	if split[0] != "new_client" {
-		return Err("Unknown command".to_string())
+		return Err("Unknown command".to_string());
 	}
 	let mut iter = split.iter();
 	let mut met = MsgEncoding::Bincode;
@@ -53,10 +51,12 @@ fn new_client_msg_parse(msg: &[u8]) -> Result<(MsgEncoding, String), String> {
 	while let Some(word) = iter.next() {
 		match word.as_ref() {
 			"json" => met = MsgEncoding::Json,
-			"client_type" => if let Some(word) = iter.next() {
-				client_type = word.to_string();
+			"client_type" => {
+				if let Some(word) = iter.next() {
+					client_type = word.to_string();
+				}
 			}
-			_ => {},
+			_ => {}
 		}
 	}
 	Ok((met, client_type))
@@ -106,7 +106,8 @@ impl Server {
 		let opponent = self.client_manager.get_attack_target(client_id);
 		let game_id = self.client_in_game.get(&client_id).unwrap();
 		let game = self.game_map.remove(&game_id).unwrap();
-		self.client_manager.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
+		self.client_manager
+			.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
 		self.client_in_game.remove(&opponent);
 		self.client_manager.set_state(client_id, ClientState::Idle);
 		self.client_manager.set_state(opponent, ClientState::Idle);
@@ -119,22 +120,16 @@ impl Server {
 				return;
 			}
 			if !self.client_manager.is_pairing(id2) {
-				eprintln!(
-					"SERVER: accept: but the sender is not pairing."
-				);
+				eprintln!("SERVER: accept: but the sender is not pairing.");
 				return;
 			}
 		}
 		self.client_manager.pair_apply(id1, id2);
 		let new_game = Game::new(id1, id2);
-		for i in 0..if id2 == 0 {
-			1
-		} else {
-			2
-		} {
+		for i in 0..if id2 == 0 { 1 } else { 2 } {
 			self.client_manager.broadcast(
 				new_game.viewers.iter(),
-				&ServerMsg::Display(new_game.generate_display(i, 0))
+				&ServerMsg::Display(new_game.generate_display(i, 0)),
 			);
 		}
 		self.game_map.insert(self.game_id_alloc, new_game);
@@ -168,13 +163,16 @@ impl Server {
 					.clients()
 					.filter(|&x| x != client_id)
 					.collect();
-				self.client_manager.send_msg_by_id(client_id, &ServerMsg::ClientList(list));
+				self.client_manager
+					.send_msg_by_id(client_id, &ServerMsg::ClientList(list));
 			}
 			ClientMsg::Kick(id) => {
 				let mut flag = true;
-				if id != client_id { // use quit, instead of kick yourself
-					if let Some(_) = self.client_manager.pop_by_id(id) {
-						self.client_manager.send_msg_by_id(client_id, &ServerMsg::Terminate);
+				if id != client_id {
+					// use quit, instead of kick yourself
+					if self.client_manager.pop_by_id(id).is_some() {
+						self.client_manager
+							.send_msg_by_id(client_id, &ServerMsg::Terminate);
 						flag = false;
 					}
 				}
@@ -211,11 +209,10 @@ impl Server {
 			ClientMsg::Request(id) => {
 				if self.client_manager.check_id(id) {
 					if self.client_manager.is_idle(id) {
-						self.client_manager.set_state(client_id, ClientState::Pairing);
-						self.client_manager.send_msg_by_id(
-							id,
-							&ServerMsg::Request(client_id),
-						);
+						self.client_manager
+							.set_state(client_id, ClientState::Pairing);
+						self.client_manager
+							.send_msg_by_id(id, &ServerMsg::Request(client_id));
 					}
 				} else {
 					eprintln!("SERVER: request: cannot find client {}", id);
@@ -225,14 +222,13 @@ impl Server {
 				let opponent = self.client_manager.get_attack_target(client_id);
 				if opponent == 0 {
 					self.try_apply_match(client_id, 0);
-				} else {
-					if self.client_manager.is_idle(opponent) {
-						self.client_manager.set_state(client_id, ClientState::Pairing);
-						self.client_manager.send_msg_by_id(
-							opponent,
-							&ServerMsg::Request(client_id),
-						);
-					}
+				} else if self.client_manager.is_idle(opponent) {
+					self.client_manager
+						.set_state(client_id, ClientState::Pairing);
+					self.client_manager.send_msg_by_id(
+						opponent,
+						&ServerMsg::Request(client_id),
+					);
 				}
 			}
 			ClientMsg::Accept(id) => {

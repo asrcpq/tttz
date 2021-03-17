@@ -95,8 +95,8 @@ pub fn convolve_height(
 
 		let mut highest = 0;
 		for block in 0..4usize {
-			let height = heights[dx as usize + posx[block] as usize]
-				- posy[block];
+			let height =
+				heights[dx as usize + posx[block] as usize] - posy[block];
 			if height > highest {
 				highest = height;
 			}
@@ -124,7 +124,9 @@ pub fn get_heights(color: &[[u8; 10]]) -> [PosType; 10] {
 	heights
 }
 
-pub fn get_height_and_hole(color: &[[u8; 10]]) -> ([PosType; 10], PosType, usize) {
+pub fn get_height_and_hole(
+	color: &[[u8; 10]],
+) -> ([PosType; 10], PosType, usize) {
 	// calc height
 	let mut heights: [PosType; 10] = [0; 10];
 	let mut highest_hole = 0;

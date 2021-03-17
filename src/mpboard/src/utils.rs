@@ -1,6 +1,6 @@
 use crate::board::Board;
-use tttz_ruleset::{CodeType, PosType};
 use tttz_protocol::Piece;
+use tttz_ruleset::{CodeType, PosType};
 
 pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 	let mut board: Board = Default::default();
@@ -12,7 +12,11 @@ pub fn generate_solidlines(heights: [usize; 10]) -> Board {
 	board
 }
 
-pub fn oracle(mut board: &mut Board, floating_code: CodeType, bag: &[CodeType]) {
+pub fn oracle(
+	mut board: &mut Board,
+	floating_code: CodeType,
+	bag: &[CodeType],
+) {
 	board.rg.bag.drain(..);
 	board.rg.bag.extend(bag.iter());
 	board.rg.bag_id = 0;

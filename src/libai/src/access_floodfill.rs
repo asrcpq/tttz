@@ -1,9 +1,9 @@
-use tttz_mpboard::Field;
-use tttz_protocol::{Piece, KeyType};
-use tttz_ruleset::*;
 use crate::utils::*;
+use tttz_mpboard::Field;
+use tttz_protocol::{KeyType, Piece};
+use tttz_ruleset::*;
 
-use std::collections::{HashSet, HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 // floodfill without route tracing
 // only consider blocks fully inside 10x20 visible region
@@ -21,7 +21,7 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 				rotation,
 			};
 			if !field.test(&p) {
-				continue
+				continue;
 			}
 			queue.push_back(p.clone());
 			possible.insert(p.clone());
@@ -31,25 +31,21 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 	while let Some(mut piece) = queue.pop_front() {
 		// possible op H, L, Z, X, D, J, K(sound)
 		piece.pos.0 += 1;
-		if field.test(&piece) {
-			if possible.insert(piece.clone()) {
-				queue.push_back(piece.clone());
-			}
+		if field.test(&piece) && possible.insert(piece.clone()) {
+			queue.push_back(piece.clone());
 		}
 		piece.pos.0 -= 2;
-		if field.test(&piece) {
-			if possible.insert(piece.clone()) {
-				queue.push_back(piece.clone());
-			}
+		if field.test(&piece) && possible.insert(piece.clone()) {
+			queue.push_back(piece.clone());
 		}
 		piece.pos.0 += 1;
 		let revert_piece = piece;
 		for rot in [-1, 1, 2].iter() {
 			let mut piece = revert_piece.clone();
-			if field.rotate(&mut piece, *rot) != 0 {
-				if possible.insert(piece.clone()) {
-					queue.push_back(piece);
-				}
+			if field.rotate(&mut piece, *rot) != 0
+				&& possible.insert(piece.clone())
+			{
+				queue.push_back(piece);
 			}
 		}
 		let mut piece = revert_piece.clone();
@@ -57,7 +53,7 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 			piece.pos.1 -= 1;
 			if !field.test(&piece) {
 				piece.pos.1 += 1;
-				break
+				break;
 			}
 		}
 		if possible.insert(piece.clone()) {
@@ -71,13 +67,18 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 
 #[derive(Default)]
 struct Router {
-	nodes: bimap::BiMap::<i32, Piece>,
+	nodes: bimap::BiMap<i32, Piece>,
 	id_alloc: i32,
-	edges: HashMap::<i32, (i32, KeyType)>,
+	edges: HashMap<i32, (i32, KeyType)>,
 }
 
 impl Router {
-	pub fn add_edge(&mut self, piece: Piece, from: &Piece, key: KeyType) -> bool {
+	pub fn add_edge(
+		&mut self,
+		piece: Piece,
+		from: &Piece,
+		key: KeyType,
+	) -> bool {
 		debug_assert!(!self.nodes.contains_left(&self.id_alloc));
 		eprintln!("adding {:?}", piece.pos);
 		if self.nodes.contains_right(&piece) {
@@ -86,10 +87,8 @@ impl Router {
 		let ret = self.nodes.insert(self.id_alloc, piece);
 		debug_assert_eq!(ret, bimap::Overwritten::Neither);
 		self.edges.insert(
-			self.id_alloc, (
-				*self.nodes.get_by_right(from).unwrap(),
-				key,
-			),
+			self.id_alloc,
+			(*self.nodes.get_by_right(from).unwrap(), key),
 		);
 		self.id_alloc += 1;
 		true
@@ -105,7 +104,7 @@ impl Router {
 	pub fn traceroute(&self, piece: &Piece) -> Option<VecDeque<KeyType>> {
 		let mut ret = Vec::new();
 		match self.nodes.get_by_right(piece) {
-			None => return None,
+			None => None,
 			Some(id) => {
 				let mut id = *id;
 				while id >= 0 {
@@ -123,13 +122,16 @@ impl Router {
 				};
 				let mut first = generate_keys(gkp);
 				first.extend(ret.into_iter().rev());
-				return Some(first)
+				Some(first)
 			}
 		}
 	}
 }
 
-pub fn route_solver(color: &[[u8; 10]], piece_query: &Piece) -> Option<VecDeque<KeyType>> {
+pub fn route_solver(
+	color: &[[u8; 10]],
+	piece_query: &Piece,
+) -> Option<VecDeque<KeyType>> {
 	let code = piece_query.code;
 	let heights = get_heights(color);
 	let mut queue: VecDeque<Piece> = VecDeque::new();
@@ -144,7 +146,7 @@ pub fn route_solver(color: &[[u8; 10]], piece_query: &Piece) -> Option<VecDeque<
 				rotation,
 			};
 			if !field.test(&p) {
-				continue
+				continue;
 			}
 			queue.push_back(p.clone());
 			router.add_root(p.clone());
@@ -157,41 +159,44 @@ pub fn route_solver(color: &[[u8; 10]], piece_query: &Piece) -> Option<VecDeque<
 	while let Some(revert_piece) = queue.pop_front() {
 		// can this be done earlier?
 		if *piece_query == revert_piece {
-			return router.traceroute(&revert_piece)
+			return router.traceroute(&revert_piece);
 		}
 		let mut piece = revert_piece.clone();
 		// possible op H, L, Z, X, D, J, K(sound)
 		piece.pos.0 += 1;
-		if field.test(&piece) {
-			if router.add_edge(piece.clone(), &revert_piece, KeyType::Right) {
-				queue.push_back(piece.clone());
-			}
+		if field.test(&piece)
+			&& router.add_edge(piece.clone(), &revert_piece, KeyType::Right)
+		{
+			queue.push_back(piece.clone());
 		}
 		piece.pos.0 -= 2;
-		if field.test(&piece) {
-			if router.add_edge(piece.clone(), &revert_piece, KeyType::Left) {
-				queue.push_back(piece.clone());
-			}
+		if field.test(&piece)
+			&& router.add_edge(piece.clone(), &revert_piece, KeyType::Left)
+		{
+			queue.push_back(piece.clone());
 		}
 		piece.pos.0 += 1;
 		for rot in [-1, 1, 2].iter() {
 			let mut piece = revert_piece.clone();
-			if field.rotate(&mut piece, *rot) != 0 {
-				if router.add_edge(piece.clone(), &revert_piece, match rot {
-					1 => KeyType::Rotate,
-					-1 => KeyType::RotateReverse,
-					2 => KeyType::RotateFlip,
-					_ => unreachable!(),
-				}) {
-					queue.push_back(piece);
-				}
+			if field.rotate(&mut piece, *rot) != 0
+				&& router.add_edge(
+					piece.clone(),
+					&revert_piece,
+					match rot {
+						1 => KeyType::Rotate,
+						-1 => KeyType::RotateReverse,
+						2 => KeyType::RotateFlip,
+						_ => unreachable!(),
+					},
+				) {
+				queue.push_back(piece);
 			}
 		}
 		loop {
 			piece.pos.1 -= 1;
 			if !field.test(&piece) {
 				piece.pos.1 += 1;
-				break
+				break;
 			}
 		}
 		if router.add_edge(piece.clone(), &revert_piece, KeyType::SonicDrop) {

@@ -19,9 +19,7 @@ pub trait Thinker {
 		let mut strategy = true;
 		let mut moveflag = false;
 		match game_type {
-			GameType::Speed => {
-				strategy = false
-			}
+			GameType::Speed => strategy = false,
 			GameType::Strategy(_round_sleep, initiator) => {
 				moveflag = initiator;
 			}

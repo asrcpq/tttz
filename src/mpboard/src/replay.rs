@@ -1,8 +1,8 @@
+use crate::RandomGenerator;
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use tttz_protocol::BoardMsg;
 use tttz_ruleset::{CodeType, PosType};
-use crate::RandomGenerator;
 
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};

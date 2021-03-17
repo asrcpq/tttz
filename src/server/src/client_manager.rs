@@ -59,7 +59,11 @@ impl ClientManager {
 		self.id_addr.iter().map(|(&x, _)| x)
 	}
 
-	pub fn broadcast<'a>(&self, receivers: impl Iterator<Item = &'a IdType>, msg: &ServerMsg) {
+	pub fn broadcast<'a>(
+		&self,
+		receivers: impl Iterator<Item = &'a IdType>,
+		msg: &ServerMsg,
+	) {
 		for &receiver in receivers {
 			self.send_msg_by_id(receiver, msg);
 		}
@@ -100,7 +104,9 @@ impl ClientManager {
 
 	pub fn pair_apply(&mut self, id1: IdType, id2: IdType) {
 		self.view_mut_by_id(id1).unwrap().pair_success(id2);
-		if id2 == 0 { return } // single player
+		if id2 == 0 {
+			return;
+		} // single player
 		self.view_mut_by_id(id2).unwrap().pair_success(id1);
 	}
 }

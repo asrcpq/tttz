@@ -1,5 +1,5 @@
-use tttz_protocol::{BoardMsg, BoardReply, KeyType, IdType, Display};
 use crate::Board;
+use tttz_protocol::{BoardMsg, BoardReply, Display, IdType, KeyType};
 
 use std::collections::HashSet;
 
@@ -30,14 +30,17 @@ impl Game {
 	// return.0 winner id, 0 = not end
 	// return.1 viewers
 	// return.2 refresh info
-	pub fn process_key(&mut self, cid: IdType, seq: usize, key_type: KeyType) ->
-		(i32, Vec<Display>)
-	{
+	pub fn process_key(
+		&mut self,
+		cid: IdType,
+		seq: usize,
+		key_type: KeyType,
+	) -> (i32, Vec<Display>) {
 		let mut winner = 0;
 		let id = if cid == self.players[0] {
 			0
 		} else if cid == self.players[1] {
-			1 
+			1
 		} else {
 			panic!("Process key getting invalid id");
 		};
@@ -47,7 +50,8 @@ impl Game {
 		let reply = self.boards[id].handle_msg(BoardMsg::KeyEvent(key_type));
 		match reply {
 			BoardReply::ClearDrop(_lc, atk) if atk > 0 && oid != 0 => {
-				let recv_ret = self.boards[1 - id].handle_msg(BoardMsg::Attacked(atk));
+				let recv_ret =
+					self.boards[1 - id].handle_msg(BoardMsg::Attacked(atk));
 				if recv_ret == BoardReply::Die {
 					winner = cid;
 				}
@@ -57,16 +61,21 @@ impl Game {
 			BoardReply::Die => {
 				winner = oid;
 			}
-			_ => {},
+			_ => {}
 		}
 		self.replies[id] = reply;
-		let displays = generate_list.iter()
+		let displays = generate_list
+			.iter()
 			.map(|&id| self.generate_display(id, self.seqs[id]))
 			.collect();
 		(winner, displays)
 	}
 
 	pub fn generate_display(&self, id: usize, seq: usize) -> Display {
-		self.boards[id].generate_display(self.players[id], seq, self.replies[id])
+		self.boards[id].generate_display(
+			self.players[id],
+			seq,
+			self.replies[id],
+		)
 	}
 }
