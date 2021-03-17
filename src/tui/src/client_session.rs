@@ -289,7 +289,9 @@ impl ClientSession {
 
 	// true = exit
 	fn recv_phase(&mut self) -> bool {
-		if let Ok(server_msg) = self.client_socket.recv() {
+		let mut change_flag = false;
+		while let Ok(server_msg) = self.client_socket.recv() {
+			change_flag = true;
 			match server_msg {
 				ServerMsg::Display(mut display) => {
 					let id = display.id;
@@ -318,6 +320,8 @@ impl ClientSession {
 					}
 				}
 			}
+		}
+		if change_flag {
 			stdout().flush().unwrap();
 		}
 		false
