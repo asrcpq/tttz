@@ -21,7 +21,7 @@ impl Game {
 		for viewer in extra_viewers {
 			viewers.insert(viewer);
 		}
-		eprintln!("{:?}", viewers);
+		eprintln!("new game with viewers: {:?}", viewers);
 		Game {
 			players: [host, guest],
 			replies: [BoardReply::Ok; 2],

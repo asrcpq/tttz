@@ -45,6 +45,7 @@ impl Client {
 	}
 
 	pub fn pair_success(&mut self, target_id: IdType) {
+		eprintln!("pair success against {}", target_id);
 		self.state = ClientState::InMatch;
 		self.attack_target = target_id;
 		self.send_msg(&ServerMsg::Start(target_id));

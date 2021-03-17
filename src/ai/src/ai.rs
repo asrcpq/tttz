@@ -1,7 +1,7 @@
 // interactive ai interface
 
 use tttz_libclient::ClientSocket;
-use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg};
+use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg, BoardReply};
 
 use std::collections::VecDeque;
 
@@ -18,19 +18,20 @@ pub trait Thinker {
 	) {
 		let mut strategy = true;
 		let mut moveflag = false;
+		let mut main_sleep = 10;
 		match game_type {
 			GameType::Speed => strategy = false,
-			GameType::Strategy(_round_sleep, initiator) => {
+			GameType::Strategy(round_sleep, initiator) => {
+				main_sleep = round_sleep;
 				moveflag = initiator;
 			}
 			_ => unreachable!(),
 		}
 		let (client_socket, id) = ClientSocket::new(&addr);
-		let main_sleep = 10;
 
 		let mut state = 3;
 		let mut last_display: Option<Display> = None;
-		let mut operation_queue: VecDeque<KeyType> = VecDeque::new();
+		let mut operation_queue: VecDeque<KeyType>;
 		loop {
 			std::thread::sleep(std::time::Duration::from_millis(main_sleep));
 			// read until last screen
@@ -42,7 +43,12 @@ pub trait Thinker {
 						} else {
 							// strategy ai moves after user move
 							if strategy {
-								moveflag = true;
+								if let BoardReply::ClearDrop(_lc, _atk) = display.board_reply {
+									moveflag = true;
+								}
+								if let BoardReply::PlainDrop(_gg) = display.board_reply {
+									moveflag = true;
+								}
 							}
 						}
 					}
@@ -72,16 +78,17 @@ pub trait Thinker {
 			if strategy {
 				if state == 2 && moveflag {
 					if let Some(decoded) = last_display.take() {
-						if operation_queue.is_empty() {
-							operation_queue = self.main_think(decoded);
+						let mut opflag = true;
+						for operation in self.main_think(decoded).iter() {
+							client_socket
+								.send(ClientMsg::KeyEvent(
+									0,
+									*operation,
+								))
+								.unwrap();
+							opflag = false;
 						}
-						client_socket
-							.send(ClientMsg::KeyEvent(
-								0,
-								operation_queue.pop_front().unwrap(),
-							))
-							.unwrap();
-						moveflag = false;
+						moveflag = opflag;
 					}
 				}
 			} else if let Some(decoded) = last_display.take() {

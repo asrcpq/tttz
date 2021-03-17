@@ -3,12 +3,16 @@ trap exittrap EXIT
 exittrap() {
 	pkill tttz
 }
+t="100"
+if [ -n "$1" ]; then
+	t="$1"
+fi
 cd "$(dirname "$0")/.."
 cargo run --release --bin tttz-server 2>/dev/shm/tttz-server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo mm strategy_initiator 100" \
-execute "spawnai algo cc strategy 100" \
+execute "spawnai algo mm strategy_initiator $t" \
+execute "spawnai algo cc strategy $t" \
 execute "sleep 300" \
 execute "view 2" \
 execute "panel 0 2" \

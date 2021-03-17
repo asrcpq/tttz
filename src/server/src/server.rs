@@ -161,6 +161,7 @@ impl Server {
 	}
 
 	fn handle_msg(&mut self, msg: ClientMsg, client_id: IdType) {
+		eprintln!("SERVER: client {} send {:?}", client_id, msg);
 		match msg {
 			ClientMsg::Quit => {
 				eprintln!("Client {} quit", client_id);

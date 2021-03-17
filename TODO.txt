@@ -1,10 +1,11 @@
 Working:
 
-- ccbot has bug
+- use tcp
 - write an ai
 
 Planned:
 
+- ccbot has bug?
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
