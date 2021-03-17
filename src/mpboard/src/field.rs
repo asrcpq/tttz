@@ -40,7 +40,7 @@ impl IndexMut<usize> for Field {
 impl Field {
 	pub fn from_color(color: &[[u8; 10]]) -> Self {
 		Field {
-			color: color.iter().cloned().collect(),
+			color: color.to_vec(),
 		}
 	}
 	

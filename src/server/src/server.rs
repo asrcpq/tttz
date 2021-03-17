@@ -112,6 +112,39 @@ impl Server {
 		self.client_manager.set_state(opponent, ClientState::Idle);
 	}
 
+	fn try_apply_match(&mut self, id1: IdType, id2: IdType) {
+		if id2 != 0 {
+			if !self.client_manager.check_id(id2) {
+				eprintln!("SERVER: accept: cannot find client {}", id2);
+				return;
+			}
+			if !self.client_manager.is_pairing(id2) {
+				eprintln!(
+					"SERVER: accept: but the sender is not pairing."
+				);
+				return;
+			}
+		}
+		self.client_manager.pair_apply(id1, id2);
+		let new_game = Game::new(id1, id2);
+		for i in 0..if id2 == 0 {
+			1
+		} else {
+			2
+		} {
+			self.client_manager.broadcast(
+				new_game.viewers.iter(),
+				&ServerMsg::Display(new_game.generate_display(i, 0))
+			);
+		}
+		self.game_map.insert(self.game_id_alloc, new_game);
+		self.client_in_game.insert(id1, self.game_id_alloc);
+		if id2 != 0 {
+			self.client_in_game.insert(id2, self.game_id_alloc);
+		}
+		self.game_id_alloc += 1;
+	}
+
 	fn handle_msg(&mut self, msg: ClientMsg, client_id: IdType) {
 		match msg {
 			ClientMsg::Quit => {
@@ -191,7 +224,7 @@ impl Server {
 			ClientMsg::Restart => {
 				let opponent = self.client_manager.get_attack_target(client_id);
 				if opponent == 0 {
-					// start single
+					self.try_apply_match(client_id, 0);
 				} else {
 					if self.client_manager.is_idle(opponent) {
 						self.client_manager.set_state(client_id, ClientState::Pairing);
@@ -203,40 +236,10 @@ impl Server {
 				}
 			}
 			ClientMsg::Accept(id) => {
-				if self.client_manager.check_id(id) {
-					if !self.client_manager.is_pairing(id) {
-						eprintln!(
-							"SERVER: accept: but the sender is not pairing."
-						);
-					} else {
-						self.client_manager.pair_apply(client_id, id);
-						let new_game = Game::new(client_id, id);
-						for i in 0..2 {
-							self.client_manager.broadcast(
-								new_game.viewers.iter(),
-								&ServerMsg::Display(new_game.generate_display(i, 0))
-							);
-						}
-						self.game_map.insert(self.game_id_alloc, new_game);
-						self.client_in_game.insert(client_id, self.game_id_alloc);
-						self.client_in_game.insert(id, self.game_id_alloc);
-						self.game_id_alloc += 1;
-					}
-				} else {
-					eprintln!("SERVER: accept: cannot find client {}", id);
-				}
+				self.try_apply_match(client_id, id);
 			}
 			ClientMsg::PlaySingle => {
-				if self.client_manager.is_idle(client_id) {
-					self.client_manager.pair_apply(client_id, 0);
-					let new_game = Game::new(client_id, 0);
-					self.client_manager.broadcast(
-						new_game.viewers.iter(),
-						&ServerMsg::Display(new_game.generate_display(0, 0)));
-					self.game_map.insert(self.game_id_alloc, new_game);
-					self.client_in_game.insert(client_id, self.game_id_alloc);
-					self.game_id_alloc += 1;
-				}
+				self.try_apply_match(client_id, 0);
 			}
 			ClientMsg::KeyEvent(seq, key_type) => {
 				if self.client_manager.in_match(client_id) {
@@ -271,26 +274,5 @@ impl Server {
 			self.handle_msg(msg, id);
 			// Be aware of the continue above before writing anything here
 		}
-	}
-}
-
-#[cfg(test)]
-mod test {
-	use super::*;
-
-	#[test]
-	fn create_and_remove_client() {
-		let mut server: Server = Default::default();
-		let addr = "127.0.0.1:23124";
-		let id = server
-			.client_manager
-			.new_client_by_addr(addr.parse().unwrap(), MsgEncoding::Json);
-		let client = server.client_manager.tmp_pop_by_id(id).unwrap();
-		server.client_manager.tmp_push_by_id(id, client);
-		assert_eq!(
-			server.client_manager.get_addr_by_id(id).unwrap(),
-			addr.parse().unwrap()
-		);
-		assert!(server.client_manager.pop_by_id(id).is_some());
 	}
 }

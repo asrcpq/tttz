@@ -77,6 +77,7 @@ impl RandomGenerator {
 		self.bag[self.bag_id - 1]
 	}
 
+	#[allow(clippy::needless_range_loop)]
 	pub fn preview_code(&self) -> [CodeType; 6] {
 		let mut ret = [0; 6];
 		for i in 0..6 {
