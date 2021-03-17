@@ -38,7 +38,7 @@ pub trait Thinker {
 			// read until last screen
 			while let Ok(server_msg) = client_socket.recv() {
 				match server_msg {
-					ServerMsg::Display(_, display) => {
+					ServerMsg::Display(display) => {
 						if display.id == id {
 							last_display = Some(display);
 						} else {

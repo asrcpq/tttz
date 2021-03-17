@@ -10,6 +10,7 @@ pub const BOARD_WIDTH: usize = 10;
 // interface between server and client
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Display {
+	pub seq: usize,
 	pub id: IdType,
 	pub color: Vec<[u8; BOARD_WIDTH]>,
 	pub shadow_block: Piece,
@@ -25,6 +26,7 @@ pub struct Display {
 impl Display {
 	pub fn new(id: IdType) -> Display {
 		Display {
+			seq: 0,
 			id,
 			color: vec![[b' '; BOARD_WIDTH]; 20],
 			shadow_block: Piece::new(0),

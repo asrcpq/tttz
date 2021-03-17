@@ -9,8 +9,6 @@ pub enum ServerMsg {
 	// response of new client
 	AllocId(IdType),
 	ClientList(Vec<IdType>),
-	// receiver, amount
-	Attack(IdType, u32),
 	// opponent, or 0 in single player mode
 	Start(IdType),
 	// sender
@@ -21,7 +19,7 @@ pub enum ServerMsg {
 	GameOver(IdType),
 	// or kicked
 	Terminate,
-	Display(u32, Display),
+	Display(Display),
 }
 
 impl ServerMsg {
@@ -45,9 +43,6 @@ impl std::fmt::Display for ServerMsg {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let string = match self {
 			Self::AllocId(id) => format!("Ok {}", id),
-			Self::Attack(id, amount) => {
-				format!("sigatk {} {}", id, amount)
-			}
 			Self::Start(id) => {
 				format!("startvs {}", id)
 			}
@@ -64,8 +59,8 @@ impl std::fmt::Display for ServerMsg {
 			Self::GameOver(id) => {
 				format!("winner: {}", id)
 			}
-			Self::Display(id, display) => {
-				format!("display id: {} seq: {}", display.id, id)
+			Self::Display(display) => {
+				format!("display id: {}", display.id)
 			}
 		};
 		write!(f, "{}", string)

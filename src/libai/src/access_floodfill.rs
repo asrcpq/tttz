@@ -147,7 +147,7 @@ pub fn route_solver(color: &[[u8; 10]], piece_query: &Piece) -> Option<VecDeque<
 				continue
 			}
 			queue.push_back(p.clone());
-			debug_assert!(router.add_root(p.clone()));
+			router.add_root(p.clone());
 			if *piece_query == p {
 				return router.traceroute(&p);
 			}

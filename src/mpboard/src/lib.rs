@@ -1,3 +1,5 @@
+mod game;
+pub use game::Game;
 mod board;
 pub use board::Board;
 mod field;

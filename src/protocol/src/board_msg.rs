@@ -8,7 +8,7 @@ pub enum BoardMsg {
 	KeyEvent(KeyType),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)]
 pub enum BoardReply {
 	// Ok and ko are return value for softdrop, move and rotate
 	// Ok is also used as return value of silent garbage queue push

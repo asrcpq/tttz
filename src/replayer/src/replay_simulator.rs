@@ -49,7 +49,7 @@ impl ReplaySimulator {
 			}
 			let br = self.board.handle_msg(self.replay.data[self.idx].1.clone());
 			self.rc.count(&br, t);
-			ret = Some(self.board.generate_display(self.id, br));
+			ret = Some(self.board.generate_display(self.id, 0, br)); // what's seq
 			self.idx += 1;
 		}
 	}

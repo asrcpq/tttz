@@ -16,9 +16,8 @@ pub enum ClientMsg {
 	Invite(IdType, IdType),
 	Restart,
 	Accept(IdType),
-	ForceMatch(IdType),
 	// message id(used for reply matching), key
-	KeyEvent(u32, KeyType),
+	KeyEvent(usize, KeyType),
 }
 
 impl ClientMsg {

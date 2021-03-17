@@ -352,8 +352,9 @@ impl Board {
 		}
 	}
 
-	pub fn generate_display(&self, id: IdType, board_reply: BoardReply) -> Display {
+	pub fn generate_display(&self, id: IdType, seq: usize, board_reply: BoardReply) -> Display {
 		let mut display = Display {
+			seq,
 			id,
 			color: self.field.iter().take(20).cloned().collect(),
 			shadow_block: self.shadow_block.clone(),

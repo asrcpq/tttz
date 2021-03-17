@@ -149,15 +149,6 @@ impl ClientSession {
 				self.modeswitch(1);
 				self.state = 2;
 			}
-			ServerMsg::Attack(id, amount) => {
-				if let Some(mut display) = self.last_display.remove(&id) {
-					display.garbages.push_back(amount);
-					if self.mode == 1 {
-						self.client_display.disp_atk_by_id(&display);
-					}
-					self.last_display.insert(id, display);
-				}
-			}
 			ServerMsg::GameOver(_) => {
 				self.client_renderer.reset();
 				self.state = 1;
@@ -297,12 +288,12 @@ impl ClientSession {
 	fn recv_phase(&mut self) -> bool {
 		if let Ok(server_msg) = self.client_socket.recv() {
 			match server_msg {
-				ServerMsg::Display(seq, mut display) => {
+				ServerMsg::Display(mut display) => {
 					let id = display.id;
 					if self.last_display.remove(&id).is_some() {
 						if self.mode == 1 {
 							if id == self.id {
-								self.client_renderer.backtrack(seq, &mut display);
+								self.client_renderer.backtrack(display.seq, &mut display);
 							} else {
 								self.sound_manager.play(
 									&SoundEffect::from_board_reply(

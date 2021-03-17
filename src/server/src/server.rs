@@ -1,12 +1,16 @@
 use once_cell::sync::Lazy;
 
-use crate::client::{Client, ClientState};
+use crate::client::ClientState;
 use crate::client_manager::ClientManager;
 use tttz_protocol::{
-	BoardMsg, BoardReply, ClientMsg, GameType, MsgEncoding, ServerMsg,
+	ClientMsg, IdType, MsgEncoding, ServerMsg,
 };
+use tttz_mpboard::Game;
 
 use std::net::{SocketAddr, UdpSocket};
+use std::collections::HashMap;
+
+type GameIdType = i32;
 
 pub static SOCKET: Lazy<UdpSocket> = Lazy::new(|| {
 	let mut addr = "0.0.0.0:23124".to_string();
@@ -25,6 +29,9 @@ pub static SOCKET: Lazy<UdpSocket> = Lazy::new(|| {
 pub struct Server {
 	client_manager: ClientManager,
 	ai_threads: Vec<std::thread::JoinHandle<()>>,
+	client_in_game: HashMap::<IdType, GameIdType>,
+	game_map: HashMap::<GameIdType, Game>,
+	game_id_alloc: GameIdType,
 }
 
 // encoding, client_type
@@ -56,74 +63,12 @@ fn new_client_msg_parse(msg: &[u8]) -> Result<(MsgEncoding, String), String> {
 }
 
 impl Server {
-	// true: kill
-	fn send_attack(&mut self, id: i32, lines: u32) -> bool {
-		// target id and attr
-		let mut client_target = self.client_manager.tmp_pop_by_id(id).unwrap();
-		let mut flag = false;
-		let reply = client_target.board.handle_msg(BoardMsg::Attacked(lines));
-		if let BoardReply::Ok = reply {
-			client_target.broadcast_msg(
-				&self.client_manager,
-				&ServerMsg::Attack(client_target.id, lines),
-			);
-		} else {
-			client_target.send_display(
-				&self.client_manager,
-				client_target.generate_display(reply.clone()),
-				0,
-			);
-			if reply == BoardReply::Die {
-				flag = true
-			}
-		}
-		self.client_manager.tmp_push_by_id(id, client_target);
-		flag
-	}
-
-	fn post_operation(
-		&mut self,
-		client: &mut Client,
-		board_reply: &BoardReply,
-		seq: u32,
-	) {
-		let mut dieflag = false;
-		// note the size effect of counter_attack
-		if let BoardReply::ClearDrop(_line_clear, atk) = *board_reply {
-			if atk > 0 {
-				if self
-					.client_manager
-					.get_addr_by_id(client.attack_target)
-					.is_some()
-				{
-					eprintln!(
-						"{} attack {} with {}",
-						client.id, client.attack_target, atk,
-					);
-					if self.send_attack(client.attack_target, atk) {
-						dieflag = true;
-					};
-				} else {
-					eprintln!(
-						"Client {} is attacking nonexistent target {} with {}",
-						client.id, client.attack_target, atk,
-					);
-				}
-			}
-		}
-		let display = client.generate_display(board_reply.clone());
-		client.send_display(&self.client_manager, display, seq);
-		if dieflag {
-			self.die(client, false);
-		}
-	}
-
 	fn parse_message(
 		&mut self,
 		buf: &[u8],
 		src: SocketAddr,
 		amt: usize,
-	) -> Option<(Client, ClientMsg)> {
+	) -> Option<(IdType, ClientMsg)> {
 		// get or create client
 		let matched_id =
 			if let Some(id) = self.client_manager.get_id_by_addr(src) {
@@ -131,20 +76,19 @@ impl Server {
 			} else {
 				0 // should never be matched in clients
 			};
-		let client = match self.client_manager.tmp_pop_by_id(matched_id) {
-			Some(client) => client,
-			None => {
-				if let Ok((met, string)) = new_client_msg_parse(&buf[..amt]) {
-					let new_id =
-						self.client_manager.new_client_by_addr(src, met, &string);
-					self.client_manager
-						.send_msg_by_id(new_id, &ServerMsg::AllocId(new_id));
-				} else {
-					eprintln!("Unknown client: {:?}", src);
-				}
-				return None;
+		let client = self.client_manager.view_by_id(matched_id);
+		if client.is_none() {
+			if let Ok((met, string)) = new_client_msg_parse(&buf[..amt]) {
+				let new_id =
+					self.client_manager.new_client_by_addr(src, met, &string);
+				self.client_manager
+					.send_msg_by_id(new_id, &ServerMsg::AllocId(new_id));
+			} else {
+				eprintln!("Unknown client: {:?}", src);
 			}
+			return None;
 		};
+		let client = client.unwrap();
 		let client_msg = match ClientMsg::from_bytes(&buf[..amt], client.met) {
 			Ok(client_msg) => client_msg,
 			Err(string) => {
@@ -152,112 +96,52 @@ impl Server {
 					"[43mSERVER[0m: Parse failed from {:?}: {}",
 					src, string
 				);
-				self.client_manager.tmp_push_by_id(client.id, client);
 				return None;
 			}
 		};
-		Some((client, client_msg))
+		Some((client.id, client_msg))
 	}
 
-	pub fn die(&mut self, client: &mut Client, die: bool) {
-		client.broadcast_msg(&self.client_manager, &ServerMsg::GameOver(if die {
-			client.attack_target
-		} else {
-			client.id
-		}));
-		self.die1(client);
-		if let Some(mut opponent) =
-			self.client_manager.tmp_pop_by_id(client.attack_target)
-		{
-			self.die1(&mut opponent);
-			self.client_manager
-				.tmp_push_by_id(client.attack_target, opponent);
-		} // or the opponent has gone
+	fn terminate_game(&mut self, client_id: IdType, winner: IdType) {
+		let opponent = self.client_manager.get_attack_target(client_id);
+		let game_id = self.client_in_game.get(&client_id).unwrap();
+		let game = self.game_map.remove(&game_id).unwrap();
+		self.client_manager.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
+		self.client_in_game.remove(&opponent);
+		self.client_manager.set_state(client_id, ClientState::Idle);
+		self.client_manager.set_state(opponent, ClientState::Idle);
 	}
 
-	fn die1(&mut self, client: &mut Client) {
-		eprintln!("SERVER: client {} gameover", client.id);
-		client.state = ClientState::Idle;
-		if client.save_replay {
-			match client.board.save_replay(&format!("{}", client.id)) {
-				Ok(true) => {}
-				Ok(false) => {
-					eprintln!("[32mSERVER[0m: cannot find path to write replay!");
-				}
-				Err(_) => {
-					eprintln!("[32mSERVER[0m: write replay failed!");
-				}
-			}
-		}
-		client.dc_ids.remove(&client.attack_target);
-	}
-
-	fn set_view(&mut self, from_id: i32, to_id: i32) {
-		let viewed_client = self.client_manager.tmp_pop_by_id(to_id);
-		match viewed_client {
-			Some(mut viewed_client) => {
-				let ret = viewed_client.dc_ids.insert(from_id);
-				eprintln!("Client {} viewing {}: {}", from_id, to_id, ret);
-				self.client_manager.tmp_push_by_id(to_id, viewed_client);
-			}
-			None => {
-				eprintln!("Client {} try to view nonexist {}", from_id, to_id);
-			}
-		}
-	}
-
-	fn unset_view(&mut self, from_id: i32, to_id: i32) {
-		let viewed_client = self.client_manager.tmp_pop_by_id(to_id);
-		match viewed_client {
-			Some(mut viewed_client) => {
-				let ret = viewed_client.dc_ids.remove(&from_id);
-				eprintln!("Client {} unviewing {}: {}", from_id, to_id, ret);
-				self.client_manager.tmp_push_by_id(to_id, viewed_client);
-			}
-			None => {
-				eprintln!(
-					"Client {} try to unview nonexist {}",
-					from_id, to_id
-				);
-			}
-		}
-	}
-
-	fn start_single(&mut self, client: &mut Client) {
-		client.init_board();
-		client.state = ClientState::InMatch(GameType::Single);
-		client.attack_target = 0;
-		client.send_msg(&ServerMsg::Start(0));
-		let display = client.generate_display(BoardReply::Ok);
-		client.send_display(&self.client_manager, display, 0);
-	}
-
-	fn handle_msg(&mut self, msg: ClientMsg, mut client: &mut Client) -> bool {
+	fn handle_msg(&mut self, msg: ClientMsg, client_id: IdType) {
 		match msg {
 			ClientMsg::Quit => {
-				eprintln!("Client {} quit", client.id);
-				if let ClientState::InMatch(_) = client.state {
-					self.die(&mut client, true);
+				eprintln!("Client {} quit", client_id);
+				if self.client_manager.in_match(client_id) {
+					let op = self.client_manager.get_attack_target(client_id);
+					self.terminate_game(client_id, op);
 				}
-				assert!(self.client_manager.pop_by_id(client.id).is_none());
-				return false;
+				self.client_manager.pop_by_id(client_id);
 			}
 			ClientMsg::Suicide => {
-				self.die(&mut client, true);
+				if self.client_manager.in_match(client_id) {
+					let op = self.client_manager.get_attack_target(client_id);
+					self.terminate_game(client_id, op);
+				}
+				self.client_manager.pop_by_id(client_id);
 			}
 			ClientMsg::GetClients => {
 				let list = self
 					.client_manager
 					.clients()
-					.filter(|&x| x != client.id)
+					.filter(|&x| x != client_id)
 					.collect();
-				client.send_msg(&ServerMsg::ClientList(list));
+				self.client_manager.send_msg_by_id(client_id, &ServerMsg::ClientList(list));
 			}
 			ClientMsg::Kick(id) => {
 				let mut flag = true;
-				if id != client.id {
-					if let Some(client) = self.client_manager.pop_by_id(id) {
-						client.send_msg(&ServerMsg::Terminate);
+				if id != client_id { // use quit, instead of kick yourself
+					if let Some(_) = self.client_manager.pop_by_id(id) {
+						self.client_manager.send_msg_by_id(client_id, &ServerMsg::Terminate);
 						flag = false;
 					}
 				}
@@ -265,11 +149,11 @@ impl Server {
 					eprintln!("SERVER: kick failed.");
 				}
 			}
-			ClientMsg::View(id) => {
-				self.set_view(client.id, id);
+			ClientMsg::View(_id) => {
+				// self.set_view(client.id, id);
 			}
-			ClientMsg::NoView(id) => {
-				self.unset_view(client.id, id);
+			ClientMsg::NoView(_id) => {
+				// self.unset_view(client.id, id);
 			}
 			ClientMsg::SpawnAi(algo, game_type, sleep) => {
 				match tttz_ai::spawn_ai(&algo, game_type, sleep) {
@@ -292,14 +176,12 @@ impl Server {
 				}
 			}
 			ClientMsg::Request(id) => {
-				if let Some(opponent) = self.client_manager.view_by_id(id) {
-					if opponent.state == ClientState::Idle {
-						client.state = ClientState::Pairing;
-						opponent.send_msg(&ServerMsg::Request(client.id));
-					} else {
-						eprintln!(
-							"SERVER: request: invalid opponent state {:?}",
-							opponent.state
+				if self.client_manager.check_id(id) {
+					if self.client_manager.is_idle(id) {
+						self.client_manager.set_state(client_id, ClientState::Pairing);
+						self.client_manager.send_msg_by_id(
+							id,
+							&ServerMsg::Request(client_id),
 						);
 					}
 				} else {
@@ -307,71 +189,73 @@ impl Server {
 				}
 			}
 			ClientMsg::Restart => {
-				if client.attack_target == 0 {
-					self.start_single(&mut client);
-				} else if let Some(opponent) =
-					self.client_manager.view_by_id(client.attack_target)
-				{
-					if opponent.state == ClientState::Idle {
-						client.state = ClientState::Pairing;
-						opponent.send_msg(&ServerMsg::Request(client.id));
-					} else {
-						eprintln!(
-							"SERVER: request: invalid opponent state {:?}",
-							opponent.state
+				let opponent = self.client_manager.get_attack_target(client_id);
+				if opponent == 0 {
+					// start single
+				} else {
+					if self.client_manager.is_idle(opponent) {
+						self.client_manager.set_state(client_id, ClientState::Pairing);
+						self.client_manager.send_msg_by_id(
+							opponent,
+							&ServerMsg::Request(client_id),
 						);
 					}
 				}
 			}
 			ClientMsg::Accept(id) => {
-				if let Some(mut opponent) =
-					self.client_manager.tmp_pop_by_id(id)
-				{
-					if opponent.state != ClientState::Pairing {
+				if self.client_manager.check_id(id) {
+					if !self.client_manager.is_pairing(id) {
 						eprintln!(
 							"SERVER: accept: but the sender is not pairing."
 						);
 					} else {
-						self.client_manager
-							.pair_apply(&mut client, &mut opponent);
-						self.client_manager.tmp_push_by_id(id, opponent);
+						self.client_manager.pair_apply(client_id, id);
+						let new_game = Game::new(client_id, id);
+						for i in 0..2 {
+							self.client_manager.broadcast(
+								new_game.viewers.iter(),
+								&ServerMsg::Display(new_game.generate_display(i, 0))
+							);
+						}
+						self.game_map.insert(self.game_id_alloc, new_game);
+						self.client_in_game.insert(client_id, self.game_id_alloc);
+						self.client_in_game.insert(id, self.game_id_alloc);
+						self.game_id_alloc += 1;
 					}
 				} else {
 					eprintln!("SERVER: accept: cannot find client {}", id);
 				}
 			}
-			// should only used for training
-			ClientMsg::ForceMatch(id) => {
-				if let Some(mut opponent) =
-					self.client_manager.tmp_pop_by_id(id)
-				{
-					self.client_manager
-						.pair_apply(&mut client, &mut opponent);
-					self.client_manager.tmp_push_by_id(id, opponent);
-				}
-			}
 			ClientMsg::PlaySingle => {
-				// terminate current game
-				match client.state {
-					ClientState::InMatch(_) => {}
-					_ => {
-						self.start_single(&mut client);
-					}
+				if self.client_manager.is_idle(client_id) {
+					self.client_manager.pair_apply(client_id, 0);
+					let new_game = Game::new(client_id, 0);
+					self.client_manager.broadcast(
+						new_game.viewers.iter(),
+						&ServerMsg::Display(new_game.generate_display(0, 0)));
+					self.game_map.insert(self.game_id_alloc, new_game);
+					self.client_in_game.insert(client_id, self.game_id_alloc);
+					self.game_id_alloc += 1;
 				}
 			}
 			ClientMsg::KeyEvent(seq, key_type) => {
-				if let ClientState::InMatch(_) = client.state {
-					let ret = client.process_key(key_type);
-					// display is included in after_operation
-					self.post_operation(&mut client, &ret, seq);
-					// update display before die
-					if ret == BoardReply::Die {
-						self.die(&mut client, true);
+				if self.client_manager.in_match(client_id) {
+					let game_id = self.client_in_game.get(&client_id).unwrap();
+					let game = self.game_map.get_mut(&game_id).unwrap();
+					let ret = game.process_key(client_id, seq, key_type);
+					for display in ret.1.into_iter() {
+						self.client_manager.broadcast(
+							game.viewers.iter(),
+							&ServerMsg::Display(display),
+						);
+					}
+					if ret.0 != 0 {
+						// ended
+						self.terminate_game(client_id, ret.0);
 					}
 				}
 			}
 		}
-		true
 	}
 
 	pub fn main_loop(&mut self) {
@@ -379,14 +263,12 @@ impl Server {
 		loop {
 			// blocking
 			let (amt, src) = SOCKET.recv_from(&mut buf).unwrap();
-			let (mut client, msg) = match self.parse_message(&buf, src, amt) {
+			let (id, msg) = match self.parse_message(&buf, src, amt) {
 				None => continue,
 				x => x.unwrap(),
 			};
-			eprintln!("SERVER client {} send: {}", client.id, msg);
-			if self.handle_msg(msg, &mut client) {
-				self.client_manager.tmp_push_by_id(client.id, client);
-			}
+			eprintln!("SERVER client {} send: {}", id, msg);
+			self.handle_msg(msg, id);
 			// Be aware of the continue above before writing anything here
 		}
 	}

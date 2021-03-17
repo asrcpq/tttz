@@ -1,7 +1,7 @@
 use bimap::BiMap;
 
 use crate::client::{Client, ClientState};
-use tttz_protocol::{BoardReply, IdType, MsgEncoding, ServerMsg};
+use tttz_protocol::{IdType, MsgEncoding, ServerMsg};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -23,25 +23,50 @@ impl Default for ClientManager {
 }
 
 impl ClientManager {
+	pub fn check_id(&self, id: IdType) -> bool {
+		self.id_addr.contains_left(&id)
+	}
+
+	pub fn get_attack_target(&self, id: IdType) -> IdType {
+		self.view_by_id(id).unwrap().attack_target
+	}
+
+	pub fn in_match(&self, id: IdType) -> bool {
+		self.view_by_id(id).unwrap().state == ClientState::InMatch
+	}
+
+	pub fn is_idle(&self, id: IdType) -> bool {
+		self.view_by_id(id).unwrap().state == ClientState::Idle
+	}
+
+	pub fn is_pairing(&self, id: IdType) -> bool {
+		self.view_by_id(id).unwrap().state == ClientState::Pairing
+	}
+
+	pub fn set_state(&mut self, id: IdType, state: ClientState) {
+		self.view_mut_by_id(id).unwrap().state = state;
+	}
+
 	pub fn view_by_id(&self, id: IdType) -> Option<&Client> {
 		self.clients.get(&id)
+	}
+
+	pub fn view_mut_by_id(&mut self, id: IdType) -> Option<&mut Client> {
+		self.clients.get_mut(&id)
 	}
 
 	pub fn clients(&self) -> impl Iterator<Item = IdType> + '_ {
 		self.id_addr.iter().map(|(&x, _)| x)
 	}
 
+	pub fn broadcast<'a>(&self, receivers: impl Iterator<Item = &'a IdType>, msg: &ServerMsg) {
+		for &receiver in receivers {
+			self.send_msg_by_id(receiver, msg);
+		}
+	}
+
 	pub fn send_msg_by_id(&self, id: IdType, msg: &ServerMsg) {
 		self.view_by_id(id).unwrap().send_msg(msg);
-	}
-
-	pub fn tmp_pop_by_id(&mut self, id: IdType) -> Option<Client> {
-		self.clients.remove(&id)
-	}
-
-	pub fn tmp_push_by_id(&mut self, id: IdType, client: Client) {
-		// reject repeat push
-		assert!(self.clients.insert(id, client).is_none());
 	}
 
 	pub fn new_client_by_addr(
@@ -50,8 +75,7 @@ impl ClientManager {
 		met: MsgEncoding,
 		client_type: &str,
 	) -> IdType {
-		let mut client = Client::new(self.id_alloc, src, met, client_type);
-		client.dc_ids.insert(self.id_alloc);
+		let client = Client::new(self.id_alloc, src, met, client_type);
 		self.clients.insert(self.id_alloc, client);
 		eprintln!("Assign id {}", self.id_alloc);
 		self.id_addr.insert(self.id_alloc, src);
@@ -59,31 +83,24 @@ impl ClientManager {
 		self.id_alloc - 1
 	}
 
-	// ignore client nonexistence(but force addr map existence)
-	// as for game over pop, client is already tmp-popped
 	pub fn pop_by_id(&mut self, id: IdType) -> Option<Client> {
 		self.id_addr.remove_by_left(&id).unwrap();
-		self.tmp_pop_by_id(id)
+		self.clients.remove(&id)
 	}
 
 	// return none if not exist
-	pub fn get_addr_by_id(&self, id: IdType) -> Option<SocketAddr> {
-		self.id_addr.get_by_left(&id).copied()
-	}
+	// pub fn get_addr_by_id(&self, id: IdType) -> Option<SocketAddr> {
+	// 	self.id_addr.get_by_left(&id).copied()
+	// }
 
 	// return none if not exist
 	pub fn get_id_by_addr(&self, addr: SocketAddr) -> Option<IdType> {
 		self.id_addr.get_by_right(&addr).copied()
 	}
 
-	pub fn pair_apply(&mut self, client1: &mut Client, client2: &mut Client) {
-		let id1 = client1.id;
-		let id2 = client2.id;
-		client1.pair_success(id2);
-		client2.pair_success(id1);
-		client2
-			.send_display(self, client2.generate_display(BoardReply::Ok), 0);
-		client1
-			.send_display(self, client1.generate_display(BoardReply::Ok), 0);
+	pub fn pair_apply(&mut self, id1: IdType, id2: IdType) {
+		self.view_mut_by_id(id1).unwrap().pair_success(id2);
+		if id2 == 0 { return } // single player
+		self.view_mut_by_id(id2).unwrap().pair_success(id1);
 	}
 }
