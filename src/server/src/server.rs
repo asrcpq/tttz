@@ -128,7 +128,24 @@ impl Server {
 			}
 		}
 		self.client_manager.pair_apply(id1, id2);
-		let new_game = Game::new(id1, id2);
+		let new_game = Game::new(
+			id1,
+			id2,
+			self.client_manager
+				.view_by_id(id1)
+				.unwrap()
+				.viewers
+				.iter()
+				.cloned()
+				.chain(
+				self.client_manager
+					.view_by_id(id2)
+					.unwrap()
+					.viewers
+					.iter()
+					.cloned()
+				)
+		);
 		for i in 0..if id2 == 0 { 1 } else { 2 } {
 			self.client_manager.broadcast(
 				new_game.viewers.iter(),
@@ -182,11 +199,15 @@ impl Server {
 					eprintln!("SERVER: kick failed.");
 				}
 			}
-			ClientMsg::View(_id) => {
-				// self.set_view(client.id, id);
+			ClientMsg::View(id) => {
+				if let Some(client) = self.client_manager.view_mut_by_id(id) {
+					client.viewers.insert(client_id);
+				}
 			}
-			ClientMsg::NoView(_id) => {
-				// self.unset_view(client.id, id);
+			ClientMsg::NoView(id) => {
+				if let Some(client) = self.client_manager.view_mut_by_id(id) {
+					client.viewers.remove(&client_id);
+				}
 			}
 			ClientMsg::SpawnAi(algo, game_type, sleep) => {
 				match tttz_ai::spawn_ai(&algo, game_type, sleep) {
@@ -274,7 +295,7 @@ impl Server {
 				None => continue,
 				x => x.unwrap(),
 			};
-			eprintln!("SERVER client {} send: {}", id, msg);
+			// eprintln!("SERVER client {} send: {}", id, msg);
 			self.handle_msg(msg, id);
 			// Be aware of the continue above before writing anything here
 		}

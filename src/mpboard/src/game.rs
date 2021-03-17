@@ -12,12 +12,16 @@ pub struct Game {
 }
 
 impl Game {
-	pub fn new(host: IdType, guest: IdType) -> Game {
+	pub fn new(host: IdType, guest: IdType, extra_viewers: impl Iterator<Item = IdType>) -> Game {
 		let mut viewers = HashSet::new();
 		viewers.insert(host);
 		if guest != 0 {
 			viewers.insert(guest);
 		}
+		for viewer in extra_viewers {
+			viewers.insert(viewer);
+		}
+		eprintln!("{:?}", viewers);
 		Game {
 			players: [host, guest],
 			replies: [BoardReply::Ok; 2],

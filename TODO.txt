@@ -1,5 +1,6 @@
 Working:
 
+- ccbot has bug
 - write an ai
 
 Planned:

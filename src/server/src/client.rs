@@ -1,6 +1,7 @@
 use crate::server::SOCKET;
 use tttz_protocol::{IdType, MsgEncoding, ServerMsg};
 
+use std::collections::HashSet;
 use std::net::SocketAddr;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -14,6 +15,7 @@ pub enum ClientState {
 pub struct Client {
 	pub id: IdType,
 	addr: SocketAddr,
+	pub viewers: HashSet<IdType>,
 	// 1: waiting
 	// 2: in-game
 	// 3: pairing
@@ -34,6 +36,7 @@ impl Client {
 		Client {
 			id,
 			addr,
+			viewers: HashSet::new(),
 			state: ClientState::Idle,
 			attack_target: 0,
 			met,

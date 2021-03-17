@@ -70,7 +70,11 @@ impl ClientManager {
 	}
 
 	pub fn send_msg_by_id(&self, id: IdType, msg: &ServerMsg) {
-		self.view_by_id(id).unwrap().send_msg(msg);
+		if let Some(client) = self.view_by_id(id) {
+			client.send_msg(msg);
+		} else {
+			eprintln!("Send msg failed");
+		}
 	}
 
 	pub fn new_client_by_addr(
