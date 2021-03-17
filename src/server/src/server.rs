@@ -103,6 +103,7 @@ impl Server {
 	}
 
 	fn terminate_game(&mut self, client_id: IdType, winner: IdType) {
+		eprintln!("Game end, {} win", winner);
 		let opponent = self.client_manager.get_attack_target(client_id);
 		let game_id = self.client_in_game.get(&client_id).unwrap();
 		let game = self.game_map.remove(&game_id).unwrap();
@@ -110,7 +111,9 @@ impl Server {
 			.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
 		self.client_in_game.remove(&opponent);
 		self.client_manager.set_state(client_id, ClientState::Idle);
-		self.client_manager.set_state(opponent, ClientState::Idle);
+		if opponent != 0 {
+			self.client_manager.set_state(opponent, ClientState::Idle);
+		}
 	}
 
 	fn try_apply_match(&mut self, id1: IdType, id2: IdType) {
@@ -155,7 +158,6 @@ impl Server {
 					let op = self.client_manager.get_attack_target(client_id);
 					self.terminate_game(client_id, op);
 				}
-				self.client_manager.pop_by_id(client_id);
 			}
 			ClientMsg::GetClients => {
 				let list = self
@@ -219,16 +221,20 @@ impl Server {
 				}
 			}
 			ClientMsg::Restart => {
-				let opponent = self.client_manager.get_attack_target(client_id);
-				if opponent == 0 {
-					self.try_apply_match(client_id, 0);
-				} else if self.client_manager.is_idle(opponent) {
-					self.client_manager
-						.set_state(client_id, ClientState::Pairing);
-					self.client_manager.send_msg_by_id(
-						opponent,
-						&ServerMsg::Request(client_id),
-					);
+				if !self.client_manager.is_idle(client_id) {
+					eprintln!("SERVER: restart: client is not idle");
+				} else {
+					let opponent = self.client_manager.get_attack_target(client_id);
+					if opponent == 0 {
+						self.try_apply_match(client_id, 0);
+					} else if self.client_manager.is_idle(opponent) {
+						self.client_manager
+							.set_state(client_id, ClientState::Pairing);
+						self.client_manager.send_msg_by_id(
+							opponent,
+							&ServerMsg::Request(client_id),
+						);
+					}
 				}
 			}
 			ClientMsg::Accept(id) => {
@@ -252,6 +258,8 @@ impl Server {
 						// ended
 						self.terminate_game(client_id, ret.0);
 					}
+				} else {
+					eprintln!("Client send operation out of battle!");
 				}
 			}
 		}
