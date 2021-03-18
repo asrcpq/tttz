@@ -13,8 +13,5 @@ tttz-protocol = { path = "../protocol" }
 tttz-ruleset = { path = "../ruleset" }
 tttz-libai = { path = "../libai" }
 
-[dependencies.cold-clear]
-git = "https://github.com/asrcpq/cold-clear"
-
-[dependencies.libtetris]
-git = "https://github.com/asrcpq/cold-clear"
+cold-clear = { path = "../../thirdparty/cold-clear/bot" }
+libtetris = { path = "../../thirdparty/cold-clear/libtetris" }

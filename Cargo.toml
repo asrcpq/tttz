@@ -5,3 +5,5 @@ members = [
 	"src/tui",
 	"src/deb",
 ]
+
+exclude = [ "./thirdparty" ]
