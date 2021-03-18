@@ -7,13 +7,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 // floodfill without route tracing
 // only consider blocks fully inside 10x20 visible region
-pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
+pub fn access_floodfill(color: &Vec<[u8; 10]>, code: CodeType) -> Vec<Piece> {
 	let heights = Field::get_heights(color);
 	let mut queue: VecDeque<Piece> = VecDeque::new();
 	let mut possible = HashSet::new();
 	let mut sound = HashSet::new();
 	let field = Field::from_color(color);
-	for rotation in 0..4 {
+	for rotation in if code == 3 {0..1} else {0..4} {
 		for &pos in convolve_height(&heights, code, rotation).0.iter() {
 			let p = Piece {
 				pos,
@@ -29,7 +29,6 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 		}
 	}
 	while let Some(mut piece) = queue.pop_front() {
-		// possible op H, L, Z, X, D, J, K(sound)
 		piece.pos.0 += 1;
 		if field.test(&piece) && possible.insert(piece.clone()) {
 			queue.push_back(piece.clone());
@@ -40,12 +39,14 @@ pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
 		}
 		piece.pos.0 += 1;
 		let revert_piece = piece;
-		for rot in [-1, 1, 2].iter() {
-			let mut piece = revert_piece.clone();
-			if field.rotate(&mut piece, *rot) != 0
-				&& possible.insert(piece.clone())
-			{
-				queue.push_back(piece);
+		if code != 3 {
+			for rot in [-1, 1, 2].iter() {
+				let mut piece = revert_piece.clone();
+				if field.rotate(&mut piece, *rot) != 0
+					&& possible.insert(piece.clone())
+				{
+					queue.push_back(piece);
+				}
 			}
 		}
 		let mut piece = revert_piece.clone();
@@ -80,7 +81,6 @@ impl Router {
 		key: KeyType,
 	) -> bool {
 		debug_assert!(!self.nodes.contains_left(&self.id_alloc));
-		eprintln!("adding {:?}", piece.pos);
 		if self.nodes.contains_right(&piece) {
 			return false;
 		}
@@ -129,7 +129,7 @@ impl Router {
 }
 
 pub fn route_solver(
-	color: &[[u8; 10]],
+	color: &Vec<[u8; 10]>,
 	piece_query: &Piece,
 ) -> Option<VecDeque<KeyType>> {
 	let code = piece_query.code;
@@ -227,7 +227,10 @@ mod test {
 	fn count() {
 		let color = generate_color();
 		let ret = access_floodfill(&color, 3);
-		assert_eq!(ret.len(), (9 + 8 + 8) * 4);
+		assert_eq!(ret.len(), 9 + 8 + 8);
+		let color = vec![[b' '; 10]; 20];
+		let ret = access_floodfill(&color, 0);
+		assert_eq!(ret.len(), (10 + 7) * 2);
 	}
 
 	#[test]
@@ -238,5 +241,24 @@ mod test {
 			eprintln!("Solving {:?}", each_piece);
 			assert!(route_solver(&color, each_piece).is_some());
 		}
+	}
+
+	#[test]
+	fn test_route_solver_z_twist() {
+		let mut color = vec![[b' '; 10]; 7];
+		color[0][0] = b'i';
+		color[1][2] = b'i';
+		for i in 3..10 {
+			color[0][i] = b'i';
+			color[1][i] = b'i';
+		}
+		let z = Piece {
+			code: 6,
+			rotation: 2,
+			pos: (0, 0),
+		};
+		let ret = access_floodfill(&color, 6);
+		assert_eq!(ret.len(), (8 + 9 + 1) * 2);
+		assert!(route_solver(&color, &z).is_some());
 	}
 }

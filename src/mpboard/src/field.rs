@@ -6,9 +6,23 @@ use std::collections::HashSet;
 
 type Colors = Vec<[u8; 10]>;
 
+#[derive(Clone)]
 pub struct Field {
 	pub color: Colors,
 	pub height: i32,
+}
+
+use std::fmt;
+impl fmt::Debug for Field {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		for row in self.iter().rev() {
+			for &ch in row.iter() {
+				write!(f, "{} ", if ch == b' ' { '0' } else { ch as char })?;
+			}
+			writeln!(f)?;
+		}
+		Ok(())
+	}
 }
 
 impl Default for Field {
@@ -42,10 +56,10 @@ impl IndexMut<usize> for Field {
 }
 
 impl Field {
-	pub fn get_heights(color: &[[u8; 10]]) -> [PosType; 10] {
+	pub fn get_heights(color: &Vec<[u8; 10]>) -> [PosType; 10] {
 		let mut heights: [PosType; 10] = [0; 10];
 		'outer: for i in 0..10 {
-			let mut j: usize = 19;
+			let mut j: usize = color.len() - 1;
 			loop {
 				if color[j][i] != b' ' {
 					heights[i as usize] = j as PosType + 1;
@@ -60,7 +74,7 @@ impl Field {
 		heights
 	}
 
-	pub fn from_color(color: &[[u8; 10]]) -> Self {
+	pub fn from_color(color: &Vec<[u8; 10]>) -> Self {
 		let heights = Self::get_heights(color);
 		let height = heights.iter().max().unwrap();
 		Field {
@@ -177,6 +191,7 @@ impl Field {
 			for x in 0..10 {
 				if self[each_ln][x] == b' ' {
 					flag = false;
+					break
 				}
 			}
 			if flag {
@@ -208,7 +223,7 @@ impl Field {
 
 	fn proc_elim(&mut self, elims: Vec<usize>) {
 		let mut movedown = 0;
-		for i in 0..40 {
+		for i in 0..self.color.len() {
 			let mut flag = false;
 			for &elim in elims.iter() {
 				if i == elim {
@@ -231,9 +246,10 @@ impl Field {
 	pub fn settle_block(&mut self, block: &Piece) -> u32 {
 		let tocheck = self.drop_set_color(block);
 		let toelim = self.checkline(tocheck);
-		let ret = toelim.len() as u32;
+		let ret = toelim.len();
+		self.height -= ret as i32;
 		self.proc_elim(toelim);
-		ret
+		ret as u32
 	}
 }
 

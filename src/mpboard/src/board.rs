@@ -18,19 +18,6 @@ pub struct Board {
 	pub replay: Replay,
 }
 
-use std::fmt;
-impl fmt::Debug for Board {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		for row in self.field.iter().rev() {
-			for &ch in row.iter() {
-				write!(f, "{} ", if ch == b' ' { '0' } else { ch as char })?;
-			}
-			writeln!(f)?;
-		}
-		Ok(())
-	}
-}
-
 impl Default for Board {
 	fn default() -> Board {
 		let replay = Default::default();
@@ -211,15 +198,14 @@ impl Board {
 		// check twist before setting field
 		let twist = self.field.test_twist(&mut self.floating_block);
 		let line_count = self.field.settle_block(&self.floating_block);
-		// put attack amount into pool
+		// gaman will safely ignore pc when lc = 0
 		let atk = self.gaman.calc_attack(
 			twist,
 			line_count,
 			self.floating_block.code,
-			self.field.height == line_count as i32,
+			self.field.height == 0,
 		);
 		if line_count > 0 {
-			self.field.height -= line_count as i32;
 			self.spawn_block();
 			self.calc_shadow(); // cannot die from a clear drop!
 			BoardReply::ClearDrop(line_count, atk)
@@ -430,7 +416,6 @@ mod test {
 		for i in 1..4 {
 			board.field[0][i] = b' ';
 		}
-		eprintln!("{:?}", board);
 		board.floating_block = Piece::new(0);
 		board.floating_block.pos.0 = 0;
 		board.floating_block.pos.1 = 0;
@@ -496,7 +481,7 @@ mod test {
 		eprintln!("{:?}", board.rg.bag);
 		for _ in 0..4 {
 			board.press_up();
-			eprintln!("height: {}", board.height);
+			eprintln!("height: {}", board.field.height);
 		}
 		for t in -1..=1 {
 			if t == 0 {
@@ -511,9 +496,9 @@ mod test {
 				}
 				board.calc_shadow();
 				board.press_up();
-				eprintln!("height: {}", board.height);
+				eprintln!("height: {}", board.field.height);
 			}
 		}
-		assert_eq!(board.height, 0);
+		assert_eq!(board.field.height, 0);
 	}
 }
