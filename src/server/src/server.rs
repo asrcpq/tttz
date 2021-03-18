@@ -5,7 +5,7 @@ use crate::client_manager::ClientManager;
 use tttz_mpboard::Game;
 use tttz_protocol::{ClientMsg, IdType, MsgEncoding, ServerMsg};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::{SocketAddr, UdpSocket};
 
 type GameIdType = i32;
@@ -128,23 +128,26 @@ impl Server {
 			}
 		}
 		self.client_manager.pair_apply(id1, id2);
-		let new_game = Game::new(
-			id1,
-			id2,
-			self.client_manager
-				.view_by_id(id1)
-				.unwrap()
-				.viewers
-				.iter()
-				.cloned()
-				.chain(
+		let mut viewers: HashSet<IdType> = self.client_manager
+			.view_by_id(id1)
+			.unwrap()
+			.viewers
+			.iter()
+			.copied()
+			.collect();
+		if id2 != 0 {
+			viewers.extend(
 				self.client_manager
 					.view_by_id(id2)
 					.unwrap()
 					.viewers
 					.iter()
-					.cloned()
-				)
+			)
+		}
+		let new_game = Game::new(
+			id1,
+			id2,
+			viewers.iter(),
 		);
 		for i in 0..if id2 == 0 { 1 } else { 2 } {
 			self.client_manager.broadcast(
