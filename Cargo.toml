@@ -4,4 +4,5 @@ members = [
 	"src/replayer",
 	"src/tui",
 	"src/deb",
+	"src/rlif",
 ]

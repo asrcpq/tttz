@@ -1,6 +1,5 @@
 Working:
 
-- use tcp
 - write an ai
 
 Planned:
@@ -10,5 +9,5 @@ Planned:
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
 - better sound effects
-- id system(for replay)
+- use tcp + id system(for replay)
 - new ui, real time stats

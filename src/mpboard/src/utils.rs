@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::{Board, Game};
 use tttz_protocol::Piece;
 use tttz_ruleset::{CodeType, PosType};
 
@@ -34,4 +34,18 @@ pub fn oracle_garbage(board: &mut Board, shift: &[f32], slot: &[PosType]) {
 	board.rg.shift.extend(shift.iter());
 	board.rg.slots.drain(..);
 	board.rg.slots.extend(slot.iter());
+}
+
+// for ML: concat boards
+pub fn color_manipulation(game: &mut Game, color: [[u8; 20]; 20]) {
+	for i in 0..20 {
+		for j in 0..10 {
+			game.boards[0].field[i][j] = color[i][j];
+		}
+	}
+	for i in 0..20 {
+		for j in 0..10 {
+			game.boards[1].field[i][j] = color[i][j + 10];
+		}
+	}
 }

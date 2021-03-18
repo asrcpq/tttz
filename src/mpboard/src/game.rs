@@ -8,7 +8,7 @@ pub struct Game {
 	replies: [BoardReply; 2],
 	seqs: [usize; 2],
 	pub viewers: HashSet<IdType>,
-	boards: Vec<Board>,
+	pub(in crate) boards: Vec<Board>,
 }
 
 impl Game {

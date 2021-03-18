@@ -1,0 +1,11 @@
+[package]
+name = "tttz-rlif"
+version = "0.1.0"
+authors = ["asrcpq <asrcpq@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+tttz-libai = {path = "../libai"}
+tttz-protocol = {path = "../protocol"}
+tttz-libclient = {path = "../libclient"}
+tttz-mpboard = {path = "../mpboard"}

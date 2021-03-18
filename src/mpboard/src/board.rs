@@ -7,8 +7,6 @@ use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
 use crate::Field;
 
-use std::collections::HashSet;
-
 pub struct Board {
 	pub(in crate) floating_block: Piece,
 	shadow_block: Piece,
@@ -17,7 +15,6 @@ pub struct Board {
 	pub(in crate) field: Field,
 	hold: CodeType,
 	gaman: GarbageAttackManager,
-	height: i32,
 	pub replay: Replay,
 }
 
@@ -44,7 +41,6 @@ impl Default for Board {
 			field: Default::default(),
 			hold: 7,
 			gaman: Default::default(),
-			height: 0,
 			replay,
 		};
 		board.spawn_block();
@@ -158,75 +154,17 @@ impl Board {
 		true
 	}
 
-	// return count of lines eliminated
-	fn checkline(&self, ln: HashSet<usize>) -> Vec<usize> {
-		let mut elims = Vec::new();
-		for &each_ln in ln.iter() {
-			let mut flag = true;
-			for x in 0..10 {
-				if self.field[each_ln][x] == b' ' {
-					flag = false;
-				}
-			}
-			if flag {
-				elims.push(each_ln);
-			}
-		}
-		elims
-	}
-
-	fn proc_elim(&mut self, elims: Vec<usize>) {
-		let mut movedown = 0;
-		for i in 0..40 {
-			let mut flag = false;
-			for &elim in elims.iter() {
-				if i == elim {
-					flag = true;
-					break;
-				}
-			}
-			if flag {
-				movedown += 1;
-				continue;
-			}
-			if movedown == 0 {
-				continue;
-			}
-			self.field[i - movedown] = self.field[i];
-		}
-	}
-
 	// -1 = death
 	fn flush_garbage(&mut self, max: usize) -> i32 {
 		let garbage_line = self.generate_garbage(max);
-		self.height += garbage_line;
+		self.field.height += garbage_line;
 		if self.calc_shadow() {
 			return -1;
 		}
-		if self.height == 40 {
+		if self.field.height == 40 {
 			return -1;
 		}
 		garbage_line as i32
-	}
-
-	// set field, update height
-	// return lines to check
-	fn hard_drop_set_field(&mut self) -> HashSet<usize> {
-		let tmppos = self.floating_block.getpos();
-		let mut lines_tocheck = HashSet::new();
-		for each_square in tmppos.iter() {
-			let px = each_square.0 as usize;
-			let py = each_square.1 as usize;
-			// tmp is higher, update height
-			if py + 1 > self.height as usize {
-				self.height = py as i32 + 1;
-			}
-
-			// generate lines that changed
-			lines_tocheck.insert(py);
-			self.field[py][px] = ID_TO_CHAR[self.floating_block.code as usize];
-		}
-		lines_tocheck
 	}
 
 	// pull pending garbages and write to board field
@@ -272,20 +210,16 @@ impl Board {
 	fn hard_drop(&mut self) -> BoardReply {
 		// check twist before setting field
 		let twist = self.field.test_twist(&mut self.floating_block);
-		let lines_tocheck = self.hard_drop_set_field();
-
-		let elim = self.checkline(lines_tocheck);
-		let line_count = elim.len() as u32;
-		self.proc_elim(elim);
+		let line_count = self.field.settle_block(&self.floating_block);
 		// put attack amount into pool
 		let atk = self.gaman.calc_attack(
 			twist,
 			line_count,
 			self.floating_block.code,
-			self.height == line_count as i32,
+			self.field.height == line_count as i32,
 		);
 		if line_count > 0 {
-			self.height -= line_count as i32;
+			self.field.height -= line_count as i32;
 			self.spawn_block();
 			self.calc_shadow(); // cannot die from a clear drop!
 			BoardReply::ClearDrop(line_count, atk)
@@ -296,7 +230,7 @@ impl Board {
 			if ret == -1 {
 				return BoardReply::Die;
 			}
-			self.height += ret;
+			self.field.height += ret;
 			self.spawn_block();
 			if self.calc_shadow() {
 				return BoardReply::Die;

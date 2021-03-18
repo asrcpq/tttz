@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 // floodfill without route tracing
 // only consider blocks fully inside 10x20 visible region
 pub fn access_floodfill(color: &[[u8; 10]], code: CodeType) -> Vec<Piece> {
-	let heights = get_heights(color);
+	let heights = Field::get_heights(color);
 	let mut queue: VecDeque<Piece> = VecDeque::new();
 	let mut possible = HashSet::new();
 	let mut sound = HashSet::new();
@@ -133,7 +133,7 @@ pub fn route_solver(
 	piece_query: &Piece,
 ) -> Option<VecDeque<KeyType>> {
 	let code = piece_query.code;
-	let heights = get_heights(color);
+	let heights = Field::get_heights(color);
 	let mut queue: VecDeque<Piece> = VecDeque::new();
 	let mut router: Router = Default::default();
 	let mut sound = HashSet::new();

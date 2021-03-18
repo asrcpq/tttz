@@ -2,16 +2,20 @@ use std::ops::{Deref, Index, IndexMut};
 use tttz_protocol::Piece;
 use tttz_ruleset::*;
 
+use std::collections::HashSet;
+
 type Colors = Vec<[u8; 10]>;
 
 pub struct Field {
 	pub color: Colors,
+	pub height: i32,
 }
 
 impl Default for Field {
 	fn default() -> Field {
 		Field {
 			color: vec![[b' '; 10]; 40],
+			height: 0,
 		}
 	}
 }
@@ -38,9 +42,30 @@ impl IndexMut<usize> for Field {
 }
 
 impl Field {
+	pub fn get_heights(color: &[[u8; 10]]) -> [PosType; 10] {
+		let mut heights: [PosType; 10] = [0; 10];
+		'outer: for i in 0..10 {
+			let mut j: usize = 19;
+			loop {
+				if color[j][i] != b' ' {
+					heights[i as usize] = j as PosType + 1;
+					continue 'outer;
+				}
+				if j == 0 {
+					continue 'outer;
+				}
+				j -= 1;
+			}
+		}
+		heights
+	}
+
 	pub fn from_color(color: &[[u8; 10]]) -> Self {
+		let heights = Self::get_heights(color);
+		let height = heights.iter().max().unwrap();
 		Field {
 			color: color.to_vec(),
+			height: *height as i32,
 		}
 	}
 
@@ -142,6 +167,73 @@ impl Field {
 			return false;
 		}
 		self.color[pos.1 as usize][pos.0 as usize] == b' '
+	}
+
+	// return count of lines eliminated
+	pub fn checkline(&self, ln: HashSet<usize>) -> Vec<usize> {
+		let mut elims = Vec::new();
+		for &each_ln in ln.iter() {
+			let mut flag = true;
+			for x in 0..10 {
+				if self[each_ln][x] == b' ' {
+					flag = false;
+				}
+			}
+			if flag {
+				elims.push(each_ln);
+			}
+		}
+		elims
+	}
+
+	// set field, update height
+	// return lines to check
+	fn drop_set_color(&mut self, block: &Piece) -> HashSet<usize> {
+		let tmppos = block.getpos();
+		let mut lines_tocheck = HashSet::new();
+		for each_square in tmppos.iter() {
+			let px = each_square.0 as usize;
+			let py = each_square.1 as usize;
+			// tmp is higher, update height
+			if py + 1 > self.height as usize {
+				self.height = py as i32 + 1;
+			}
+
+			// generate lines that changed
+			lines_tocheck.insert(py);
+			self[py][px] = ID_TO_CHAR[block.code as usize];
+		}
+		lines_tocheck
+	}
+
+	fn proc_elim(&mut self, elims: Vec<usize>) {
+		let mut movedown = 0;
+		for i in 0..40 {
+			let mut flag = false;
+			for &elim in elims.iter() {
+				if i == elim {
+					flag = true;
+					break;
+				}
+			}
+			if flag {
+				movedown += 1;
+				continue;
+			}
+			if movedown == 0 {
+				continue;
+			}
+			self[i - movedown] = self[i];
+		}
+	}
+
+	// linecount, pcflag
+	pub fn settle_block(&mut self, block: &Piece) -> u32 {
+		let tocheck = self.drop_set_color(block);
+		let toelim = self.checkline(tocheck);
+		let ret = toelim.len() as u32;
+		self.proc_elim(toelim);
+		ret
 	}
 }
 
