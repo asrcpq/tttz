@@ -90,7 +90,7 @@ impl Thinker for CCBot {
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
 		let garbage_sum = display.garbages.iter().sum();
-		self.interface.request_next_move(garbage_sum);
+		self.interface.suggest_next_move(garbage_sum);
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),
 			Some((moves, _info)) => {

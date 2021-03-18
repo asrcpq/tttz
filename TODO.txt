@@ -5,9 +5,9 @@ Working:
 Planned:
 
 - ccbot has bug?
+- id
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
 - better sound effects
-- use tcp + id system(for replay)
 - new ui, real time stats
