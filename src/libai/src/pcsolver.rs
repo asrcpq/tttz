@@ -106,11 +106,4 @@ mod test {
 	fn test_pc_all_z() {
 		assert!(pc_solver_blank(vec![6; 10]).is_none());
 	}
-
-	#[test]
-	#[ignore]
-	fn test_pc_2() {
-		// zjstiloizs
-		assert!(pc_solver_blank(vec![6, 1, 5, 4, 0, 2, 3, 0, 6, 4]).is_some());
-	}
 }
