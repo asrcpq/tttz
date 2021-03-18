@@ -5,9 +5,11 @@ use tttz_ruleset::CodeType;
 use tttz_protocol::Piece;
 
 // TODO: use bit to save memory
-pub fn pc_solver_recurse<'a>(seq: impl Iterator<Item = &'a CodeType> + Clone, field: Field)
-	-> Option<Vec<Piece>>
-{
+pub fn pc_solver_recurse<'a>(
+	seq: impl Iterator<Item = &'a CodeType> + Clone,
+	field: Field,
+	remain_lc: i32,
+) -> Option<Vec<Piece>> {
 	let mut next = seq.clone();
 	let code = match next.next() {
 		Some(&code) => code,
@@ -21,11 +23,12 @@ pub fn pc_solver_recurse<'a>(seq: impl Iterator<Item = &'a CodeType> + Clone, fi
 	for piece in access_floodfill(&field.color, code) {
 		// eprintln!("try pos {:?}", piece);
 		let mut field = field.clone();
-		field.settle_block(&piece);
-		if field.height > 4 {
+		let lc = field.settle_block(&piece) as i32;
+		let new_remain_lc = remain_lc - lc;
+		if field.height > new_remain_lc {
 			continue
 		}
-		match pc_solver_recurse(next.clone(), field) {
+		match pc_solver_recurse(next.clone(), field, new_remain_lc) {
 			None => {},
 			Some(mut vec) => {
 				vec.push(piece);
@@ -40,7 +43,7 @@ pub fn pc_solver_recurse<'a>(seq: impl Iterator<Item = &'a CodeType> + Clone, fi
 pub fn pc_solver_blank(seq: Vec<CodeType>) -> Option<Vec<Piece>> {
 	// at most 7 lines, for I spin
 	let new_field = Field::from_color(&vec![[b' '; 10]; 7]);
-	pc_solver_recurse(seq.iter(), new_field)
+	pc_solver_recurse(seq.iter(), new_field, 4)
 }
 
 #[cfg(test)]
@@ -55,7 +58,7 @@ mod test {
 		for i in 3..10 {
 			color[0][i] = b'i';
 			color[1][i] = b'i';
-		} assert!(pc_solver_recurse(vec![6].iter(), Field::from_color(&color)).is_some())
+		} assert!(pc_solver_recurse(vec![6].iter(), Field::from_color(&color), 4).is_some())
 	}
 
 	#[test]
@@ -75,7 +78,11 @@ mod test {
 		for i in 4..10 {
 			color[3][i] = b' ';
 		}
-		assert!(pc_solver_recurse(vec![0, 2, 3, 0, 6, 4].iter(), Field::from_color(&color)).is_some())
+		assert!(pc_solver_recurse(
+			vec![0, 2, 3, 0, 6, 4].iter(),
+			Field::from_color(&color),
+			4,
+		).is_some())
 	}
 
 	#[test]
