@@ -4,7 +4,7 @@ use tttz_mpboard::Field;
 use tttz_ruleset::CodeType;
 use tttz_protocol::Piece;
 
-// TODO: use bit to save memory
+// TODO: support hold
 pub fn pc_solver_recurse<'a>(
 	seq: impl Iterator<Item = &'a CodeType> + Clone,
 	field: Field,

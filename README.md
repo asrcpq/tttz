@@ -11,19 +11,21 @@ Warning: master != work, clone tagged version instead
 ## Features
 
 * Focus on 1v1 network combat(ai use the same interface as human),
-optimized for high latency environment
+optimized for slow connections.
 
-* Responsive and minimalist. zero-gravity, event-blocking.
+* Responsive and minimalist(xterm is recommended for its low input latency)
 
 * Optimized attack rules, including
-immobile twist check, all-spin bonus and twist combo multiplier.
-These rules further encourage fancy attack patterns and challenge current AI implementations.
+immobile twist(and mini-twist) check, all-twist bonus and twist combo multiplier.
+These rules further encourage skillful attack patterns and challenge current AI implementations.
 
 * Replay is automatically saved. KPP, APP and PPS are computed by replayer.
 
 ## Default Keybind
 
-* hjkl/arrow key: Move
+* h/l or Left/Right: Move
+
+* j/k or down/up: sonic/hard drop(no soft drop)
 
 * H/L: move until fail
 

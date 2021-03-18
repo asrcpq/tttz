@@ -242,7 +242,7 @@ impl Field {
 		}
 	}
 
-	// linecount, pcflag
+	// linecount
 	pub fn settle_block(&mut self, block: &Piece) -> u32 {
 		let tocheck = self.drop_set_color(block);
 		let toelim = self.checkline(tocheck);
