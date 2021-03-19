@@ -86,11 +86,13 @@ mod test {
 	}
 
 	#[test]
+	#[ignore]
 	fn test_pc_all_i() {
 		assert!(pc_solver_blank(vec![0; 10]).is_some());
 	}
 
 	#[test]
+	#[ignore]
 	fn test_pc_all_o() {
 		assert!(pc_solver_blank(vec![3; 10]).is_some());
 	}

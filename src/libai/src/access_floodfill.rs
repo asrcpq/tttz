@@ -121,6 +121,7 @@ impl Router {
 					dx: piece.pos.0,
 				};
 				let mut first = generate_keys(gkp);
+				first.push_back(KeyType::SonicDrop);
 				first.extend(ret.into_iter().rev());
 				Some(first)
 			}

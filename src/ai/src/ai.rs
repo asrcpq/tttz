@@ -87,7 +87,7 @@ pub trait Thinker {
 								))
 								.unwrap();
 							opflag = false;
-							std::thread::sleep(std::time::Duration::from_millis(30));
+							std::thread::sleep(std::time::Duration::from_millis(40));
 						}
 						moveflag = opflag;
 					}

@@ -1,4 +1,6 @@
-use tttz_protocol::KeyType;
+use once_cell::sync::Lazy;
+
+use tttz_protocol::{Piece, KeyType};
 use tttz_ruleset::*;
 
 use std::collections::VecDeque;
@@ -69,7 +71,6 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 		ret.push_back(KeyType::SonicDrop);
 		ret.push_back(gkp.post_key);
 	}
-	ret.push_back(KeyType::HardDrop);
 	ret
 }
 
@@ -136,4 +137,55 @@ pub fn get_height_and_hole(
 		}
 	}
 	(heights, highest_hole_x, highest_hole)
+}
+
+pub fn count_hover_x(color: &Vec<[u8; 10]>, piece: &Piece) -> i32 {
+	let hover_check: Lazy<[[Vec<(PosType, PosType)>; 4]; 7]> = Lazy::new(|| [
+		[
+			vec![(0, -1), (1, -1), (2, -1), (3, -1)],
+			vec![(0, -1)],
+			vec![(0, -1), (1, -1), (2, -1), (3, -1)],
+			vec![(0, -1)],
+		], [
+			vec![(0, -1), (1, -1), (2, -1)],
+			vec![(0, -1), (1, 1)],
+			vec![(0, 0), (1, 0), (2, -1)],
+			vec![(0, -1), (1, -1)],
+		], [
+			vec![(0, -1), (1, -1), (2, -1)],
+			vec![(0, -1), (1, -1)],
+			vec![(0, -1), (1, 0), (2, 0)],
+			vec![(0, 1), (1, -1)],
+		], [
+			vec![(0, -1), (1, -1)],
+			vec![(0, -1), (1, -1)],
+			vec![(0, -1), (1, -1)],
+			vec![(0, -1), (1, -1)],
+		], [
+			vec![(0, -1), (1, -1), (2, 0)],
+			vec![(0, 0), (1, -1)],
+			vec![(0, -1), (1, -1), (2, 0)],
+			vec![(0, 0), (1, -1)],
+		], [
+			vec![(0, -1), (1, -1), (2, -1)],
+			vec![(0, -1), (1, 0)],
+			vec![(0, 0), (1, -1), (2, -0)],
+			vec![(0, 0), (1, -1)],
+		], [
+			vec![(0, 0), (1, -1), (2, -1)],
+			vec![(0, -1), (1, 0)],
+			vec![(0, 0), (1, -1), (2, -1)],
+			vec![(0, -1), (1, 0)],
+		],
+	]);
+	let mut hole: i32 = 0;
+	for pos in hover_check[piece.code as usize][piece.rotation as usize].iter() {
+		let x = piece.pos.0 + pos.0;
+		let y = piece.pos.1 + pos.1;
+		if y < 0 { continue }
+		if color[y as usize][x as usize] == b' ' {
+			hole += 1;
+		}
+	}
+	hole
 }

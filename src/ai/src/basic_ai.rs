@@ -1,8 +1,8 @@
 // stupid ai, put block to make least holes and lowest height
 use crate::ai::Thinker;
 use tttz_libai::utils::*;
-use tttz_protocol::Display;
-use tttz_protocol::KeyType;
+use tttz_libai::{access_floodfill, route_solver};
+use tttz_protocol::{Display, KeyType, Piece};
 use tttz_ruleset::*;
 
 use std::collections::VecDeque;
@@ -30,82 +30,83 @@ impl Default for BasicAi {
 impl Thinker for BasicAi {
 	fn reset(&mut self) {}
 
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
+	fn main_think(&mut self, mut display: Display) -> VecDeque<KeyType> {
 		if display.hold == 7 {
 			let mut ret = VecDeque::new();
 			ret.push_back(KeyType::Hold);
-			return ret;
+			display.hold = display.floating_block.code;
+			display.floating_block.code = display.bag_preview[0];
 		}
 
-		let (heights, highest_hole_x, _highest_hole) =
+		let (_heights, highest_hole_x, _highest_hole) =
 			get_height_and_hole(&display.color);
 
 		let mut best_score = f32::INFINITY;
-		let mut best_rotation = 0;
-		let mut best_posx = 0;
+		let mut best_piece = Piece::new(0);
 		let mut best_id = 0;
 		for (id, &option_code) in [display.floating_block.code, display.hold]
 			.iter()
 			.enumerate()
 		{
-			for rot in 0..4 {
-				let (possible_pos, posx, posy) =
-					convolve_height(&heights, option_code, rot);
-				for (dx, height) in possible_pos
-					.iter()
-					.map(|&(x, y)| (x as PosType, y as PosType))
-				{
-					let mut delta_heights = [0; 4];
-					let mut block_count = [0; 4];
-					for block in 0..4 {
-						let dh = posy[block] + height as PosType
-							- heights[dx as usize + posx[block] as usize]
-								as PosType;
-						block_count[posx[block] as usize] += 1;
-						if dh > delta_heights[posx[block] as usize] {
-							delta_heights[posx[block] as usize] = dh;
-						}
-					}
-					let mut hole: i32 = 0;
-					for block in 0..4 {
-						if delta_heights[block] > block_count[block] {
-							hole += 1;
-						}
-					}
-					let cover = (dx <= highest_hole_x
-						&& dx + BLOCK_WIDTH[option_code as usize][rot as usize]
-							> highest_hole_x) as PosType;
-					let score = (height as f32
-						+ BLOCK_MCH[option_code as usize][rot as usize])
-						* self.height_weight + hole as f32
-						* self.hole_weight + cover as f32
-						* self.cover_weight;
-					if score < best_score {
-						// eprintln!(
-						// 	"{} {} {} = {} overtake {} at dx: {}, rot: {}",
-						// 	height, hole, cover, score, best_score, dx, rot,
-						// );
-						best_score = score;
-						best_rotation = rot;
-						best_posx = dx;
-						best_id = id;
-					}
+			for piece in access_floodfill(&display.color, option_code).iter() {
+				let hole = count_hover_x(&display.color, &piece);
+				let cover = (piece.pos.0 <= highest_hole_x
+					&& piece.pos.0 + BLOCK_WIDTH[option_code as usize][piece.rotation as usize]
+						> highest_hole_x) as PosType;
+				let score = (piece.pos.1 as f32
+					+ BLOCK_MCH[option_code as usize][piece.rotation as usize])
+					* self.height_weight + hole as f32
+					* self.hole_weight + cover as f32
+					* self.cover_weight;
+				if score < best_score {
+					best_score = score;
+					best_piece = piece.clone();
+					best_id = id;
 				}
 			}
 		}
-		let best_code = if best_id == 0 {
-			display.floating_block.code
-		} else {
-			// best solution is from the hold block
-			display.hold
+		let mut key_seq = VecDeque::new();
+		if best_id == 1 {
+			key_seq.push_back(KeyType::Hold);
+		}
+		key_seq.extend(route_solver(&display.color, &best_piece).unwrap());
+		key_seq.push_back(KeyType::HardDrop);
+		key_seq
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+	use tttz_protocol::BoardReply;
+
+	#[test]
+	fn test_obvious_zspin() {
+		let mut color = vec![[b'i'; 10]; 2];
+		color.extend(vec![[b' '; 10]; 18]);
+		color[1][0] = b' ';
+		color[1][1] = b' ';
+		color[0][1] = b' ';
+		color[0][2] = b' ';
+		let display = Display {
+			seq: 0,
+			id: 0,
+			color,
+			shadow_block: Piece::new(0),
+			floating_block: Piece::new(6),
+			hold: 0,
+			bag_preview: [0; 6],
+			cm: 0,
+			tcm: 0,
+			garbages: Default::default(),
+			board_reply: BoardReply::Ok,
 		};
-		// perform action
-		generate_keys(GenerateKeyParam {
-			hold_swap: best_id != 0,
-			code: best_code,
-			rotation: best_rotation,
-			post_key: KeyType::Nothing,
-			dx: best_posx,
-		})
+		let mut ai: BasicAi = Default::default();
+		let mut ret = ai.main_think(display);
+		eprintln!("ret {:?}", ret);
+		let key = ret.pop_back().unwrap();
+		assert_eq!(key, KeyType::HardDrop);
+		let key = ret.pop_back().unwrap();
+		assert!(key == KeyType::Rotate);
 	}
 }
