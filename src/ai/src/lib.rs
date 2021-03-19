@@ -21,11 +21,6 @@ pub fn spawn_ai(
 			let mut ccbot: CCBot = Default::default();
 			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
 		})),
-		"ccop" => Ok(std::thread::spawn(move || {
-			let evaluator: cold_clear::evaluation::Standard = ccbot::load_trained_evaluator();
-			let mut ccbot: CCBot = CCBot::from_eval(evaluator);
-			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
-		})),
 		"mm" => Ok(std::thread::spawn(move || match MMBot::try_new() {
 			Ok(mut mmbot) => {
 				mmbot.main_loop("127.0.0.1:23124", sleep, game_type)

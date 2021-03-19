@@ -8,12 +8,6 @@ use libtetris::PieceMovement;
 
 use std::collections::VecDeque;
 
-pub fn load_trained_evaluator() -> Standard {
-	// TODO: path handling
-	let string = std::fs::read_to_string("./thirdparty/cold-clear/optimizer/best.json").unwrap();
-	serde_json::from_str::<Standard>(&string).unwrap()
-}
-
 pub struct CCBot {
 	pub interface: Interface,
 	pub preview_list: [CodeType; 6],
