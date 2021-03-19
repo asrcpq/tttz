@@ -38,6 +38,17 @@ const SRP: [[(PosType, PosType); 4]; 7] = [
 	[(0, 0), (1, -1), (0, -1), (0, -1)],
 ];
 
+// mass center height
+pub const BLOCK_MCH: [[f32; 4]; 7] = [
+	[0.0, 1.5, 0.0, 1.5],
+	[0.25, 1.25, 0.75, 0.75],
+	[0.25, 0.75, 0.75, 1.25],
+	[0.5, 0.5, 0.5, 0.5],
+	[0.5, 1.0, 0.5, 1.0],
+	[0.25, 1.0, 0.75, 1.0],
+	[0.5, 1.0, 0.5, 1.0],
+];
+
 pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 	let mut ret = VecDeque::new();
 	if gkp.hold_swap {

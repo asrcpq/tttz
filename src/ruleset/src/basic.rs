@@ -90,17 +90,6 @@ pub static ref COLORMAP: EnumMap<u8, u8> = enum_map! {
 };
 }
 
-// mass center height, convenient for AI
-pub const BLOCK_MCH: BlockScalar<f32> = [
-	[0.0, 1.5, 0.0, 1.5],
-	[0.25, 1.25, 0.75, 0.75],
-	[0.25, 0.75, 0.75, 1.25],
-	[0.5, 0.5, 0.5, 0.5],
-	[0.5, 1.0, 0.5, 1.0],
-	[0.25, 1.0, 0.75, 1.0],
-	[0.5, 1.0, 0.5, 1.0],
-];
-
 #[cfg(test)]
 mod test {
 	use super::*;

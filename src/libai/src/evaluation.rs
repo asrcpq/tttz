@@ -1,10 +1,10 @@
-use tttz_protocol::{Display, Piece};
+use tttz_protocol::Piece;
 use tttz_ruleset::*;
 use crate::utils::*;
 
 pub trait Evaluator {
-	fn evaluate_piece(&self, display: &Display, piece: &Piece) -> f32;
-	fn evaluate_field(display: &Display) -> Self;
+	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> f32;
+	fn evaluate_field(display: &Vec<[u8; 10]>) -> Self;
 }
 
 pub struct SimpleEvaluator {
@@ -12,15 +12,14 @@ pub struct SimpleEvaluator {
 }
 
 impl Evaluator for SimpleEvaluator {
-	fn evaluate_field(display: &Display) -> Self {
-		let (_heights, highest_hole_x, _highest_hole) =
-			get_height_and_hole(&display.color);
+	fn evaluate_field(color: &Vec<[u8; 10]>) -> Self {
+		let (_heights, highest_hole_x, _highest_hole) = get_height_and_hole(color);
 		SimpleEvaluator {
 			highest_hole_x,
 		}
 	}
 
-	fn evaluate_piece(&self, display: &Display, piece: &Piece) -> f32 {
+	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> f32 {
 		// how bad it is to put a block on the highest hole
 		const COVER_WEIGHT: f32 = 0.5;
 		// how bad it is to create a new hole
@@ -29,7 +28,7 @@ impl Evaluator for SimpleEvaluator {
 		const HEIGHT_WEIGHT: f32 = 1.0;
 
 		let option_code = piece.code;
-		let hole = count_hover_x(&display.color, &piece);
+		let hole = count_hover_x(color, &piece);
 		let cover = (piece.pos.0 <= self.highest_hole_x
 			&& piece.pos.0 + BLOCK_WIDTH[option_code as usize][piece.rotation as usize]
 				> self.highest_hole_x) as PosType;

@@ -5,5 +5,3 @@
 *.wav
 perf.*
 *.svg
-
-/src/libai/src/mcts.rs
