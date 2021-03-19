@@ -25,7 +25,7 @@ impl Game {
 		for &viewer in extra_viewers {
 			viewers.insert(viewer);
 		}
-		eprintln!("new game with viewers: {:?}", viewers);
+		// eprintln!("new game with viewers: {:?}", viewers);
 		Game {
 			players: [host, guest],
 			replies: [BoardReply::Ok; 2],
@@ -50,7 +50,7 @@ impl Game {
 		} else if cid == self.players[1] {
 			1
 		} else {
-			panic!("Process key getting invalid id");
+			panic!("Process key getting invalid id {}", cid);
 		};
 		let mut generate_list = vec![id];
 		let oid = self.players[1 - id];

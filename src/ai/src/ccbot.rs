@@ -3,13 +3,14 @@ use tttz_ruleset::CodeType;
 
 use crate::Thinker;
 use cold_clear::Interface;
+use cold_clear::evaluation::Standard;
 use libtetris::PieceMovement;
 
 use std::collections::VecDeque;
 
 pub struct CCBot {
-	interface: Interface,
-	preview_list: [CodeType; 6],
+	pub interface: Interface,
+	pub preview_list: [CodeType; 6],
 }
 
 fn map_key(pm: PieceMovement) -> KeyType {
@@ -32,6 +33,12 @@ fn proc_moves(hold: bool, inputs: &[PieceMovement]) -> VecDeque<KeyType> {
 	}
 	ret.push_back(KeyType::HardDrop);
 	ret
+}
+
+fn load_trained_evaluator() -> Standard {
+	// TODO: path handling
+	let string = std::fs::read_to_string("./thirdparty/cold-clear/optimizer/best.json").unwrap();
+	serde_json::from_str::<Standard>(&string).unwrap()
 }
 
 fn get_if() -> Interface {
@@ -90,7 +97,8 @@ impl Thinker for CCBot {
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
 		let garbage_sum = display.garbages.iter().sum();
-		self.interface.suggest_next_move(garbage_sum);
+		self.interface.request_next_move(garbage_sum);
+		//std::thread::sleep(std::time::Duration::from_millis(100));
 		match self.interface.block_next_move() {
 			None => panic!("CC returns none!"),
 			Some((moves, _info)) => {
@@ -102,6 +110,20 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
+	pub fn new_op() -> CCBot {
+		let evaluator: cold_clear::evaluation::Standard = load_trained_evaluator();
+		let interface = Interface::launch(
+			libtetris::Board::new(),
+			Default::default(),
+			evaluator,
+			None,
+		);
+		CCBot {
+			interface,
+			preview_list: [7; 6],
+		}
+	}
+
 	fn update_preview(&mut self, new_list: &[CodeType; 6], current: CodeType) {
 		if self.preview_list[0] == 7 {
 			// feed previews
@@ -124,7 +146,7 @@ impl CCBot {
 					old_id += 1;
 					if old_id == 6 {
 						while new_pos < 6 {
-							eprintln!("add {}", new_list[new_pos]);
+							// eprintln!("add {}", new_list[new_pos]);
 							self.interface.add_next_piece(code_to_piece(
 								new_list[new_pos],
 							));
