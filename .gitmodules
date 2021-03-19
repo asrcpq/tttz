@@ -1,6 +1,7 @@
 [submodule "thirdparty/cold-clear"]
 	path = thirdparty/cold-clear
 	url = https://github.com/asrcpq/cold-clear.git
+	branch = dirty_workaround
 [submodule "thirdparty/MisaMinoBot"]
 	path = thirdparty/MisaMinoBot
 	url = https://github.com/asrcpq/MisaMinoBot.git
