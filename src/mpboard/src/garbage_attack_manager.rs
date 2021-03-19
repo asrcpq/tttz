@@ -19,6 +19,15 @@ impl GarbageAttackManager {
 		self.garbages.push_back(atk);
 	}
 
+	// use for mcts node reset from display
+	pub fn from_display(display: &Display) -> Self {
+		GarbageAttackManager {
+			cm: display.cm,
+			tcm: display.tcm,
+			garbages: display.garbages.clone(),
+		}
+	}
+
 	// return atk
 	fn counter_attack(&mut self, mut atk: u32) -> u32 {
 		loop {

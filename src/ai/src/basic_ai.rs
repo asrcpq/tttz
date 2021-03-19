@@ -1,31 +1,13 @@
 // stupid ai, put block to make least holes and lowest height
 use crate::ai::Thinker;
-use tttz_libai::utils::*;
 use tttz_libai::{access_floodfill, route_solver};
+use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
 use tttz_protocol::{Display, KeyType, Piece};
-use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
-// A hole is a group of vertical continuous blank blocks
-pub struct BasicAi {
-	// how bad it is to put a block on the highest hole
-	pub cover_weight: f32,
-	// how bad it is to create a new hole
-	pub hole_weight: f32,
-	// how bad it is to increase height
-	pub height_weight: f32,
-}
-
-impl Default for BasicAi {
-	fn default() -> Self {
-		BasicAi {
-			cover_weight: 0.5,
-			hole_weight: 1.0,
-			height_weight: 1.0,
-		}
-	}
-}
+#[derive(Default)]
+pub struct BasicAi {}
 
 impl Thinker for BasicAi {
 	fn reset(&mut self) {}
@@ -38,9 +20,7 @@ impl Thinker for BasicAi {
 			display.floating_block.code = display.bag_preview[0];
 		}
 
-		let (_heights, highest_hole_x, _highest_hole) =
-			get_height_and_hole(&display.color);
-
+		let simple_evaluator = SimpleEvaluator::evaluate_field(&display);
 		let mut best_score = f32::INFINITY;
 		let mut best_piece = Piece::new(0);
 		let mut best_id = 0;
@@ -49,15 +29,7 @@ impl Thinker for BasicAi {
 			.enumerate()
 		{
 			for piece in access_floodfill(&display.color, option_code).iter() {
-				let hole = count_hover_x(&display.color, &piece);
-				let cover = (piece.pos.0 <= highest_hole_x
-					&& piece.pos.0 + BLOCK_WIDTH[option_code as usize][piece.rotation as usize]
-						> highest_hole_x) as PosType;
-				let score = (piece.pos.1 as f32
-					+ BLOCK_MCH[option_code as usize][piece.rotation as usize])
-					* self.height_weight + hole as f32
-					* self.hole_weight + cover as f32
-					* self.cover_weight;
+				let score = simple_evaluator.evaluate_piece(&display, piece);
 				if score < best_score {
 					best_score = score;
 					best_piece = piece.clone();
@@ -107,6 +79,6 @@ mod test {
 		let key = ret.pop_back().unwrap();
 		assert_eq!(key, KeyType::HardDrop);
 		let key = ret.pop_back().unwrap();
-		assert!(key == KeyType::Rotate);
+		assert!(key != KeyType::SonicDrop);
 	}
 }

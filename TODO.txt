@@ -4,6 +4,7 @@ Working:
 
 Planned:
 
+- replay
 - ccbot has bug?
 - id
 - write more tests
