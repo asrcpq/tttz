@@ -86,4 +86,11 @@ impl Game {
 			self.replies[id],
 		)
 	}
+
+	pub fn save_replay(&mut self) {
+		self.boards[0].save_replay("0").unwrap();
+		if self.players[1] != 0 {
+			self.boards[1].save_replay("1").unwrap();
+		}
+	}
 }

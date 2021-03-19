@@ -106,7 +106,8 @@ impl Server {
 		eprintln!("Game end, {} win", winner);
 		let opponent = self.client_manager.get_attack_target(client_id);
 		let game_id = self.client_in_game.get(&client_id).unwrap();
-		let game = self.game_map.remove(&game_id).unwrap();
+		let mut game = self.game_map.remove(&game_id).unwrap();
+		game.save_replay();
 		self.client_manager
 			.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
 		self.client_in_game.remove(&opponent);

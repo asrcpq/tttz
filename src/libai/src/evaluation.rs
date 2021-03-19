@@ -8,13 +8,6 @@ pub trait Evaluator {
 }
 
 pub struct SimpleEvaluator {
-	// how bad it is to put a block on the highest hole
-	pub cover_weight: f32,
-	// how bad it is to create a new hole
-	pub hole_weight: f32,
-	// how bad it is to increase height
-	pub height_weight: f32,
-
 	highest_hole_x: PosType,
 }
 
@@ -24,13 +17,17 @@ impl Evaluator for SimpleEvaluator {
 			get_height_and_hole(&display.color);
 		SimpleEvaluator {
 			highest_hole_x,
-			cover_weight: 0.5,
-			hole_weight: 1.0,
-			height_weight: 1.0,
 		}
 	}
 
 	fn evaluate_piece(&self, display: &Display, piece: &Piece) -> f32 {
+		// how bad it is to put a block on the highest hole
+		const COVER_WEIGHT: f32 = 0.5;
+		// how bad it is to create a new hole
+		const HOLE_WEIGHT: f32 = 1.0;
+		// how bad it is to increase height
+		const HEIGHT_WEIGHT: f32 = 1.0;
+
 		let option_code = piece.code;
 		let hole = count_hover_x(&display.color, &piece);
 		let cover = (piece.pos.0 <= self.highest_hole_x
@@ -38,9 +35,9 @@ impl Evaluator for SimpleEvaluator {
 				> self.highest_hole_x) as PosType;
 		let score = (piece.pos.1 as f32
 			+ BLOCK_MCH[option_code as usize][piece.rotation as usize])
-			* self.height_weight + hole as f32
-			* self.hole_weight + cover as f32
-			* self.cover_weight;
+			* HEIGHT_WEIGHT + hole as f32
+			* HOLE_WEIGHT + cover as f32
+			* COVER_WEIGHT;
 		score
 	}
 }
