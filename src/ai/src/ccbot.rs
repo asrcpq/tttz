@@ -8,9 +8,16 @@ use libtetris::PieceMovement;
 
 use std::collections::VecDeque;
 
+pub fn load_trained_evaluator() -> Standard {
+	// TODO: path handling
+	let string = std::fs::read_to_string("./thirdparty/cold-clear/optimizer/best.json").unwrap();
+	serde_json::from_str::<Standard>(&string).unwrap()
+}
+
 pub struct CCBot {
 	pub interface: Interface,
 	pub preview_list: [CodeType; 6],
+	pub evaluator: Standard,
 }
 
 fn map_key(pm: PieceMovement) -> KeyType {
@@ -35,28 +42,23 @@ fn proc_moves(hold: bool, inputs: &[PieceMovement]) -> VecDeque<KeyType> {
 	ret
 }
 
-fn load_trained_evaluator() -> Standard {
-	// TODO: path handling
-	let string = std::fs::read_to_string("./thirdparty/cold-clear/optimizer/best.json").unwrap();
-	serde_json::from_str::<Standard>(&string).unwrap()
-}
-
-fn get_if() -> Interface {
-	let evaluator: cold_clear::evaluation::Standard = Default::default();
+fn get_if(eval: Standard) -> Interface {
 	Interface::launch(
 		libtetris::Board::new(),
 		Default::default(),
-		evaluator,
+		eval,
 		None,
 	)
 }
 
 impl Default for CCBot {
 	fn default() -> CCBot {
-		let interface = get_if();
+		let evaluator: cold_clear::evaluation::Standard = Default::default();
+		let interface = get_if(evaluator.clone());
 		CCBot {
 			interface,
 			preview_list: [7; 6],
+			evaluator,
 		}
 	}
 }
@@ -80,7 +82,7 @@ fn code_to_piece(code: CodeType) -> libtetris::Piece {
 impl Thinker for CCBot {
 	fn reset(&mut self) {
 		eprintln!("CCBOT: Reset");
-		self.interface = get_if();
+		self.interface = get_if(self.evaluator.clone());
 		self.preview_list = [7; 6];
 	}
 
@@ -96,11 +98,12 @@ impl Thinker for CCBot {
 			}
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
+		// eprintln!("{:?}", display);
 		let garbage_sum = display.garbages.iter().sum();
 		self.interface.request_next_move(garbage_sum);
 		//std::thread::sleep(std::time::Duration::from_millis(100));
 		match self.interface.block_next_move() {
-			None => panic!("CC returns none!"),
+			None => return VecDeque::new(),
 			Some((moves, _info)) => {
 				// eprintln!("{:?}", moves.inputs);
 				proc_moves(moves.hold, &moves.inputs)
@@ -110,17 +113,12 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
-	pub fn new_op() -> CCBot {
-		let evaluator: cold_clear::evaluation::Standard = load_trained_evaluator();
-		let interface = Interface::launch(
-			libtetris::Board::new(),
-			Default::default(),
-			evaluator,
-			None,
-		);
+	pub fn from_eval(eval: Standard) -> CCBot {
+		let interface = get_if(eval.clone());
 		CCBot {
 			interface,
 			preview_list: [7; 6],
+			evaluator: eval,
 		}
 	}
 
