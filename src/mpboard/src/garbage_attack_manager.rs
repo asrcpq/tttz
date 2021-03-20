@@ -71,7 +71,7 @@ impl GarbageAttackManager {
 		let mut total_mult = 10;
 		total_mult += self.cm;
 		self.cm += ATTACK_COMBO_INC;
-		self.tcm = if twist > 0 || line_count == 4 {
+		self.tcm = if twist > 0 {
 			total_mult += self.tcm;
 			self.tcm + ATTACK_B2B_INC
 		} else {

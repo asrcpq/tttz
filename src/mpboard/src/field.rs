@@ -150,9 +150,9 @@ impl Field {
 		if !self.test_twist2(block) {
 			return 0;
 		}
-		// No mini i spin
+		// No regular i spin
 		if block.code == 0 {
-			return 2;
+			return 1;
 		}
 		let tmp =
 			&TWIST_MINI_CHECK[block.code as usize][block.rotation as usize];

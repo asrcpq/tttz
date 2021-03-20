@@ -8,7 +8,7 @@
 
 ## Special Attack Table
 
-* All twists are rewarded(in different base attack), with mini-twists
+* All twists are rewarded equally, with mini-twists
 
 * Combos are calculated as multipliers(cm).
 
@@ -20,11 +20,13 @@
 
 	* A regular clear will reset tc to 0x
 
+	* quad does not increase tcm
+
 * Attack Computation
 
 	```
 	b = base_attack[cleared_lines] = [0.5, 1.5, 2.5, 4.0]
-	tb = twist_bonus[mini|regular][block_type]
+	tb = twist_bonus[mini|regular]
 	cm = combo * COMBO_INC=0.3
 	tcm = tc * TWIST_COMBO_INC=0.3
 	atk = floor(b * tb * (cm + tcm + 1))
@@ -34,8 +36,8 @@
 
 	Block | T | S/Z | L/J | I
 	--- | --- | --- | --- | ---
-	mini | 2 | 2 | 1.5 | N/A
-	regular | 3 | 2.5 | 2 | 1.5
+	mini | 1.5 | 1.5 | 1.5 | 1.5
+	regular | 2.5 | 2.5 | 2.5 | N/A
 
 ## Event-driven(instead of realtime)
 
