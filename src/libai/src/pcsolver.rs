@@ -4,6 +4,32 @@ use tttz_mpboard::Field;
 use tttz_ruleset::CodeType;
 use tttz_protocol::Piece;
 
+pub fn hold_seqgen(current: (CodeType, CodeType), preview: &Vec<CodeType>)
+	-> impl Iterator<Item = Vec<CodeType>> {
+	let output_len = preview.len() + 1;
+	let t = 2u128.pow(output_len as u32);
+	let mut seq = Vec::new();
+	for x in 0..t {
+		let mut xx = x;
+		let mut result = Vec::new();
+		let mut current = current.clone();
+		for i in 0..output_len {
+			let hold = xx % 2;
+			if hold == 1 {
+				result.push(current.0);
+				current.0 = current.1;
+				current.1 = *preview.get(i).unwrap_or(&0);
+			} else {
+				result.push(current.1);
+				current.1 = *preview.get(i).unwrap_or(&0);
+			}
+			xx /= 2;
+		}
+		seq.push(result);
+	}
+	seq.into_iter()
+}
+
 // TODO: support hold
 pub fn pc_solver_recurse<'a>(
 	seq: impl Iterator<Item = &'a CodeType> + Clone,
@@ -83,6 +109,34 @@ mod test {
 			Field::from_color(&color),
 			4,
 		).is_some())
+	}
+
+	#[test]
+	fn test_pc_recurse3() {
+		let mut color = vec![[b'i'; 10]; 4];
+		let color2 = vec![[b' '; 10]; 3];
+		color.extend(color2);
+		for i in 0..8 {
+			color[0][i] = b' ';
+		}
+		for i in 0..7 {
+			color[1][i] = b' ';
+		}
+		for i in 0..5 {
+			color[2][i] = b' ';
+		}
+		for i in 0..4 {
+			color[3][i] = b' ';
+		}
+		// o/t + s i z 3/5 4 0 6
+		for seq in hold_seqgen((3, 5), &vec![4, 0, 6]) {
+			eprintln!("test {:?}", seq);
+			assert!(pc_solver_recurse(
+				seq.iter(),
+				Field::from_color(&color),
+				4,
+			).is_none());
+		}
 	}
 
 	#[test]
