@@ -422,12 +422,12 @@ mod test {
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 2);
 		assert_eq!(board.floating_block.pos, (0, 0));
-		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 		board.floating_block.rotation = 3;
 		board.rotate(1);
 		assert_eq!(board.floating_block.rotation, 0);
 		assert_eq!(board.floating_block.pos, (0, 0));
-		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
 	}
 
 	#[test]

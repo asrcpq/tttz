@@ -200,3 +200,22 @@ pub fn count_hover_x(color: &Vec<[u8; 10]>, piece: &Piece) -> i32 {
 	}
 	hole
 }
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_mch() {
+		let mut mch: [[f32; 4]; 7] = Default::default();
+		for code in 0..7 {
+			for rot in 0..4 {
+				mch[code][rot] = BPT[code][rot]
+					.iter()
+					.fold(0f32, |max, data| max + data.1 as f32)
+					/ 4.0;
+			}
+		}
+		assert_eq!(mch, BLOCK_MCH);
+	}
+}

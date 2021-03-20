@@ -120,18 +120,4 @@ mod test {
 		assert_eq!(height, BLOCK_HEIGHT);
 		assert_eq!(width, BLOCK_WIDTH);
 	}
-
-	#[test]
-	fn test_mch() {
-		let mut mch: BlockScalar<f32> = Default::default();
-		for code in 0..7 {
-			for rot in 0..4 {
-				mch[code][rot] = BPT[code][rot]
-					.iter()
-					.fold(0f32, |max, data| max + data.1 as f32)
-					/ 4.0;
-			}
-		}
-		assert_eq!(mch, BLOCK_MCH);
-	}
 }
