@@ -1,5 +1,5 @@
 use tttz_libai::mcts::SearchTree;
-use tttz_protocol::{Display, KeyType, BoardReply};
+use tttz_protocol::{Display, KeyType};
 use crate::Thinker;
 
 use std::collections::VecDeque;

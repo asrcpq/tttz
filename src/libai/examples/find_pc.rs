@@ -1,4 +1,5 @@
-use tttz_libai::pc_solver_blank;
+use tttz_libai::*;
+use tttz_mpboard::Field;
 
 fn main() {
 	// zjstiloizs

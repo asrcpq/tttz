@@ -3,7 +3,7 @@ use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct GarbageAttackManager {
 	cm: u32,
 	tcm: u32,

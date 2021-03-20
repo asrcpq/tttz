@@ -6,6 +6,7 @@ use crate::evaluation::{Evaluator, SimpleEvaluator};
 
 use std::collections::{HashMap, VecDeque};
 
+#[derive(Debug)]
 struct Node {
 	pub field: Field,
 	pub active: (CodeType, CodeType),
@@ -17,7 +18,7 @@ struct Node {
 	pub parent_id: u64,
 
 	pub weights: HashMap<Piece, f32>,
-	pub visit: u32,
+	pub visit: i32,
 	pub q: f32,
 	pub children: HashMap<Piece, u64>,
 }
@@ -59,7 +60,7 @@ impl Node {
 		let active = if piece.code == self.active.0 {
 			(next, self.active.1)
 		} else {
-			(self.active.1, next)
+			(next, self.active.0)
 		};
 		self.children.insert(piece, id);
 		let simple_evaluator = SimpleEvaluator::evaluate_field(&new_field.color);
@@ -114,7 +115,8 @@ impl SearchTree {
 	pub fn from_display(mut display: Display) -> SearchTree {
 		display.hold = display.floating_block.code;
 		display.floating_block.code = display.bag_preview[0];
-		let root = Node::from_display(0, 1, &display);
+		let mut root = Node::from_display(0, 1, &display);
+		root.expand();
 		let preview = display.bag_preview.to_vec();
 		let mut nodes = HashMap::new();
 		nodes.insert(0, root);
@@ -139,6 +141,7 @@ impl SearchTree {
 	// also handle garbage flush
 	pub fn update(&mut self, display: Display) -> VecDeque<KeyType> {
 		// update preview
+		// eprintln!("in {:?} self {:?} p:{}", display.bag_preview, self.preview, self.preview_pointer);
 		for (i, &code) in display.bag_preview.iter().enumerate() {
 			// initialize has seq = 0, after first drop, two pieces are consumed
 			// so we should check from 2 at seq = 1
@@ -148,17 +151,20 @@ impl SearchTree {
 			}
 		}
 
-		self.compare_display(&display);
-
 		let flush_flag = match display.board_reply {
 			BoardReply::GarbageOverflow(_) => true,
 			BoardReply::PlainDrop(x) if x > 0 => true,
-			_ => false,
+			_ => {
+				self.compare_display(&display);
+				false
+			},
 		};
 		if flush_flag {
-			let node = Node::from_display(self.alloc_id, self.preview_pointer, &display);
+			let mut new_root = Node::from_display(self.alloc_id, self.preview_pointer, &display);
+			new_root.expand();
+			self.root = self.alloc_id;
 			self.nodes = HashMap::new();
-			self.nodes.insert(self.alloc_id, node);
+			self.nodes.insert(self.alloc_id, new_root);
 			self.alloc_id += 1;
 		}
 		self.go_down()
@@ -175,17 +181,18 @@ impl SearchTree {
 				None => break self.nodes.get(&focus).unwrap().q,
 				Some(code) => *code,
 			};
-			self.nodes.get_mut(&focus).unwrap().expand();
 
 			let ret = self.select(focus);
 			match ret {
 				SelectResult::End(piece) => {
 					let node = self.nodes
 						.get_mut(&focus)
-						.unwrap()
-						.create(piece, next_code, self.alloc_id);
+						.unwrap();
+					let mut new_node = node.create(piece, next_code, self.alloc_id);
+					assert!(new_node.expand());
 					let q = node.q;
-					self.nodes.insert(self.alloc_id, node);
+					// eprintln!("Insert {}", self.alloc_id);
+					self.nodes.insert(self.alloc_id, new_node);
 					self.alloc_id += 1;
 					break q;
 				},
@@ -204,6 +211,7 @@ impl SearchTree {
 	// update q
 	fn expand_backward(&mut self, end_node: u64, q: f32) {
 		// self.debug_print_nodes_recurse(self.root);
+		// eprintln!();
 		let mut focus = end_node;
 		loop {
 			focus = self.nodes.get(&focus).unwrap().parent_id;
@@ -218,7 +226,8 @@ impl SearchTree {
 	}
 
 	pub fn go_down(&mut self) -> VecDeque<KeyType> {
-		eprintln!("{:?}", self.preview);
+		// let root_node = self.nodes.get(&self.root).unwrap();
+		// eprintln!("{:?} {:?}", root_node, self.preview);
 		let mut ret = VecDeque::new();
 		if self.preview_pointer == 0 {
 			ret.push_back(KeyType::Hold);
@@ -240,6 +249,7 @@ impl SearchTree {
 
 	fn drop_recurse(&mut self, root: u64) {
 		let node = self.nodes.remove(&root).unwrap();
+		// eprintln!("drop {}", root);
 		for (_piece, &child_id) in &node.children {
 			self.drop_recurse(child_id);
 		}
@@ -248,7 +258,7 @@ impl SearchTree {
 	fn decide(&mut self) -> VecDeque<KeyType> {
 		let node = self.nodes.get(&self.root).unwrap();
 		let root_children = &node.children;
-		let mut max_visit = 0;
+		let mut max_visit = -1;
 		let mut best_piece = None;
 		let mut best_id = 0;
 		for (piece, &id) in root_children {
@@ -270,14 +280,26 @@ impl SearchTree {
 		}
 
 		let best_piece = best_piece.unwrap();
+		let mut ret = VecDeque::new();
+		if root.active.0 != best_piece.code {
+			ret.push_back(KeyType::Hold);
+		}
 		self.root = best_id;
 		self.nodes.get_mut(&best_id).unwrap().parent_id = best_id;
-		route_solver(&root.field.color, &best_piece).unwrap()
+		ret.extend(route_solver(&root.field.color, &best_piece).unwrap());
+		ret
 	}
 
 	fn select(&mut self, focus: u64) -> SelectResult {
 		const CPUCT: f32 = 2.5;
-		let node = self.nodes.get(&focus).unwrap();
+		let node = match self.nodes.get(&focus) {
+			Some(node) => node,
+			None => {
+				self.debug_print_nodes_recurse(self.root);
+				eprintln!();
+				panic!("Selecting nonexist node: {}", focus);
+			}
+		};
 		let mut max_u = f32::NEG_INFINITY;
 		let mut max_piece = None;
 		let mut max_id = 0;
@@ -291,7 +313,7 @@ impl SearchTree {
 			// let u = ((node.visit as f32).sqrt() / (1 + visit) as f32) * value * CPUCT + q;
 			let u = q;
 			if max_u < u {
-				eprintln!("{} overtake {} at {:?}", u, max_u, piece);
+				// eprintln!("{} overtake {} at {:?}", u, max_u, piece);
 				max_u = u;
 				max_piece = Some(piece);
 				max_id = id;
@@ -315,7 +337,8 @@ impl SearchTree {
 				return;
 			}
 			Some(node) => {
-				eprint!("{}@{}", id, node.parent_id);
+				eprint!("{}", id);
+				if node.children.is_empty() { return; }
 				eprint!("(");
 				for (_piece, &child_id) in &node.children {
 					self.debug_print_nodes_recurse(child_id);
@@ -344,10 +367,14 @@ mod test {
 	fn test_mcts1() {
 		let mut board: Board = Default::default();
 		let display = board.generate_display(0, 0, BoardReply::Ok);
+		eprintln!("hold {}, prev {:?}", display.hold, display.bag_preview);
 		let mut search_tree = SearchTree::from_display(display);
-		assert_eq!(search_tree.go_down().pop_back(), Some(KeyType::HardDrop));
-		board.handle_msg(BoardMsg::KeyEvent(KeyType::HardDrop));
-		let display = board.generate_display(0, 0, BoardReply::Ok);
+		let ret = search_tree.go_down();
+		for &op in ret.iter() {
+			eprintln!("do {:?}", op);
+			board.handle_msg(BoardMsg::KeyEvent(op));
+		}
+		let display = board.generate_display(0, 0, BoardReply::PlainDrop(0));
 		let mut ret = search_tree.update(display);
 		assert_eq!(ret.pop_back(), Some(KeyType::HardDrop));
 	}

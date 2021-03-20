@@ -7,6 +7,7 @@ pub trait Evaluator {
 	fn evaluate_field(display: &Vec<[u8; 10]>) -> Self;
 }
 
+#[derive(Debug)]
 pub struct SimpleEvaluator {
 	highest_hole_x: PosType,
 }
