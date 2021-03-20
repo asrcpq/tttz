@@ -1,5 +1,5 @@
 use tttz_ruleset::CodeType;
-use tttz_protocol::{BoardReply, KeyType, Display, Piece};
+use tttz_protocol::{KeyType, Display, Piece};
 use tttz_mpboard::{Field, GarbageAttackManager};
 use crate::{access_floodfill, route_solver};
 use crate::evaluation::{Evaluator, SimpleEvaluator};
@@ -55,7 +55,10 @@ impl Node {
 		);
 		// value expression here
 		// currently it is high attack + not bad block placement
-		let q = atk as f32 - v;
+		let q = atk as f32 * 5. - v;
+		// if lc > 0 {
+		// 	eprintln!("{} {} {} {} {}", lc, twist, new_field.height, atk, v);
+		// }
 		// whether hold is used
 		let active = if piece.code == self.active.0 {
 			(next, self.active.1)
@@ -126,16 +129,23 @@ impl SearchTree {
 			nodes,
 			preview_pointer: 0,
 			alloc_id: 1, // 0 is given to root
-			step: 100,
+			step: 5000,
 		}
 	}
 
-	// for debug: check if internal state is corrupted
-	pub fn compare_display(&self, display: &Display) {
+	// unfortunately, for unknown reason
+	// replacing the with GarbageOverflow + PlainDrop reply check has bug
+	// check if internal state is corrupted
+	pub fn compare_display(&self, display: &Display) -> bool {
 		let root_node = self.nodes.get(&self.root).unwrap();
 		for (i, &line) in display.color.iter().enumerate() {
-			assert_eq!(root_node.field.color[i], line);
+			if root_node.field.color[i] != line {
+				// eprintln!("{:?}", display.color);
+				// eprintln!("{:?}", root_node.field);
+				return false
+			}
 		}
+		true
 	}
 
 	// also handle garbage flush
@@ -151,15 +161,7 @@ impl SearchTree {
 			}
 		}
 
-		let flush_flag = match display.board_reply {
-			BoardReply::GarbageOverflow(_) => true,
-			BoardReply::PlainDrop(x) if x > 0 => true,
-			_ => {
-				self.compare_display(&display);
-				false
-			},
-		};
-		if flush_flag {
+		if !self.compare_display(&display) {
 			let mut new_root = Node::from_display(self.alloc_id, self.preview_pointer, &display);
 			new_root.expand();
 			self.root = self.alloc_id;
@@ -291,7 +293,7 @@ impl SearchTree {
 	}
 
 	fn select(&mut self, focus: u64) -> SelectResult {
-		const CPUCT: f32 = 2.5;
+		const CPUCT: f32 = 0.01;
 		let node = match self.nodes.get(&focus) {
 			Some(node) => node,
 			None => {
@@ -310,8 +312,8 @@ impl SearchTree {
 			} else {
 				(0f32, 0, 0)
 			};
-			// let u = ((node.visit as f32).sqrt() / (1 + visit) as f32) * value * CPUCT + q;
-			let u = q;
+			let u = ((node.visit as f32).sqrt() / (1 + visit) as f32) * value * CPUCT + q;
+			// let u = q;
 			if max_u < u {
 				// eprintln!("{} overtake {} at {:?}", u, max_u, piece);
 				max_u = u;

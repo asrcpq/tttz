@@ -11,6 +11,7 @@ fn main() {
 	let mut iter = std::env::args();
 	iter.next();
 	let mut spd = 1.0;
+	let mut constant_flag = false;
 	while let Some(string) = iter.next() {
 		match string.as_ref() {
 			"path" => {
@@ -20,6 +21,9 @@ fn main() {
 			}
 			"speed" => {
 				spd = iter.next().unwrap().parse::<f64>().unwrap();
+			}
+			"constant" => {
+				constant_flag = true;
 			}
 			_ => {}
 		}
@@ -36,11 +40,8 @@ fn main() {
 		client_display.setpanel(1, 2);
 		client_display.activate();
 
-		let replay_start_time = std::time::Instant::now();
-		let mut elapsed;
+		let mut elapsed = 0;
 		'main_loop: loop {
-			elapsed =
-				(replay_start_time.elapsed().as_micros() as f64 * spd) as u128;
 			let mut all_end = true;
 			for rs in rss.iter_mut() {
 				match rs.seek_forward(elapsed) {
@@ -48,6 +49,9 @@ fn main() {
 					SeekResult::Ok(None) => all_end = false,
 					SeekResult::Ok(Some(display)) => {
 						client_display.disp_by_id(&display);
+						if constant_flag {
+							std::thread::sleep(std::time::Duration::from_millis(60));
+						}
 						all_end = false;
 					}
 				}
@@ -61,7 +65,10 @@ fn main() {
 					break 'main_loop;
 				}
 			}
-			std::thread::sleep(std::time::Duration::from_millis(10));
+			if !constant_flag {
+				std::thread::sleep(std::time::Duration::from_millis(10));
+			}
+			elapsed += 10_000;
 		}
 		client_display.deactivate();
 	}
