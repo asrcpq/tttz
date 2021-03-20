@@ -1,11 +1,13 @@
 mod ai;
-pub use ai::Thinker;
+use ai::Thinker;
 mod basic_ai;
-pub use basic_ai::BasicAi;
+use basic_ai::BasicAi;
 mod ccbot;
-pub use ccbot::CCBot;
+use ccbot::CCBot;
 mod mmbot;
-pub use mmbot::MMBot;
+use mmbot::MMBot;
+mod sbai;
+use sbai::SBAi;
 
 pub fn spawn_ai(
 	algo: &str,
@@ -16,6 +18,10 @@ pub fn spawn_ai(
 		"basic" => Ok(std::thread::spawn(move || {
 			let mut basic_ai: BasicAi = Default::default();
 			basic_ai.main_loop("127.0.0.1:23124", sleep, game_type);
+		})),
+		"sbai" => Ok(std::thread::spawn(move || {
+			let mut sbai: SBAi = Default::default();
+			sbai.main_loop("127.0.0.1:23124", sleep, game_type);
 		})),
 		"cc" => Ok(std::thread::spawn(move || {
 			let mut ccbot: CCBot = Default::default();

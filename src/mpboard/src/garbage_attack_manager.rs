@@ -3,7 +3,7 @@ use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct GarbageAttackManager {
 	cm: u32,
 	tcm: u32,
@@ -79,7 +79,7 @@ impl GarbageAttackManager {
 		};
 		let mut atk = base_atk * twist_mult * total_mult / 1000;
 		if pc {
-			atk += 10;
+			atk += ATTACK_PC;
 		}
 		self.counter_attack(atk)
 	}

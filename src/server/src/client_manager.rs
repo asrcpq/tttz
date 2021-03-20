@@ -36,7 +36,10 @@ impl ClientManager {
 	}
 
 	pub fn is_idle(&self, id: IdType) -> bool {
-		self.view_by_id(id).unwrap().state == ClientState::Idle
+		match self.view_by_id(id) {
+			Some(client) => client.state == ClientState::Idle,
+			None => false,
+		}
 	}
 
 	pub fn is_pairing(&self, id: IdType) -> bool {

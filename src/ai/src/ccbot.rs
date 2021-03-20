@@ -107,15 +107,6 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
-	pub fn from_eval(eval: Standard) -> CCBot {
-		let interface = get_if(eval.clone());
-		CCBot {
-			interface,
-			preview_list: [7; 6],
-			evaluator: eval,
-		}
-	}
-
 	fn update_preview(&mut self, new_list: &[CodeType; 6], current: CodeType) {
 		if self.preview_list[0] == 7 {
 			// feed previews
