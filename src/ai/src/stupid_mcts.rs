@@ -1,8 +1,8 @@
 use tttz_ruleset::CodeType;
 use tttz_protocol::{KeyType, Display, Piece};
 use tttz_mpboard::{Field, GarbageAttackManager};
-use crate::{access_floodfill, route_solver};
-use crate::evaluation::{Evaluator, SimpleEvaluator};
+use tttz_libai::{access_floodfill, route_solver};
+use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
 
 use std::collections::{HashMap, VecDeque};
 
@@ -129,7 +129,7 @@ impl SearchTree {
 			nodes,
 			preview_pointer: 0,
 			alloc_id: 1, // 0 is given to root
-			step: 5000,
+			step: 2000,
 		}
 	}
 

@@ -44,7 +44,7 @@ fn main() {
 		'main_loop: loop {
 			let mut all_end = true;
 			for rs in rss.iter_mut() {
-				match rs.seek_forward(elapsed) {
+				match rs.seek_forward((elapsed as f64 * spd) as u128) {
 					SeekResult::End => {}
 					SeekResult::Ok(None) => all_end = false,
 					SeekResult::Ok(Some(display)) => {

@@ -1,6 +1,6 @@
-use tttz_libai::mcts::SearchTree;
 use tttz_protocol::{Display, KeyType};
 use crate::Thinker;
+use crate::stupid_mcts::SearchTree;
 
 use std::collections::VecDeque;
 

@@ -8,6 +8,7 @@ mod mmbot;
 use mmbot::MMBot;
 mod sbai;
 use sbai::SBAi;
+mod stupid_mcts;
 
 pub fn spawn_ai(
 	algo: &str,

@@ -3,7 +3,7 @@ trap exittrap EXIT
 exittrap() {
 	pkill tttz
 }
-t="100"
+t="40"
 if [ -n "$1" ]; then
 	t="$1"
 fi
