@@ -30,7 +30,7 @@ impl Piece {
 	pub fn new(code: i8) -> Piece {
 		Piece {
 			code,
-			pos: (INITIAL_POS[code as usize] as PosType, 38),
+			pos: (INITIAL_POS[code as usize] as PosType, 22),
 			rotation: 0,
 		}
 	}

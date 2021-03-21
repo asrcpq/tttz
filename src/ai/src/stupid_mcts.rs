@@ -110,7 +110,7 @@ impl SearchTree {
 			nodes,
 			preview_pointer: 0,
 			alloc_id: 1, // 0 is given to root
-			step: 100,
+			step: 500,
 		}
 	}
 
@@ -193,7 +193,6 @@ impl SearchTree {
 
 	// update q
 	fn expand_backward(&mut self, end_node: u64, q: f32) {
-		// self.debug_print_nodes_recurse(self.root);
 		// eprintln!();
 		let mut focus = end_node;
 		loop {
@@ -277,7 +276,7 @@ impl SearchTree {
 	}
 
 	fn select(&mut self, focus: u64) -> SelectResult {
-		const CPUCT: f32 = 1.0;
+		const CPUCT: f32 = 1.4;
 		let node = match self.nodes.get(&focus) {
 			Some(node) => node,
 			None => {

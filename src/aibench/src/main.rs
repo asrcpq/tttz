@@ -1,5 +1,5 @@
 use tttz_mpboard::Game;
-use tttz_ai::{BasicAi, SBAi, SBAiNext, MMBot, CCBot};
+use tttz_ai::{BasicAi, SBAi, MMBot, CCBot};
 use tttz_ai::ai::Thinker;
 
 fn simulation() -> bool {

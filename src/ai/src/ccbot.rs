@@ -93,7 +93,10 @@ impl Thinker for CCBot {
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
 		// eprintln!("{:?}", display);
-		let garbage_sum = display.garbages.iter().sum();
+		let garbage_sum = display.garbages
+			.iter()
+			.map(|x| x.1)
+			.sum();
 		self.interface.request_next_move(garbage_sum);
 		//std::thread::sleep(std::time::Duration::from_millis(100));
 		match self.interface.block_next_move() {

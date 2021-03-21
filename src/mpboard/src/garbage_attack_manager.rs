@@ -7,25 +7,16 @@ use std::collections::VecDeque;
 pub struct GarbageAttackManager {
 	cm: u32,
 	tcm: u32,
-	pub garbages: VecDeque<u32>,
+	pub garbages: VecDeque<(u32, u32)>,
 }
 
 impl GarbageAttackManager {
 	// push a new attack into pending garbage queue
-	pub fn push_garbage(&mut self, atk: u32) {
+	pub fn push_garbage(&mut self, width: u32, atk: u32) {
 		if atk == 0 {
 			return;
 		}
-		self.garbages.push_back(atk);
-	}
-
-	// use for mcts node reset from display
-	pub fn from_display(display: &Display) -> Self {
-		GarbageAttackManager {
-			cm: display.cm,
-			tcm: display.tcm,
-			garbages: display.garbages.clone(),
-		}
+		self.garbages.push_back((width, atk));
 	}
 
 	// return atk
@@ -35,15 +26,15 @@ impl GarbageAttackManager {
 			if self.garbages.is_empty() {
 				break atk;
 			}
-			if self.garbages[0] >= atk {
-				self.garbages[0] -= atk;
-				if self.garbages[0] == 0 {
+			if self.garbages[0].1 >= atk {
+				self.garbages[0].1 -= atk;
+				if self.garbages[0].1 == 0 {
 					self.garbages.pop_front();
 				}
 				break 0;
 			}
 			let popped_lines = self.garbages.pop_front().unwrap();
-			atk -= popped_lines;
+			atk -= popped_lines.1;
 		}
 	}
 

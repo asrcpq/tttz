@@ -4,7 +4,8 @@ Working:
 
 Planned:
 
-- ccbot has bug?
+- modify cc to run in a blocking way(for better profiling control)
+	after its interface has stabilized(called TBI?)
 - id
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii

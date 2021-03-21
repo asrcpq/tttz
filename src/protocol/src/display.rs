@@ -19,7 +19,7 @@ pub struct Display {
 	pub bag_preview: [CodeType; 6],
 	pub cm: u32,
 	pub tcm: u32,
-	pub garbages: VecDeque<u32>,
+	pub garbages: VecDeque<(u32, u32)>,
 	pub board_reply: BoardReply,
 }
 

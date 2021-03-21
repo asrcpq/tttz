@@ -28,7 +28,6 @@ impl Default for RandomGenerator {
 			shift_id: 0,
 		};
 		rg.generate_bag();
-		rg.generate_slots();
 		rg.generate_shift();
 		rg
 	}
@@ -39,12 +38,6 @@ impl RandomGenerator {
 		let mut b = vec![0, 1, 2, 3, 4, 5, 6];
 		b.shuffle(&mut self.rng);
 		self.bag.extend(b.into_iter());
-	}
-
-	fn generate_slots(&mut self) {
-		for _ in 0..10 {
-			self.slots.push(self.rng.gen_range(0..10));
-		}
 	}
 
 	fn generate_shift(&mut self) {
@@ -61,9 +54,9 @@ impl RandomGenerator {
 		self.shift[self.shift_id - 1]
 	}
 
-	pub fn get_slot(&mut self) -> PosType {
-		if self.slots.len() - self.slots_id < 10 {
-			self.generate_slots()
+	pub fn get_slot(&mut self, w: u32) -> PosType {
+		if self.slots.len() == self.slots_id {
+			self.slots.push(self.rng.gen_range(0..11 - w as PosType));
 		}
 		self.slots_id += 1;
 		self.slots[self.slots_id - 1]

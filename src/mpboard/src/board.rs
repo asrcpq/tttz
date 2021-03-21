@@ -96,8 +96,8 @@ impl Board {
 					okflag = self.move2(1);
 				}
 			},
-			BoardMsg::Attacked(amount) => {
-				self.gaman.push_garbage(amount);
+			BoardMsg::Attacked(width, amount) => {
+				self.gaman.push_garbage(width, amount);
 				const MAX_GARBAGE_LEN: usize = 5;
 				if self.gaman.garbages.len() > MAX_GARBAGE_LEN {
 					let ret = self.flush_garbage(MAX_GARBAGE_LEN);
@@ -162,10 +162,10 @@ impl Board {
 			if self.gaman.garbages.len() <= keep {
 				break;
 			}
-			let mut count = match self.gaman.garbages.pop_front() {
-				Some(x) => x,
+			let (w, mut count) = match self.gaman.garbages.pop_front() {
+				Some((x, y)) => (x, y as usize),
 				None => break,
-			} as usize;
+			};
 			// assert!(count != 0);
 			if count > 40 {
 				count = 40;
@@ -176,16 +176,18 @@ impl Board {
 					self.field[y][x] = self.field[y - count][x];
 				}
 			}
-			let mut slot = self.rg.get_slot(); // initial pos
+			let mut slot = self.rg.get_slot(w); // initial pos
 			for y in 0..count {
 				let same = self.rg.get_shift();
 				if same >= SAME_LINE {
-					slot = self.rg.get_slot();
+					slot = self.rg.get_slot(w);
 				}
 				for x in 0..10 {
 					self.field[y][x] = b'g';
 				}
-				self.field[y][slot as usize] = b' ';
+				for i in 0..w {
+					self.field[y][slot as usize + i as usize] = b' ';
+				}
 				if !self.field.test(&self.floating_block) {
 					self.floating_block.pos.1 -= 1;
 				}

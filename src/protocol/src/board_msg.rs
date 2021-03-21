@@ -4,7 +4,7 @@ use crate::KeyType;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum BoardMsg {
-	Attacked(u32),
+	Attacked(u32, u32),
 	KeyEvent(KeyType),
 }
 

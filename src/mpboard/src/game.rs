@@ -57,9 +57,10 @@ impl Game {
 		self.seqs[id] = seq;
 		let reply = self.boards[id].handle_msg(BoardMsg::KeyEvent(key_type));
 		match reply {
-			BoardReply::ClearDrop(_lc, atk) if atk > 0 && oid != 0 => {
+			BoardReply::ClearDrop(lc, atk) if atk > 0 && oid != 0 => {
 				let recv_ret =
-					self.boards[1 - id].handle_msg(BoardMsg::Attacked(atk));
+					// change lc to 1 for traditional garbage style
+					self.boards[1 - id].handle_msg(BoardMsg::Attacked(lc, atk));
 				if recv_ret == BoardReply::Die {
 					winner = cid;
 				}

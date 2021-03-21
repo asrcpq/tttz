@@ -2,9 +2,10 @@
 
 * Special keys: move left/right until fail(=long press in gui)
 
-* SRS kick table(with 180 degree kick)
+* SRS+ kick table
 
-* Garbage in same attack has a 30%(or 40%) probability to shift
+* Garbage in same attack has a 30%(or 40%) probability to shift,
+slot width = cleared lines.
 
 ## Special Attack Table
 
@@ -51,9 +52,7 @@
 
 	* max 5 attacks pending, or early attacks will pop
 
-* Block generate at top
-
-	Precisely, at y=38(bottom = 0) to prevent wall kick.
+* All blocks generated at y=22(bottom = 0)
 
 * Die, if after board change shadow block is totally invisible
 

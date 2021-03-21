@@ -297,17 +297,14 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[panel] + 20;
 		let offsety = self.offset_y[panel];
 		let mut dy = 0;
-		for (mut ind, &each_garbage) in display.garbages.iter().enumerate() {
-			let mut each_garbage = each_garbage as u16;
-			let flag = dy + each_garbage > 20;
+		for &each_garbage in display.garbages.iter() {
+			let mut garbage_len = each_garbage.1 as u16;
+			let flag = dy + garbage_len > 20;
 			if flag {
-				each_garbage = 20 - dy;
+				garbage_len = 20 - dy;
 			}
-			if ind > 4 {
-				ind = 4;
-			}
-			print!("[4{}m", 5 - ind);
-			for i in dy..(dy + each_garbage) {
+			print!("[4{}m", each_garbage.0 + 1);
+			for i in dy..(dy + garbage_len) {
 				print!(
 					"{} ",
 					termion::cursor::Goto(
@@ -316,7 +313,7 @@ impl ClientDisplay {
 					),
 				)
 			}
-			dy += each_garbage;
+			dy += garbage_len;
 			if flag {
 				break;
 			}
