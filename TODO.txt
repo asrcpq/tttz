@@ -1,6 +1,6 @@
 Working:
 
-- write an ai
+- ai benchmark binary for quick result
 
 Planned:
 

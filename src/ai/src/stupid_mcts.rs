@@ -110,7 +110,7 @@ impl SearchTree {
 			nodes,
 			preview_pointer: 0,
 			alloc_id: 1, // 0 is given to root
-			step: 2000,
+			step: 100,
 		}
 	}
 
@@ -262,7 +262,10 @@ impl SearchTree {
 			}
 		}
 
-		let best_piece = best_piece.unwrap();
+		let best_piece = match best_piece {
+			Some(piece) => piece,
+			None => { return VecDeque::new() }
+		};
 		let mut ret = VecDeque::new();
 		if root.active.0 != best_piece.code {
 			ret.push_back(KeyType::Hold);
@@ -291,7 +294,7 @@ impl SearchTree {
 				let node = self.nodes.get(&id).unwrap();
 				(node.q, node.visit, id)
 			} else {
-				(0f32, 0, 0)
+				(value, 0, 0)
 			};
 			let u = ((node.visit as f32).sqrt() / (1 + visit) as f32) * value * CPUCT + q;
 			// let u = q;
@@ -344,7 +347,7 @@ enum SelectResult {
 mod test {
 	use super::*;
 	use tttz_mpboard::Board;
-	use tttz_protocol::BoardMsg;
+	use tttz_protocol::{BoardMsg, BoardReply};
 
 	#[test]
 	fn test_mcts1() {

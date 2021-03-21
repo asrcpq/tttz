@@ -44,8 +44,8 @@ impl Evaluator for SimpleEvaluator {
 		let twist = new_field.test_twist(&mut piece.clone());
 		let lc = new_field.settle_block(&piece);
 		// do not handle combo
-		let atk = (twist + 1) * lc; // simple approx
-		let q = (atk as f32 * 5. - score) / 10.0 + 1.0;
+		let atk = (twist as f32 + 1.0) * (lc as f32 - 0.5); // simple approx
+		let q = (atk * 3. - score) / 10.0 + 1.0;
 		(q, new_field)
 	}
 }

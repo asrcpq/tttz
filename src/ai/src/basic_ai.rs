@@ -41,7 +41,9 @@ impl Thinker for BasicAi {
 		if best_id == 1 {
 			key_seq.push_back(KeyType::Hold);
 		}
-		key_seq.extend(route_solver(&display.color, &best_piece).unwrap());
+		key_seq.extend(route_solver(&display.color, &best_piece).unwrap_or(
+			VecDeque::new()
+		));
 		key_seq.push_back(KeyType::HardDrop);
 		key_seq
 	}

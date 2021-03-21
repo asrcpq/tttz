@@ -1,13 +1,13 @@
-mod ai;
+pub mod ai;
 use ai::Thinker;
 mod basic_ai;
-use basic_ai::BasicAi;
+pub use basic_ai::BasicAi;
 mod ccbot;
-use ccbot::CCBot;
+pub use ccbot::CCBot;
 mod mmbot;
-use mmbot::MMBot;
+pub use mmbot::MMBot;
 mod sbai;
-use sbai::SBAi;
+pub use sbai::SBAi;
 mod stupid_mcts;
 
 pub fn spawn_ai(

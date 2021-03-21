@@ -2,6 +2,7 @@
 members = [
 	"src/server",
 	"src/replayer",
+	"src/aibench",
 	"src/tui",
 	"src/deb",
 ]
