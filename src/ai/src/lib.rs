@@ -1,5 +1,5 @@
 pub mod ai;
-use ai::Thinker;
+pub use ai::Thinker;
 mod basic_ai;
 pub use basic_ai::BasicAi;
 mod ccbot;

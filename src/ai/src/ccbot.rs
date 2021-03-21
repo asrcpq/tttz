@@ -98,7 +98,7 @@ impl Thinker for CCBot {
 			.map(|x| x.1)
 			.sum();
 		self.interface.request_next_move(garbage_sum);
-		//std::thread::sleep(std::time::Duration::from_millis(100));
+		std::thread::sleep(std::time::Duration::from_millis(10));
 		match self.interface.block_next_move() {
 			None => return VecDeque::new(),
 			Some((moves, _info)) => {
@@ -110,6 +110,14 @@ impl Thinker for CCBot {
 }
 
 impl CCBot {
+	pub fn from_eval(eval: Standard) -> CCBot {
+		CCBot {
+			interface: get_if(eval.clone()),
+			preview_list: [7; 6],
+			evaluator: eval,
+		}
+	}
+
 	fn update_preview(&mut self, new_list: &[CodeType; 6], current: CodeType) {
 		if self.preview_list[0] == 7 {
 			// feed previews

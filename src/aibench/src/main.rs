@@ -4,8 +4,8 @@ use tttz_ai::ai::Thinker;
 
 fn simulation() -> bool {
 	let mut game = Game::new(1, 2, vec![].iter());
-	let mut basic_ai: BasicAi = Default::default();
-	let mut sbai: SBAi = Default::default();
+	let mut basic_ai: SBAi = Default::default();
+	let mut sbai: CCBot = Default::default();
 	// let mut sbai: CCBot = Default::default();
 	// let mut sbai: MMBot = MMBot::try_new().unwrap();
 	loop {
