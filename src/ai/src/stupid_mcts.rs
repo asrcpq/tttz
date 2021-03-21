@@ -1,6 +1,6 @@
 use tttz_ruleset::CodeType;
 use tttz_protocol::{KeyType, Display, Piece};
-use tttz_mpboard::{Field, GarbageAttackManager};
+use tttz_mpboard::Field;
 use tttz_libai::{access_floodfill, route_solver};
 use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
 
@@ -11,7 +11,6 @@ struct Node {
 	pub field: Field,
 	pub active: (CodeType, CodeType),
 	pub depth: usize, // preview pointer
-	pub gaman: GarbageAttackManager,
 	pub simple_evaluator: SimpleEvaluator,
 
 	pub id: u64,
@@ -30,7 +29,6 @@ impl Node {
 			field: Field::from_color(&display.color),
 			active: (display.floating_block.code, display.hold),
 			depth,
-			gaman: GarbageAttackManager::from_display(display),
 			simple_evaluator: SimpleEvaluator::evaluate_field(&display.color),
 			id,
 			parent_id: id,
@@ -41,25 +39,9 @@ impl Node {
 		}
 	}
 
-	pub fn create(&mut self, mut piece: Piece, next: CodeType, id: u64) -> Self {
-		let v = self.simple_evaluator.evaluate_piece(&self.field.color, &piece);
-		let twist = self.field.test_twist(&mut piece);
-		let mut new_field = self.field.clone();
-		let lc = new_field.settle_block(&piece);
-		let mut new_gaman = self.gaman.clone();
-		let atk = new_gaman.calc_attack(
-			twist,
-			lc,
-			piece.code,
-			new_field.height == 0
-		);
-		// value expression here
-		// currently it is high attack + not bad block placement
-		let q = atk as f32 * 5. - v;
-		// if lc > 0 {
-		// 	eprintln!("{} {} {} {} {}", lc, twist, new_field.height, atk, v);
-		// }
-		// whether hold is used
+	pub fn create(&mut self, piece: Piece, next: CodeType, id: u64) -> Self {
+		let (q, new_field) = self.simple_evaluator.evaluate_piece(&self.field.color, &piece);
+
 		let active = if piece.code == self.active.0 {
 			(next, self.active.1)
 		} else {
@@ -71,7 +53,6 @@ impl Node {
 			field: new_field,
 			active,
 			depth: self.depth + 1,
-			gaman: self.gaman.clone(),
 			simple_evaluator,
 			id,
 			parent_id: self.id,
@@ -94,7 +75,7 @@ impl Node {
 		}
 
 		for piece in possible.iter() {
-			let score = self.simple_evaluator.evaluate_piece(&self.field.color, piece);
+			let score = self.simple_evaluator.evaluate_piece(&self.field.color, piece).0;
 			self.weights.insert(piece.clone(), score);
 		}
 
@@ -293,7 +274,7 @@ impl SearchTree {
 	}
 
 	fn select(&mut self, focus: u64) -> SelectResult {
-		const CPUCT: f32 = 0.01;
+		const CPUCT: f32 = 1.0;
 		let node = match self.nodes.get(&focus) {
 			Some(node) => node,
 			None => {

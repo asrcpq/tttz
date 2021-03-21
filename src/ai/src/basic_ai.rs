@@ -21,7 +21,7 @@ impl Thinker for BasicAi {
 		}
 
 		let simple_evaluator = SimpleEvaluator::evaluate_field(&display.color);
-		let mut best_score = f32::INFINITY;
+		let mut best_score = f32::NEG_INFINITY;
 		let mut best_piece = Piece::new(0);
 		let mut best_id = 0;
 		for (id, &option_code) in [display.floating_block.code, display.hold]
@@ -29,8 +29,8 @@ impl Thinker for BasicAi {
 			.enumerate()
 		{
 			for piece in access_floodfill(&display.color, option_code).iter() {
-				let score = simple_evaluator.evaluate_piece(&display.color, piece);
-				if score < best_score {
+				let score = simple_evaluator.evaluate_piece(&display.color, piece).0;
+				if score > best_score {
 					best_score = score;
 					best_piece = piece.clone();
 					best_id = id;

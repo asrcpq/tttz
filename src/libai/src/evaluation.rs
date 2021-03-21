@@ -1,9 +1,10 @@
 use tttz_protocol::Piece;
 use tttz_ruleset::*;
+use tttz_mpboard::Field;
 use crate::utils::*;
 
 pub trait Evaluator {
-	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> f32;
+	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> (f32, Field);
 	fn evaluate_field(display: &Vec<[u8; 10]>) -> Self;
 }
 
@@ -20,7 +21,7 @@ impl Evaluator for SimpleEvaluator {
 		}
 	}
 
-	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> f32 {
+	fn evaluate_piece(&self, color: &Vec<[u8; 10]>, piece: &Piece) -> (f32, Field) {
 		// how bad it is to put a block on the highest hole
 		const COVER_WEIGHT: f32 = 0.5;
 		// how bad it is to create a new hole
@@ -38,6 +39,13 @@ impl Evaluator for SimpleEvaluator {
 			* HEIGHT_WEIGHT + hole as f32
 			* HOLE_WEIGHT + cover as f32
 			* COVER_WEIGHT;
-		score
+
+		let mut new_field = Field::from_color(color);
+		let twist = new_field.test_twist(&mut piece.clone());
+		let lc = new_field.settle_block(&piece);
+		// do not handle combo
+		let atk = (twist + 1) * lc; // simple approx
+		let q = (atk as f32 * 5. - score) / 10.0 + 1.0;
+		(q, new_field)
 	}
 }
