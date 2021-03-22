@@ -1,7 +1,7 @@
 use std::io::{stdout, Read, Write};
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
-use tttz_libclient::ClientDisplay;
+use tttz_libclient::{ClientDisplay, SoundEffect, SoundManager};
 mod replay_simulator;
 use replay_simulator::{ReplaySimulator, SeekResult};
 mod replay_counter;
@@ -29,8 +29,10 @@ fn main() {
 		}
 	}
 
+	let sm: SoundManager = Default::default();
+
 	// termion and display works inside
-	{
+	let sleep_flag = {
 		let mut stdin = async_stdin().bytes();
 		let stdout = stdout();
 		let mut stdout = stdout.lock().into_raw_mode().unwrap();
@@ -41,13 +43,14 @@ fn main() {
 		client_display.activate();
 
 		let mut elapsed = 0;
-		'main_loop: loop {
+		let sleep_flag = 'main_loop: loop {
 			let mut all_end = true;
 			for rs in rss.iter_mut() {
 				match rs.seek_forward((elapsed as f64 * spd) as u128) {
 					SeekResult::End => {}
 					SeekResult::Ok(None) => all_end = false,
 					SeekResult::Ok(Some(display)) => {
+						sm.play(&SoundEffect::from_board_reply(&display.board_reply));
 						client_display.disp_by_id(&display);
 						if constant_flag {
 							std::thread::sleep(std::time::Duration::from_millis(60));
@@ -57,22 +60,26 @@ fn main() {
 				}
 			}
 			if all_end {
-				break 'main_loop;
+				break 'main_loop true;
 			}
 			stdout.flush().unwrap();
 			while let Some(Ok(byte)) = stdin.next() {
 				if byte == b'q' {
-					break 'main_loop;
+					break 'main_loop false;
 				}
 			}
 			if !constant_flag {
 				std::thread::sleep(std::time::Duration::from_millis(10));
 			}
 			elapsed += 10_000;
-		}
+		};
 		client_display.deactivate();
+		sleep_flag
+	};
+
+	if sleep_flag {
+		std::thread::sleep(std::time::Duration::from_millis(1000));
 	}
-	std::thread::sleep(std::time::Duration::from_millis(1000));
 
 	for rs in rss.iter() {
 		rs.print_rc();
