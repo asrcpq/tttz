@@ -3,11 +3,14 @@ name = "tttz-libclient"
 version = "0.2.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
+build = "build.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies.tttz-segen]
+path = "../segen"
 
 [dependencies]
 termion = "*"
+rodio = "*"
 tttz-mpboard = {path = "../mpboard"}
 tttz-protocol = {path = "../protocol"}
 tttz-ruleset = {path = "../ruleset"}

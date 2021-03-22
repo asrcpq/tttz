@@ -1,5 +1,5 @@
-use crate::sound_effect::SoundEffect;
-use crate::sound_manager::SoundManager;
+use tttz_libclient::SoundEffect;
+use tttz_libclient::SoundManager;
 use tttz_mpboard::Board;
 use tttz_protocol::{BoardMsg, Display, IdType, KeyType};
 

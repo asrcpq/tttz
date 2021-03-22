@@ -3,14 +3,9 @@ name = "tttz-tui"
 version = "0.3.0"
 authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
-build = "build.rs"
-
-[build-dependencies.tttz-segen]
-path = "../segen"
 
 [dependencies]
 termion = "*"
-rodio = "*"
 
 [dependencies.tttz-libclient]
 path = "../libclient"

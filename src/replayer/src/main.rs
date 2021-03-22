@@ -72,6 +72,7 @@ fn main() {
 		}
 		client_display.deactivate();
 	}
+	std::thread::sleep(std::time::Duration::from_millis(1000));
 
 	for rs in rss.iter() {
 		rs.print_rc();

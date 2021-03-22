@@ -2,10 +2,8 @@ use termion::async_stdin;
 use termion::raw::IntoRawMode;
 
 use crate::keymap::TuiKey;
-use crate::sound_effect::SoundEffect;
-use crate::sound_manager::SoundManager;
 use crate::ClientRenderer;
-use tttz_libclient::{ClientDisplay, ClientSocket};
+use tttz_libclient::{ClientDisplay, ClientSocket, SoundEffect, SoundManager};
 use tttz_protocol::{ClientMsg, Display, IdType, ServerMsg};
 
 use std::collections::HashMap;

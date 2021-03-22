@@ -25,7 +25,7 @@ impl Evaluator for SimpleEvaluator {
 		// how bad it is to put a block on the highest hole
 		const COVER_WEIGHT: f32 = 0.5;
 		// how bad it is to create a new hole
-		const HOLE_WEIGHT: f32 = 1.0;
+		const HOLE_WEIGHT: f32 = 0.5;
 		// how bad it is to increase height
 		const HEIGHT_WEIGHT: f32 = 1.0;
 
@@ -45,7 +45,7 @@ impl Evaluator for SimpleEvaluator {
 		let lc = new_field.settle_block(&piece);
 		// do not handle combo
 		let atk = (twist as f32 + 1.0) * (lc as f32 - 0.5); // simple approx
-		let q = (atk * 3. - score) / 10.0 + 1.0;
+		let q = (atk * 4. - score) / 10.0 + 1.0;
 		(q, new_field)
 	}
 }
