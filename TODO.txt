@@ -1,9 +1,10 @@
 Working:
 
-- ai benchmark binary for quick result
+- write an ai
 
 Planned:
 
+- replayer does not record death frame?
 - modify cc to run in a blocking way(for better profiling control)
 	after its interface has stabilized(called TBI?)
 - id

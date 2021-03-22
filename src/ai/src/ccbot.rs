@@ -83,7 +83,11 @@ impl Thinker for CCBot {
 	// TODO: handle garbages
 	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
 		self.update_preview(&display.bag_preview, display.floating_block.code);
-		if let BoardReply::GarbageOverflow(_) = display.board_reply {
+		if match display.board_reply {
+			BoardReply::GarbageOverflow(x) if x > 0 => true,
+			BoardReply::PlainDrop(x) if x > 0 => true,
+			_ => false,
+		} {
 			let mut field = [[false; 10]; 40];
 			for (row, each_row) in field.iter_mut().take(20).enumerate() {
 				for (col, color) in each_row.iter_mut().enumerate() {
