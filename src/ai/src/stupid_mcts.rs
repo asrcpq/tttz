@@ -10,7 +10,6 @@ use std::collections::{HashMap, VecDeque};
 struct Node {
 	pub field: Field,
 	pub active: (CodeType, CodeType),
-	pub depth: usize, // preview pointer
 	pub simple_evaluator: SimpleEvaluator,
 
 	pub id: u64,
@@ -24,11 +23,10 @@ struct Node {
 
 impl Node {
 	// root
-	pub fn from_display(id: u64, depth: usize, display: &Display) -> Node {
+	pub fn from_display(id: u64, display: &Display) -> Node {
 		Node {
 			field: Field::from_color(&display.color),
 			active: (display.floating_block.code, display.hold),
-			depth,
 			simple_evaluator: SimpleEvaluator::evaluate_field(&display.color),
 			id,
 			parent_id: id,
@@ -52,7 +50,6 @@ impl Node {
 		Node {
 			field: new_field,
 			active,
-			depth: self.depth + 1,
 			simple_evaluator,
 			id,
 			parent_id: self.id,
@@ -63,7 +60,7 @@ impl Node {
 		}
 	}
 
-	pub fn expand(&mut self) -> bool {
+	fn expand(&mut self) -> bool {
 		assert!(self.active.0 != 7);
 		if !self.weights.is_empty() {
 			return false;
@@ -74,9 +71,9 @@ impl Node {
 			possible.extend(access_floodfill(&self.field.color, self.active.1));
 		}
 
-		for piece in possible.iter() {
-			let score = self.simple_evaluator.evaluate_piece(&self.field.color, piece).0;
-			self.weights.insert(piece.clone(), score);
+		for piece in possible.into_iter() {
+			let score = self.simple_evaluator.evaluate_piece(&self.field.color, &piece).0;
+			self.weights.insert(piece, score);
 		}
 
 		// if self.weights.is_empty() { } // die
@@ -99,7 +96,7 @@ impl SearchTree {
 	pub fn from_display(mut display: Display) -> SearchTree {
 		display.hold = display.floating_block.code;
 		display.floating_block.code = display.bag_preview[0];
-		let mut root = Node::from_display(0, 1, &display);
+		let mut root = Node::from_display(0, &display);
 		root.expand();
 		let preview = display.bag_preview.to_vec();
 		let mut nodes = HashMap::new();
@@ -143,7 +140,7 @@ impl SearchTree {
 		}
 
 		if !self.compare_display(&display) {
-			let mut new_root = Node::from_display(self.alloc_id, self.preview_pointer, &display);
+			let mut new_root = Node::from_display(self.alloc_id, &display);
 			new_root.expand();
 			self.root = self.alloc_id;
 			self.nodes = HashMap::new();
