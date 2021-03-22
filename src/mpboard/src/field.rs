@@ -223,7 +223,8 @@ impl Field {
 
 	fn proc_elim(&mut self, elims: Vec<usize>) {
 		let mut movedown = 0;
-		for i in 0..self.color.len() {
+		let len = self.color.len();
+		for i in 0..len {
 			let mut flag = false;
 			for &elim in elims.iter() {
 				if i == elim {
@@ -239,6 +240,9 @@ impl Field {
 				continue;
 			}
 			self[i - movedown] = self[i];
+		}
+		for i in 1..=movedown {
+			self[len - i] = [b' '; 10];
 		}
 	}
 
