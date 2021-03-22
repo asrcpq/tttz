@@ -229,10 +229,11 @@ impl Board {
 
 	// true = death
 	fn press_down(&mut self) -> BoardReply {
-		if !self.soft_drop() {
-			return self.hard_drop();
+		if self.soft_drop() {
+			BoardReply::Ok
+		} else {
+			BoardReply::BadMove
 		}
-		BoardReply::Ok
 	}
 
 	// true = death

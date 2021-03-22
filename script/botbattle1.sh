@@ -11,8 +11,8 @@ cd "$(dirname "$0")/.."
 cargo run --release --bin tttz-server 2>/dev/shm/tttz-server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo cc2 strategy_initiator $t" \
-execute "spawnai algo cc strategy $t" \
+execute "spawnai algo cc strategy_initiator $t" \
+execute "spawnai algo mm strategy $t" \
 execute "sleep 300" \
 execute "view 2" \
 execute "panel 0 2" \
