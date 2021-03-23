@@ -5,3 +5,5 @@
 *.wav
 perf.*
 *.svg
+
+/thirdparty/tttzbot
