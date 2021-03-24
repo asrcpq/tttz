@@ -264,7 +264,9 @@ impl Server {
 				}
 			}
 			ClientMsg::Accept(id) => {
-				self.try_apply_match(client_id, id);
+				if self.client_manager.is_idle(client_id) {
+					self.try_apply_match(client_id, id);
+				}
 			}
 			ClientMsg::PlaySingle => {
 				self.try_apply_match(client_id, 0);

@@ -53,6 +53,7 @@ fn main() {
 						sm.play(&SoundEffect::from_board_reply(&display.board_reply));
 						client_display.disp_by_id(&display);
 						if constant_flag {
+							stdout.flush().unwrap();
 							std::thread::sleep(std::time::Duration::from_millis(60));
 						}
 						all_end = false;
@@ -62,13 +63,13 @@ fn main() {
 			if all_end {
 				break 'main_loop true;
 			}
-			stdout.flush().unwrap();
 			while let Some(Ok(byte)) = stdin.next() {
 				if byte == b'q' {
 					break 'main_loop false;
 				}
 			}
 			if !constant_flag {
+				stdout.flush().unwrap();
 				std::thread::sleep(std::time::Duration::from_millis(10));
 			}
 			elapsed += 10_000;
