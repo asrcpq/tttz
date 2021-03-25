@@ -6,10 +6,9 @@ Planned:
 
 - replayer does not record death frame?
 - modify cc to run in a blocking way(for better profiling control)
-	after its interface has stabilized(called TBI?)
 - id
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
 - better sound effects
-- new ui, real time stats
+- new ui, stats during play

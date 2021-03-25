@@ -297,13 +297,13 @@ impl ClientDisplay {
 		let offsetx = self.offset_x[panel] + 20;
 		let offsety = self.offset_y[panel];
 		let mut dy = 0;
-		for &each_garbage in display.garbages.iter() {
+		for (i, &each_garbage) in display.garbages.iter().enumerate() {
 			let mut garbage_len = each_garbage.1 as u16;
 			let flag = dy + garbage_len > 20;
 			if flag {
 				garbage_len = 20 - dy;
 			}
-			print!("[4{}m", each_garbage.0 + 1);
+			print!("[4{}m", 6 - i);
 			for i in dy..(dy + garbage_len) {
 				print!(
 					"{} ",

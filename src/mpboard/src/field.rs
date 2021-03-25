@@ -159,6 +159,10 @@ impl Field {
 		for mini_pos in tmp.iter() {
 			let check_x = block.pos.0 + mini_pos.0;
 			let check_y = block.pos.1 + mini_pos.1;
+			// this is used for L/J special check pos, they are not always inside the field!
+			if !self.is_pos_inside((check_x, check_y)) {
+				continue
+			}
 			if self.color[check_y as usize][check_x as usize] == b' ' {
 				return 1;
 			}
