@@ -1,6 +1,6 @@
 use tttz_mpboard::Game;
 use tttz_ai::{BasicAi, SBAi, MMBot, CCBot};
-use tttz_ai::ai::Thinker;
+use tttz_libai::Thinker;
 
 fn simulation() -> bool {
 	let mut game = Game::new(1, 2, vec![].iter());

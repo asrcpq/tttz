@@ -1,5 +1,4 @@
-pub mod ai;
-pub use ai::Thinker;
+use tttz_libai::Thinker;
 mod basic_ai;
 pub use basic_ai::BasicAi;
 mod ccbot;

@@ -8,6 +8,7 @@ edition = "2018"
 tttz-mpboard = {path = "../mpboard"}
 tttz-protocol = {path = "../protocol"}
 tttz-ruleset = {path = "../ruleset"}
+tttz-libclient = {path = "../libclient"}
 
 bimap = "*"
 once_cell = "*"

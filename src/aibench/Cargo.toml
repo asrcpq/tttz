@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 tttz-ai = {path = "../ai"}
+tttz-libai = {path = "../libai"}
 tttz-mpboard = {path = "../mpboard"}

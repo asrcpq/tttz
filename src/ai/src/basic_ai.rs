@@ -1,5 +1,5 @@
 // stupid ai, put block to make least holes and lowest height
-use crate::ai::Thinker;
+use crate::Thinker;
 use tttz_libai::{access_floodfill, route_solver};
 use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
 use tttz_protocol::{Display, KeyType, Piece};
