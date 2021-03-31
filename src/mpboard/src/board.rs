@@ -348,11 +348,11 @@ mod test {
 		board.floating_block.pos.0 = 1;
 		board.floating_block.pos.1 = 0;
 		board.floating_block.rotation = 3;
-		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 		board.floating_block.code = 2;
 		board.floating_block.pos.0 = 2;
 		board.floating_block.rotation = 1;
-		assert_eq!(board.field.test_twist(&mut board.floating_block), 1);
+		assert_eq!(board.field.test_twist(&mut board.floating_block), 2);
 
 		// mini-twist
 		let mut board =

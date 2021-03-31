@@ -95,9 +95,9 @@ mod test {
 	#[test]
 	fn test_counter_attack() {
 		let mut gaman: GarbageAttackManager = Default::default();
-		gaman.garbages = VecDeque::from(vec![1, 2, 3, 4, 5]);
+		gaman.garbages = VecDeque::from(vec![(1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]);
 		gaman.counter_attack(5);
-		let expect_garbage = vec![1, 4, 5];
+		let expect_garbage = vec![(1, 1), (1, 4), (1, 5)];
 		assert!(gaman
 			.garbages
 			.iter()
