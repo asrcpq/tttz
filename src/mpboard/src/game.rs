@@ -59,7 +59,7 @@ impl Game {
 		match reply {
 			BoardReply::ClearDrop(_lc, atk) if atk > 0 && oid != 0 => {
 				let recv_ret =
-					// change lc to 1 for traditional garbage style
+					// change 1 to _lc for new garbage style
 					self.boards[1 - id].handle_msg(BoardMsg::Attacked(1, atk));
 				if recv_ret == BoardReply::Die {
 					winner = cid;

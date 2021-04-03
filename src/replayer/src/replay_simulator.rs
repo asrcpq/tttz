@@ -13,7 +13,7 @@ pub struct ReplaySimulator {
 
 pub enum SeekResult {
 	Ok(Option<Display>),
-	End,
+	End(Option<Display>),
 }
 
 impl ReplaySimulator {
@@ -42,7 +42,7 @@ impl ReplaySimulator {
 		let mut ret = None;
 		loop {
 			if self.idx == self.replay.data.len() {
-				break SeekResult::End;
+				break SeekResult::End(ret);
 			}
 			if t < self.replay.data[self.idx].0 {
 				return SeekResult::Ok(ret);

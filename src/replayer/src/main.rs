@@ -46,17 +46,17 @@ fn main() {
 		let sleep_flag = 'main_loop: loop {
 			let mut all_end = true;
 			for rs in rss.iter_mut() {
-				match rs.seek_forward((elapsed as f64 * spd) as u128) {
-					SeekResult::End => {}
-					SeekResult::Ok(None) => all_end = false,
-					SeekResult::Ok(Some(display)) => {
-						sm.play(&SoundEffect::from_board_reply(&display.board_reply));
-						client_display.disp_by_id(&display);
-						if constant_flag {
-							stdout.flush().unwrap();
-							std::thread::sleep(std::time::Duration::from_millis(60));
-						}
-						all_end = false;
+				let (end_flag, display) = match rs.seek_forward((elapsed as f64 * spd) as u128) {
+					SeekResult::End(x) => { (true, x) },
+					SeekResult::Ok(x) => { (false, x) },
+				};
+				all_end &= end_flag;
+				if let Some(display) = display {
+					sm.play(&SoundEffect::from_board_reply(&display.board_reply));
+					client_display.disp_by_id(&display);
+					if constant_flag {
+						stdout.flush().unwrap();
+						std::thread::sleep(std::time::Duration::from_millis(60));
 					}
 				}
 			}

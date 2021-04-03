@@ -3,15 +3,15 @@ trap exittrap EXIT
 exittrap() {
 	pkill tttz
 }
-spd=300
+algo="mm"
 if [ -n "$1" ]; then
-	spd="$1"
+	algo="$1"
 fi
 cd "$(dirname "$0")/.."
 cargo run --release --bin tttz-server 2>/dev/shm/tttz-server.log &
 sleep 1
 cargo run --release --bin tttz-tui \
-execute "spawnai algo mm strategy $spd" \
+execute "spawnai algo $algo strategy 300" \
 execute "sleep 300" \
 execute "request 2" \
 2>/dev/shm/tttz-client.log
