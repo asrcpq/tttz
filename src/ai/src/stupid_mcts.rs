@@ -238,12 +238,15 @@ impl SearchTree {
 		let node = self.nodes.get(&self.root).unwrap();
 		let root_children = &node.children;
 		let mut max_visit = -1;
+		let mut max_q = -1f32;
 		let mut best_piece = None;
 		let mut best_id = 0;
 		for (piece, &id) in root_children {
 			if let Some(child) = self.nodes.get(&id) {
-				if child.visit > max_visit {
+				if child.visit > max_visit ||
+					(child.visit == max_visit && child.q > max_q) {
 					max_visit = child.visit;
+					max_q = child.q;
 					best_piece = Some(piece.clone());
 					best_id = id;
 				}
@@ -273,7 +276,7 @@ impl SearchTree {
 	}
 
 	fn select(&mut self, focus: u64) -> SelectResult {
-		const CPUCT: f32 = 1.4;
+		const CPUCT: f32 = 1.0;
 		let node = match self.nodes.get(&focus) {
 			Some(node) => node,
 			None => {

@@ -1,14 +1,15 @@
 Working:
 
-- write an ai
+- conditional compilation(no sound, no bot, etc.)
+- mmbot build in build.rs/add build script
 
 Planned:
 
-- replayer does not record death frame?
+- fix: misamino has several problems related to spawn rule difference
+- better sound effects
 - modify cc to run in a blocking way(for better profiling control)
 - id
 - write more tests
 - read terminfo and support fallback mode: 16color, monochrome, ascii
 - replay seek
-- better sound effects
-- new ui, stats during play
+- ui, stats during play
