@@ -142,6 +142,7 @@ impl Field {
 
 	// test all types of twists
 	// return 0: none, 1: mini, 2: regular
+	// although it require piece to be mutable, it won't be changed in the end
 	pub fn test_twist(&self, block: &mut Piece) -> u32 {
 		// No o spin
 		if block.code == 3 {

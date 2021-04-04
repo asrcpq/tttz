@@ -3,7 +3,7 @@ use tttz_ruleset::*;
 
 use std::collections::VecDeque;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct GarbageAttackManager {
 	cm: u32,
 	tcm: u32,
@@ -11,6 +11,27 @@ pub struct GarbageAttackManager {
 }
 
 impl GarbageAttackManager {
+	// for mcts
+	pub fn from_display(display: &Display) -> Self {
+		Self {
+			cm: display.cm,
+			tcm: display.tcm,
+			garbages: display.garbages.clone(),
+		}
+	}
+
+	// for mcts
+	pub fn to_info(&self) -> Vec<f32> {
+		vec![
+			self.cm as f32 / 10f32,
+			self.tcm as f32 / 10f32,
+			self.garbages
+				.iter()
+				.map(|(_, amt)| amt)
+				.sum::<u32>() as f32,
+		]
+	}
+
 	// push a new attack into pending garbage queue
 	pub fn push_garbage(&mut self, width: u32, atk: u32) {
 		if atk == 0 {
