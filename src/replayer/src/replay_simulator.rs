@@ -40,19 +40,20 @@ impl ReplaySimulator {
 	// (replies, replay end flag)
 	pub fn seek_forward(&mut self, t: u128) -> SeekResult {
 		let mut ret = None;
-		loop {
-			if self.idx == self.replay.data.len() {
-				break SeekResult::End(ret);
-			}
-			if t < self.replay.data[self.idx].0 {
-				return SeekResult::Ok(ret);
-			}
-			let br =
-				self.board.handle_msg(self.replay.data[self.idx].1.clone());
-			self.rc.count(&br, t);
-			ret = Some(self.board.generate_display(self.id, 0, br)); // what's seq
-			self.idx += 1;
+		// loop {
+		if self.idx == self.replay.data.len() {
+			return SeekResult::End(ret);
 		}
+		if t < self.replay.data[self.idx].0 {
+			return SeekResult::Ok(ret);
+		}
+		let br =
+			self.board.handle_msg(self.replay.data[self.idx].1.clone());
+		self.rc.count(&br, t);
+		ret = Some(self.board.generate_display(self.id, 0, br)); // what's seq
+		self.idx += 1;
+		return SeekResult::Ok(ret);
+		// }
 	}
 
 	pub fn print_rc(&self) {
