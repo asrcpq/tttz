@@ -209,7 +209,9 @@ impl Board {
 		);
 		if line_count > 0 {
 			self.spawn_block();
-			self.calc_shadow(); // cannot die from a clear drop!
+			if self.calc_shadow() {
+				return BoardReply::Die;
+			}
 			BoardReply::ClearDrop(line_count, atk)
 		} else {
 			// plain drop: attack execution
