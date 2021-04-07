@@ -201,7 +201,7 @@ impl Board {
 		let twist = self.field.test_twist(&mut self.floating_block);
 		let line_count = self.field.settle_block(&self.floating_block);
 		// gaman will safely ignore pc when lc = 0
-		let atk = self.gaman.calc_attack(
+		let (raw_atk, atk) = self.gaman.calc_attack(
 			twist,
 			line_count,
 			self.floating_block.code,
@@ -212,7 +212,7 @@ impl Board {
 			if self.calc_shadow() {
 				return BoardReply::Die;
 			}
-			BoardReply::ClearDrop(line_count, atk)
+			BoardReply::ClearDrop(line_count, atk, raw_atk)
 		} else {
 			// plain drop: attack execution
 			let ret = self.generate_garbage(0);

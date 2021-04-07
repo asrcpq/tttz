@@ -1,5 +1,4 @@
 use tttz_libai::*;
-use tttz_mpboard::Field;
 
 fn main() {
 	// zjstiloizs

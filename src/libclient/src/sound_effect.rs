@@ -19,10 +19,10 @@ pub enum SoundEffect {
 impl SoundEffect {
 	pub fn from_board_reply(board_reply: &BoardReply) -> SoundEffect {
 		match board_reply {
-			&BoardReply::ClearDrop(_lc, atk) => {
-				if atk == 0 {
+			&BoardReply::ClearDrop(_lc, _atk, raw_atk) => {
+				if raw_atk == 0 {
 					SoundEffect::ClearDrop
-				} else if atk < 4 {
+				} else if raw_atk < 4 {
 					SoundEffect::AttackDrop
 				} else {
 					SoundEffect::AttackDrop2

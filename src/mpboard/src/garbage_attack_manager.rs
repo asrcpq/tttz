@@ -65,13 +65,13 @@ impl GarbageAttackManager {
 		line_count: u32,
 		code: CodeType,
 		pc: bool,
-	) -> u32 {
+	) -> (u32, u32) { // raw atk, net atk
 		if line_count == 0 {
 			self.cm = 0;
 			if self.tcm > 0 {
 				self.tcm = ATTACK_B2B_INC;
 			}
-			return 0;
+			return (0, 0);
 		}
 		let base_atk = ATTACK_BASE[(line_count - 1) as usize];
 		let twist_mult = if twist > 0 {
@@ -93,7 +93,7 @@ impl GarbageAttackManager {
 		if pc {
 			atk += ATTACK_PC;
 		}
-		self.counter_attack(atk)
+		(atk, self.counter_attack(atk))
 	}
 
 	pub fn read_display(&mut self, display: &Display) {

@@ -34,8 +34,8 @@ impl ReplayCounter {
 				self.piece += 1;
 				self.key += 1;
 			}
-			BoardReply::ClearDrop(_, atk2) => {
-				self.atk += atk2;
+			BoardReply::ClearDrop(_lc, _atk, raw) => {
+				self.atk += raw;
 				self.piece += 1;
 				self.key += 1;
 			}

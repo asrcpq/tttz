@@ -43,7 +43,7 @@ pub trait Thinker {
 						} else {
 							// strategy ai moves after user move
 							if strategy {
-								if let BoardReply::ClearDrop(_lc, _atk) = display.board_reply {
+								if let BoardReply::ClearDrop(_lc, _atk, _raw) = display.board_reply {
 									moveflag = true;
 								}
 								if let BoardReply::PlainDrop(_gg) = display.board_reply {
