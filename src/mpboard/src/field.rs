@@ -257,6 +257,7 @@ impl Field {
 		let toelim = self.checkline(tocheck);
 		let ret = toelim.len();
 		self.height -= ret as i32;
+		assert!(self.height >= 0);
 		self.proc_elim(toelim);
 		ret as u32
 	}

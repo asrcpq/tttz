@@ -16,7 +16,7 @@ optimized for slow connections.
 * Responsive and minimalist(xterm is recommended for its low input latency)
 
 * Heavily optimized rules, including
-immobile twist(and mini-twist) check, all-twist bonus, twist combo multiplier, etc.
+immobile twist check, all-twist bonus, twist combo multiplier(no quad b2b), etc.
 These rules further encourage skillful attack patterns and challenge current AI implementations.
 
 * Replay is automatically saved. KPP, APP and PPS are computed by replayer.

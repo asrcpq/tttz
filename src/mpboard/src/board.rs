@@ -144,7 +144,6 @@ impl Board {
 	// -1 = death
 	fn flush_garbage(&mut self, max: usize) -> i32 {
 		let garbage_line = self.generate_garbage(max);
-		self.field.height += garbage_line;
 		if self.calc_shadow() {
 			return -1;
 		}
@@ -157,7 +156,7 @@ impl Board {
 	// pull pending garbages and write to board field
 	pub fn generate_garbage(&mut self, keep: usize) -> i32 {
 		const SAME_LINE: f32 = 0.6;
-		let mut ret = 0;
+		let mut ret = 0i32;
 		loop {
 			if self.gaman.garbages.len() <= keep {
 				break;
@@ -170,7 +169,6 @@ impl Board {
 			if count > 40 {
 				count = 40;
 			}
-			ret += count;
 			for y in (count..40).rev() {
 				for x in 0..10 {
 					self.field[y][x] = self.field[y - count][x];
@@ -192,8 +190,13 @@ impl Board {
 					self.floating_block.pos.1 -= 1;
 				}
 			}
+			self.field.height += count as i32;
+			ret += count as i32;
+			if self.field.height >= 40 {
+				ret = -1;
+			}
 		}
-		ret as i32
+		ret
 	}
 
 	fn hard_drop(&mut self) -> BoardReply {
