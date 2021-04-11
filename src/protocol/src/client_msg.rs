@@ -46,7 +46,7 @@ impl ClientMsg {
 		let mut iter = words.iter();
 		let mut game_type = GameType::Speed;
 		let mut sleep = 500;
-		let mut algorithm = "cc".to_string();
+		let mut algorithm = "sbai".to_string();
 		while let Some(&word) = iter.next() {
 			match word {
 				"strategy" | "strategy_initiator" => {

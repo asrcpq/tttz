@@ -223,7 +223,6 @@ impl Board {
 			if ret == -1 {
 				return BoardReply::Die;
 			}
-			self.field.height += ret;
 			self.spawn_block();
 			if self.calc_shadow() {
 				return BoardReply::Die;
