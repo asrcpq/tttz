@@ -9,6 +9,7 @@ mod replay_counter;
 fn main() {
 	let mut rss = Vec::new();
 	let mut iter = std::env::args();
+	let mut pause = false;
 	iter.next();
 	let mut spd = 1.0;
 	let mut constant_flag = false;
@@ -67,12 +68,17 @@ fn main() {
 				if byte == b'q' {
 					break 'main_loop false;
 				}
+				if byte == b' ' {
+					pause = !pause;
+				}
 			}
 			if !constant_flag {
 				stdout.flush().unwrap();
 				std::thread::sleep(std::time::Duration::from_millis(10));
 			}
-			elapsed += 10_000;
+			if !pause {
+				elapsed += 10_000;
+			}
 		};
 		client_display.deactivate();
 		sleep_flag
