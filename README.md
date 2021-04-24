@@ -1,7 +1,5 @@
 # TTTZ
 
-Warning: master != work, clone tagged version instead
-
 ## Require
 
 * rust(cargo)

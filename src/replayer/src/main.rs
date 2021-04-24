@@ -72,11 +72,11 @@ fn main() {
 					pause = !pause;
 				}
 			}
-			if !constant_flag {
-				stdout.flush().unwrap();
+			if !constant_flag || pause {
 				std::thread::sleep(std::time::Duration::from_millis(10));
 			}
 			if !pause {
+				stdout.flush().unwrap();
 				elapsed += 10_000;
 			}
 		};

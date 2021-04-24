@@ -31,6 +31,16 @@ pub fn spawn_ai(
 				},
 			).output().unwrap();
 		})),
+		"3tz2" => Ok(std::thread::spawn(move || {
+			let _ = std::process::Command::new(
+				match std::env::var("TTTZ_TTTZBOT_PATH") {
+					Ok(string) => string,
+					Err(_) => "tttz_tttzbot".to_string(),
+				},
+			).args(&["mode", "strategy_initiator"])
+			.output()
+			.unwrap();
+		})),
 		"cc" => Ok(std::thread::spawn(move || {
 			let mut ccbot: CCBot = Default::default();
 			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
