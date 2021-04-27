@@ -4,7 +4,7 @@
 
 * rust(cargo)
 
-* a modern terminal(unicode + ansi escape + 256 color)
+* a modern terminal(unicode + ansi escape + 256 color), kernel tty should also work.
 
 ## Features
 
