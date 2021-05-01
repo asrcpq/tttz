@@ -53,6 +53,7 @@ fn main() {
 				};
 				all_end &= end_flag;
 				if let Some(display) = display {
+					client_display.set_offset();
 					sm.play(&SoundEffect::from_board_reply(&display.board_reply));
 					client_display.disp_by_id(&display);
 					if constant_flag {
