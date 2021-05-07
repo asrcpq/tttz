@@ -187,7 +187,7 @@ impl Board {
 					self.field[y][slot as usize + i as usize] = b' ';
 				}
 				if !self.field.test(&self.floating_block) {
-					self.floating_block.pos.1 -= 1;
+					self.floating_block.pos.1 += 1;
 				}
 			}
 			self.field.height += count as i32;

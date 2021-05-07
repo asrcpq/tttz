@@ -253,7 +253,7 @@ impl ClientDisplay {
 		let floating_block = display.floating_block.clone();
 		let shadow_pos = shadow_block.getpos();
 		// show shadow_block first
-		print!("[0m");
+		print!("[48;5;16m");
 		for shadow_square in shadow_pos.iter() {
 			let x = shadow_square.0 as u16;
 			let y = shadow_square.1 as u16;
@@ -266,7 +266,7 @@ impl ClientDisplay {
 				);
 			}
 		}
-		print!("[30m");
+		print!("[38;5;16m");
 		let tmp_pos = floating_block.getpos();
 		for tmp_square in tmp_pos.iter() {
 			let x = tmp_square.0 as u16;
