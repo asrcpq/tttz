@@ -5,18 +5,19 @@ use tttz_libai::Thinker;
 fn simulation() -> bool {
 	let mut game = Game::new(1, 2, vec![].iter());
 	let mut basic_ai: SBAi = Default::default();
-	let mut sbai: CCBot = Default::default();
 	// let mut sbai: CCBot = Default::default();
-	// let mut sbai: MMBot = MMBot::try_new().unwrap();
-	loop {
+	let mut sbai: MMBot = MMBot::try_new().unwrap();
+	let mut turn = 0;
+	let result = 'sim: loop {
+		turn += 1;
 		let keyseq = basic_ai.main_think(game.generate_display(0, 0));
 		for key_type in keyseq.into_iter() {
 			let ret = game.process_key(1, 0, key_type).0;
 			if ret > 0 {
 				if ret == 1 {
-					return true
+					break 'sim true
 				}
-				return false
+				break 'sim false
 			}
 		}
 		let keyseq = sbai.main_think(game.generate_display(1, 0));
@@ -24,12 +25,14 @@ fn simulation() -> bool {
 			let ret = game.process_key(2, 0, key_type).0;
 			if ret > 0 {
 				if ret == 1 {
-					return true
+					break 'sim true
 				}
-				return false
+				break 'sim false
 			}
 		}
-	}
+	};
+	eprintln!("End@turn {}", turn);
+	result
 }
 
 fn main() {
