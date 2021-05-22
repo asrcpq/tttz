@@ -63,23 +63,23 @@ impl Thinker for MMBot {
 	}
 
 	// TODO: handle garbages
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
+	fn main_think(&mut self, displays: Vec<Display>) -> VecDeque<KeyType> {
 		self.write_msg(&format!(
 			"update game this_piece_type {}\n",
-			ID_TO_CHAR_MM[display.floating_block.code as usize],
+			ID_TO_CHAR_MM[displays[0].floating_block.code as usize],
 		));
 		self.write_msg(&format!(
 			"update game next_pieces {}\n",
-			display
+			displays[0]
 				.bag_preview
 				.iter()
 				.map(|&x| String::from(ID_TO_CHAR_MM[x as usize]))
 				.collect::<Vec<String>>()
 				.join(",")
 		));
-		let garbage_sum: u32 = display.garbages.iter().map(|x| x.1).sum();
+		let garbage_sum: u32 = displays[0].garbages.iter().map(|x| x.1).sum();
 		self.write_msg(&format!("update bot1 inAtt {}\n", garbage_sum));
-		let field_string = convert_field(&display.color);
+		let field_string = convert_field(&displays[0].color);
 		self.write_msg(&format!("update bot1 field {}\n", field_string,));
 		self.write_msg("action2 moves 10000\n");
 		let mut buf = String::new();

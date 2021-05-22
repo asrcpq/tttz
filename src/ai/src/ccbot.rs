@@ -76,9 +76,9 @@ impl Thinker for CCBot {
 	}
 
 	// TODO: handle garbages
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType> {
-		self.update_preview(&display.bag_preview, display.floating_block.code);
-		if match display.board_reply {
+	fn main_think(&mut self, displays: Vec<Display>) -> VecDeque<KeyType> {
+		self.update_preview(&displays[0].bag_preview, displays[0].floating_block.code);
+		if match displays[0].board_reply {
 			BoardReply::GarbageOverflow(x) if x > 0 => true,
 			BoardReply::PlainDrop(x) if x > 0 => true,
 			_ => false,
@@ -86,13 +86,13 @@ impl Thinker for CCBot {
 			let mut field = [[false; 10]; 40];
 			for (row, each_row) in field.iter_mut().take(20).enumerate() {
 				for (col, color) in each_row.iter_mut().enumerate() {
-					*color = display.color[row][col] != b' ';
+					*color = displays[0].color[row][col] != b' ';
 				}
 			}
-			self.interface.reset(field, display.tcm > 0, display.cm / 3);
+			self.interface.reset(field, displays[0].tcm > 0, displays[0].cm / 3);
 		}
-		// eprintln!("{:?}", display);
-		let garbage_sum = display.garbages.iter().map(|x| x.1).sum();
+		// eprintln!("{:?}", displays[0]);
+		let garbage_sum = displays[0].garbages.iter().map(|x| x.1).sum();
 		self.interface.request_next_move(garbage_sum);
 		std::thread::sleep(std::time::Duration::from_millis(10));
 		match self.interface.block_next_move() {

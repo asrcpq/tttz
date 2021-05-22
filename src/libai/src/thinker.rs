@@ -10,7 +10,7 @@ use std::collections::VecDeque;
 pub trait Thinker {
 	fn reset(&mut self);
 
-	fn main_think(&mut self, display: Display) -> VecDeque<KeyType>;
+	fn main_think(&mut self, displays: Vec<Display>) -> VecDeque<KeyType>;
 
 	fn main_loop(
 		&mut self,
@@ -32,7 +32,7 @@ pub trait Thinker {
 		let (client_socket, id) = ClientSocket::new(&addr);
 
 		let mut state = 3;
-		let mut last_display: Option<Display> = None;
+		let mut last_display: [Option<Display>; 2] = [None, None];
 		let mut operation_queue: VecDeque<KeyType>;
 		loop {
 			std::thread::sleep(std::time::Duration::from_millis(main_sleep));
@@ -41,7 +41,7 @@ pub trait Thinker {
 				match server_msg {
 					ServerMsg::Display(display) => {
 						if display.id == id {
-							last_display = Some(display);
+							last_display[0] = Some(display);
 						} else {
 							// strategy ai moves after user move
 							if strategy {
@@ -56,6 +56,7 @@ pub trait Thinker {
 									moveflag = true;
 								}
 							}
+							last_display[1] = Some(display);
 						}
 					}
 					ServerMsg::GameOver(_) => {
@@ -83,9 +84,13 @@ pub trait Thinker {
 			}
 			if strategy {
 				if state == 2 && moveflag {
-					if let Some(decoded) = last_display.take() {
+					if let Some(decoded) = last_display[0].take() {
 						let mut opflag = true;
-						for operation in self.main_think(decoded).iter() {
+						let mut displays = vec![decoded];
+						if let Some(decoded) = last_display[1].take() {
+							displays.push(decoded);
+						}
+						for operation in self.main_think(displays).iter() {
 							client_socket
 								.send(ClientMsg::KeyEvent(0, *operation))
 								.unwrap();
@@ -97,9 +102,13 @@ pub trait Thinker {
 						moveflag = opflag;
 					}
 				}
-			} else if let Some(decoded) = last_display.take() {
+			} else if let Some(decoded) = last_display[0].take() {
 				if state == 2 {
-					operation_queue = self.main_think(decoded);
+					let mut displays = vec![decoded];
+					if let Some(decoded) = last_display[1].take() {
+						displays.push(decoded);
+					}
+					operation_queue = self.main_think(displays);
 					while let Some(key_type) = operation_queue.pop_front() {
 						client_socket
 							.send(ClientMsg::KeyEvent(0, key_type))
@@ -109,7 +118,7 @@ pub trait Thinker {
 						));
 					}
 				}
-				last_display = None;
+				last_display = [None, None];
 			}
 		}
 	}

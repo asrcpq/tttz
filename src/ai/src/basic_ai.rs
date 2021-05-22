@@ -12,25 +12,25 @@ pub struct BasicAi {}
 impl Thinker for BasicAi {
 	fn reset(&mut self) {}
 
-	fn main_think(&mut self, mut display: Display) -> VecDeque<KeyType> {
-		if display.hold == 7 {
+	fn main_think(&mut self, mut displays: Vec<Display>) -> VecDeque<KeyType> {
+		if displays[0].hold == 7 {
 			let mut ret = VecDeque::new();
 			ret.push_back(KeyType::Hold);
-			display.hold = display.floating_block.code;
-			display.floating_block.code = display.bag_preview[0];
+			displays[0].hold = displays[0].floating_block.code;
+			displays[0].floating_block.code = displays[0].bag_preview[0];
 		}
 
-		let simple_evaluator = SimpleEvaluator::evaluate_field(&display.color);
+		let simple_evaluator = SimpleEvaluator::evaluate_field(&displays[0].color);
 		let mut best_score = f32::NEG_INFINITY;
 		let mut best_piece = Piece::new(0);
 		let mut best_id = 0;
-		for (id, &option_code) in [display.floating_block.code, display.hold]
+		for (id, &option_code) in [displays[0].floating_block.code, displays[0].hold]
 			.iter()
 			.enumerate()
 		{
-			for piece in access_floodfill(&display.color, option_code).iter() {
+			for piece in access_floodfill(&displays[0].color, option_code).iter() {
 				let score =
-					simple_evaluator.evaluate_piece(&display.color, piece).0;
+					simple_evaluator.evaluate_piece(&displays[0].color, piece).0;
 				if score > best_score {
 					best_score = score;
 					best_piece = piece.clone();
@@ -43,7 +43,7 @@ impl Thinker for BasicAi {
 			key_seq.push_back(KeyType::Hold);
 		}
 		key_seq.extend(
-			route_solver(&display.color, &best_piece)
+			route_solver(&displays[0].color, &best_piece)
 				.unwrap_or(VecDeque::new()),
 		);
 		key_seq.push_back(KeyType::HardDrop);

@@ -10,7 +10,7 @@ fn simulation() -> bool {
 	let mut turn = 0;
 	let result = 'sim: loop {
 		turn += 1;
-		let keyseq = basic_ai.main_think(game.generate_display(0, 0));
+		let keyseq = basic_ai.main_think(vec![game.generate_display(0, 0)]);
 		for key_type in keyseq.into_iter() {
 			let ret = game.process_key(1, 0, key_type).0;
 			if ret > 0 {
@@ -20,7 +20,7 @@ fn simulation() -> bool {
 				break 'sim false;
 			}
 		}
-		let keyseq = sbai.main_think(game.generate_display(1, 0));
+		let keyseq = sbai.main_think(vec![game.generate_display(1, 0)]);
 		for key_type in keyseq.into_iter() {
 			let ret = game.process_key(2, 0, key_type).0;
 			if ret > 0 {
