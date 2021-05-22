@@ -1,6 +1,7 @@
 use std::ops::{Deref, Index, IndexMut};
 use tttz_protocol::Piece;
 use tttz_ruleset::*;
+use crate::RandomGenerator;
 
 use std::collections::HashSet;
 
@@ -260,6 +261,53 @@ impl Field {
 		assert!(self.height >= 0);
 		self.proc_elim(toelim);
 		ret as u32
+	}
+
+	pub fn generate_garbage(
+		&mut self,
+		garbages: Vec<(u32, u32)>,
+		rg: &mut RandomGenerator,
+		floating_block: &mut Piece,
+	) -> i32 {
+		const SAME_LINE: f32 = 0.6;
+		let mut ret = 0i32;
+		for (w, count) in garbages.into_iter() {
+			let mut count = count as usize;
+			// assert!(count != 0);
+			if count > 40 {
+				count = 40;
+			}
+			for y in (count..40).rev() {
+				for x in 0..10 {
+					self[y][x] = self[y - count][x];
+				}
+			}
+			let mut slot = rg.get_slot(w); // initial pos
+			for y in 0..count {
+				let same = rg.get_shift();
+				if same >= SAME_LINE {
+					slot = rg.get_slot(w);
+				}
+				for x in 0..10 {
+					self[y][x] = b'g';
+				}
+				for i in 0..w {
+					self[y][slot as usize + i as usize] = b' ';
+				}
+				if !self.test(&floating_block) {
+					floating_block.pos.1 += 1;
+					if floating_block.pos.1 >= 20 {
+						return -1;
+					}
+				}
+			}
+			self.height += count as i32;
+			ret += count as i32;
+			if self.height >= 40 {
+				ret = -1;
+			}
+		}
+		ret
 	}
 }
 

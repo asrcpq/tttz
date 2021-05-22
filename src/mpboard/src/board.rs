@@ -143,7 +143,8 @@ impl Board {
 
 	// -1 = death
 	fn flush_garbage(&mut self, max: usize) -> i32 {
-		let garbage_line = self.generate_garbage(max);
+		let to_flush = self.gaman.pop_garbage(max);
+		let garbage_line = self.field.generate_garbage(to_flush, &mut self.rg, &mut self.floating_block);
 		if self.calc_shadow() {
 			return -1;
 		}
@@ -151,52 +152,6 @@ impl Board {
 			return -1;
 		}
 		garbage_line as i32
-	}
-
-	// pull pending garbages and write to board field
-	pub fn generate_garbage(&mut self, keep: usize) -> i32 {
-		const SAME_LINE: f32 = 0.6;
-		let mut ret = 0i32;
-		loop {
-			if self.gaman.garbages.len() <= keep {
-				break;
-			}
-			let (w, mut count) = match self.gaman.garbages.pop_front() {
-				Some((x, y)) => (x, y as usize),
-				None => break,
-			};
-			// assert!(count != 0);
-			if count > 40 {
-				count = 40;
-			}
-			for y in (count..40).rev() {
-				for x in 0..10 {
-					self.field[y][x] = self.field[y - count][x];
-				}
-			}
-			let mut slot = self.rg.get_slot(w); // initial pos
-			for y in 0..count {
-				let same = self.rg.get_shift();
-				if same >= SAME_LINE {
-					slot = self.rg.get_slot(w);
-				}
-				for x in 0..10 {
-					self.field[y][x] = b'g';
-				}
-				for i in 0..w {
-					self.field[y][slot as usize + i as usize] = b' ';
-				}
-				if !self.field.test(&self.floating_block) {
-					self.floating_block.pos.1 += 1;
-				}
-			}
-			self.field.height += count as i32;
-			ret += count as i32;
-			if self.field.height >= 40 {
-				ret = -1;
-			}
-		}
-		ret
 	}
 
 	fn hard_drop(&mut self) -> BoardReply {
@@ -218,7 +173,7 @@ impl Board {
 			BoardReply::ClearDrop(line_count, atk, raw_atk)
 		} else {
 			// plain drop: attack execution
-			let ret = self.generate_garbage(0);
+			let ret = self.flush_garbage(0);
 			// ret=-1 <=> height=40
 			if ret == -1 {
 				return BoardReply::Die;

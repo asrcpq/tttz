@@ -40,6 +40,12 @@ impl GarbageAttackManager {
 		self.garbages.push_back((width, atk));
 	}
 
+	pub fn pop_garbage(&mut self, retain: usize) -> Vec<(u32, u32)>{
+		if self.garbages.len() <= retain { return Vec::new() }
+		let popsize = self.garbages.len() - retain;
+		self.garbages.drain(0..popsize).collect()
+	}
+
 	// return atk
 	fn counter_attack(&mut self, mut atk: u32) -> u32 {
 		loop {
