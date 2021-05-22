@@ -1,7 +1,7 @@
 // stupid ai, put block to make least holes and lowest height
 use crate::Thinker;
-use tttz_libai::{access_floodfill, route_solver};
 use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
+use tttz_libai::{access_floodfill, route_solver};
 use tttz_protocol::{Display, KeyType, Piece};
 
 use std::collections::VecDeque;
@@ -29,7 +29,8 @@ impl Thinker for BasicAi {
 			.enumerate()
 		{
 			for piece in access_floodfill(&display.color, option_code).iter() {
-				let score = simple_evaluator.evaluate_piece(&display.color, piece).0;
+				let score =
+					simple_evaluator.evaluate_piece(&display.color, piece).0;
 				if score > best_score {
 					best_score = score;
 					best_piece = piece.clone();
@@ -41,9 +42,10 @@ impl Thinker for BasicAi {
 		if best_id == 1 {
 			key_seq.push_back(KeyType::Hold);
 		}
-		key_seq.extend(route_solver(&display.color, &best_piece).unwrap_or(
-			VecDeque::new()
-		));
+		key_seq.extend(
+			route_solver(&display.color, &best_piece)
+				.unwrap_or(VecDeque::new()),
+		);
 		key_seq.push_back(KeyType::HardDrop);
 		key_seq
 	}

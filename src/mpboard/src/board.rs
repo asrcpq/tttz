@@ -144,7 +144,11 @@ impl Board {
 	// -1 = death
 	fn flush_garbage(&mut self, max: usize) -> i32 {
 		let to_flush = self.gaman.pop_garbage(max);
-		let garbage_line = self.field.generate_garbage(to_flush, &mut self.rg, &mut self.floating_block);
+		let garbage_line = self.field.generate_garbage(
+			to_flush,
+			&mut self.rg,
+			&mut self.floating_block,
+		);
 		if self.calc_shadow() {
 			return -1;
 		}

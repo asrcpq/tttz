@@ -2,8 +2,8 @@ use tttz_protocol::{BoardReply, Display, KeyType};
 use tttz_ruleset::CodeType;
 
 use crate::Thinker;
-use cold_clear::Interface;
 use cold_clear::evaluation::Standard;
+use cold_clear::Interface;
 use libtetris::PieceMovement;
 
 use std::collections::VecDeque;
@@ -37,12 +37,7 @@ fn proc_moves(hold: bool, inputs: &[PieceMovement]) -> VecDeque<KeyType> {
 }
 
 fn get_if(eval: Standard) -> Interface {
-	Interface::launch(
-		libtetris::Board::new(),
-		Default::default(),
-		eval,
-		None,
-	)
+	Interface::launch(libtetris::Board::new(), Default::default(), eval, None)
 }
 
 impl Default for CCBot {
@@ -97,10 +92,7 @@ impl Thinker for CCBot {
 			self.interface.reset(field, display.tcm > 0, display.cm / 3);
 		}
 		// eprintln!("{:?}", display);
-		let garbage_sum = display.garbages
-			.iter()
-			.map(|x| x.1)
-			.sum();
+		let garbage_sum = display.garbages.iter().map(|x| x.1).sum();
 		self.interface.request_next_move(garbage_sum);
 		std::thread::sleep(std::time::Duration::from_millis(10));
 		match self.interface.block_next_move() {

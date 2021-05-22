@@ -1,7 +1,9 @@
 // interactive ai interface
 
 use tttz_libclient::ClientSocket;
-use tttz_protocol::{ClientMsg, Display, GameType, KeyType, ServerMsg, BoardReply};
+use tttz_protocol::{
+	BoardReply, ClientMsg, Display, GameType, KeyType, ServerMsg,
+};
 
 use std::collections::VecDeque;
 
@@ -43,10 +45,14 @@ pub trait Thinker {
 						} else {
 							// strategy ai moves after user move
 							if strategy {
-								if let BoardReply::ClearDrop(_lc, _atk, _raw) = display.board_reply {
+								if let BoardReply::ClearDrop(_lc, _atk, _raw) =
+									display.board_reply
+								{
 									moveflag = true;
 								}
-								if let BoardReply::PlainDrop(_gg) = display.board_reply {
+								if let BoardReply::PlainDrop(_gg) =
+									display.board_reply
+								{
 									moveflag = true;
 								}
 							}
@@ -81,13 +87,12 @@ pub trait Thinker {
 						let mut opflag = true;
 						for operation in self.main_think(decoded).iter() {
 							client_socket
-								.send(ClientMsg::KeyEvent(
-									0,
-									*operation,
-								))
+								.send(ClientMsg::KeyEvent(0, *operation))
 								.unwrap();
 							opflag = false;
-							std::thread::sleep(std::time::Duration::from_millis(40));
+							std::thread::sleep(
+								std::time::Duration::from_millis(40),
+							);
 						}
 						moveflag = opflag;
 					}

@@ -1,7 +1,7 @@
+use crate::RandomGenerator;
 use std::ops::{Deref, Index, IndexMut};
 use tttz_protocol::Piece;
 use tttz_ruleset::*;
-use crate::RandomGenerator;
 
 use std::collections::HashSet;
 
@@ -163,7 +163,7 @@ impl Field {
 			let check_y = block.pos.1 + mini_pos.1;
 			// this is used for L/J special check pos, they are not always inside the field!
 			if !self.is_pos_inside((check_x, check_y)) {
-				continue
+				continue;
 			}
 			if self.color[check_y as usize][check_x as usize] == b' ' {
 				return 1;
@@ -197,7 +197,7 @@ impl Field {
 			for x in 0..10 {
 				if self[each_ln][x] == b' ' {
 					flag = false;
-					break
+					break;
 				}
 			}
 			if flag {

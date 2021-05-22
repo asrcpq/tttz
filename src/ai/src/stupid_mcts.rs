@@ -1,8 +1,8 @@
-use tttz_ruleset::CodeType;
-use tttz_protocol::{KeyType, Display, Piece};
-use tttz_mpboard::Field;
-use tttz_libai::{access_floodfill, route_solver};
 use tttz_libai::evaluation::{Evaluator, SimpleEvaluator};
+use tttz_libai::{access_floodfill, route_solver};
+use tttz_mpboard::Field;
+use tttz_protocol::{Display, KeyType, Piece};
+use tttz_ruleset::CodeType;
 
 use std::collections::{HashMap, VecDeque};
 
@@ -38,7 +38,9 @@ impl Node {
 	}
 
 	pub fn create(&mut self, piece: Piece, next: CodeType, id: u64) -> Self {
-		let (q, new_field) = self.simple_evaluator.evaluate_piece(&self.field.color, &piece);
+		let (q, new_field) = self
+			.simple_evaluator
+			.evaluate_piece(&self.field.color, &piece);
 
 		let active = if piece.code == self.active.0 {
 			(next, self.active.1)
@@ -46,7 +48,8 @@ impl Node {
 			(next, self.active.0)
 		};
 		self.children.insert(piece, id);
-		let simple_evaluator = SimpleEvaluator::evaluate_field(&new_field.color);
+		let simple_evaluator =
+			SimpleEvaluator::evaluate_field(&new_field.color);
 		Node {
 			field: new_field,
 			active,
@@ -72,7 +75,10 @@ impl Node {
 		}
 
 		for piece in possible.into_iter() {
-			let score = self.simple_evaluator.evaluate_piece(&self.field.color, &piece).0;
+			let score = self
+				.simple_evaluator
+				.evaluate_piece(&self.field.color, &piece)
+				.0;
 			self.weights.insert(piece, score);
 		}
 
@@ -120,7 +126,7 @@ impl SearchTree {
 			if root_node.field.color[i] != line {
 				// eprintln!("{:?}", display.color);
 				// eprintln!("{:?}", root_node.field);
-				return false
+				return false;
 			}
 		}
 		true
@@ -165,17 +171,16 @@ impl SearchTree {
 			let ret = self.select(focus);
 			match ret {
 				SelectResult::End(piece) => {
-					let node = self.nodes
-						.get_mut(&focus)
-						.unwrap();
-					let mut new_node = node.create(piece, next_code, self.alloc_id);
+					let node = self.nodes.get_mut(&focus).unwrap();
+					let mut new_node =
+						node.create(piece, next_code, self.alloc_id);
 					assert!(new_node.expand());
 					let q = node.q;
 					// eprintln!("Insert {}", self.alloc_id);
 					self.nodes.insert(self.alloc_id, new_node);
 					self.alloc_id += 1;
 					break q;
-				},
+				}
 				SelectResult::Node(id) => {
 					focus = id;
 				}
@@ -195,7 +200,7 @@ impl SearchTree {
 		loop {
 			focus = self.nodes.get(&focus).unwrap().parent_id;
 			if focus == self.root {
-				break
+				break;
 			}
 			// eprintln!("focus: {}", focus);
 			let mut node = self.nodes.get_mut(&focus).unwrap(); //parent always exists
@@ -243,8 +248,9 @@ impl SearchTree {
 		let mut best_id = 0;
 		for (piece, &id) in root_children {
 			if let Some(child) = self.nodes.get(&id) {
-				if child.visit > max_visit ||
-					(child.visit == max_visit && child.q > max_q) {
+				if child.visit > max_visit
+					|| (child.visit == max_visit && child.q > max_q)
+				{
 					max_visit = child.visit;
 					max_q = child.q;
 					best_piece = Some(piece.clone());
@@ -263,7 +269,7 @@ impl SearchTree {
 
 		let best_piece = match best_piece {
 			Some(piece) => piece,
-			None => { return VecDeque::new() }
+			None => return VecDeque::new(),
 		};
 		let mut ret = VecDeque::new();
 		if root.active.0 != best_piece.code {
@@ -295,7 +301,8 @@ impl SearchTree {
 			} else {
 				(value, 0, 0)
 			};
-			let u = ((node.visit as f32).sqrt() / (1 + visit) as f32) * value * CPUCT + q;
+			let u = ((node.visit as f32).sqrt() / (1 + visit) as f32)
+				* value * CPUCT + q;
 			// let u = q;
 			if max_u < u {
 				// eprintln!("{} overtake {} at {:?}", u, max_u, piece);
@@ -323,7 +330,9 @@ impl SearchTree {
 			}
 			Some(node) => {
 				eprint!("{}", id);
-				if node.children.is_empty() { return; }
+				if node.children.is_empty() {
+					return;
+				}
 				eprint!("(");
 				for (_piece, &child_id) in &node.children {
 					self.debug_print_nodes_recurse(child_id);

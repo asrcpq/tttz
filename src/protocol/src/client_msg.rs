@@ -53,8 +53,9 @@ impl ClientMsg {
 					let initiator = word == "strategy_initiator";
 					if let Some(word) = iter.next() {
 						if let Ok(timelimit) = word.parse::<u64>() {
-							game_type = GameType::Strategy(timelimit, initiator);
-							continue
+							game_type =
+								GameType::Strategy(timelimit, initiator);
+							continue;
 						}
 					}
 					game_type = GameType::Strategy(1000, initiator);

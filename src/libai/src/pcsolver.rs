@@ -1,11 +1,13 @@
 use crate::*;
 
 use tttz_mpboard::Field;
-use tttz_ruleset::CodeType;
 use tttz_protocol::Piece;
+use tttz_ruleset::CodeType;
 
-pub fn hold_seqgen(current: (CodeType, CodeType), preview: &Vec<CodeType>)
-	-> impl Iterator<Item = Vec<CodeType>> {
+pub fn hold_seqgen(
+	current: (CodeType, CodeType),
+	preview: &Vec<CodeType>,
+) -> impl Iterator<Item = Vec<CodeType>> {
 	let output_len = preview.len() + 1;
 	let t = 2u128.pow(output_len as u32);
 	let mut seq = Vec::new();
@@ -39,10 +41,12 @@ pub fn pc_solver_recurse<'a>(
 	let mut next = seq.clone();
 	let code = match next.next() {
 		Some(&code) => code,
-		None => if field.height == 0 {
-			return Some(Vec::new())
-		} else {
-			return None
+		None => {
+			if field.height == 0 {
+				return Some(Vec::new());
+			} else {
+				return None;
+			}
 		}
 	};
 	// eprintln!("proc code {}", code);
@@ -52,13 +56,13 @@ pub fn pc_solver_recurse<'a>(
 		let lc = field.settle_block(&piece) as i32;
 		let new_remain_lc = remain_lc - lc;
 		if field.height > new_remain_lc {
-			continue
+			continue;
 		}
 		match pc_solver_recurse(next.clone(), field, new_remain_lc) {
-			None => {},
+			None => {}
 			Some(mut vec) => {
 				vec.push(piece);
-				return Some(vec)
+				return Some(vec);
 			}
 		}
 	}
@@ -84,7 +88,11 @@ mod test {
 		for i in 3..10 {
 			color[0][i] = b'i';
 			color[1][i] = b'i';
-		} assert!(pc_solver_recurse(vec![6].iter(), Field::from_color(&color), 4).is_some())
+		}
+		assert!(
+			pc_solver_recurse(vec![6].iter(), Field::from_color(&color), 4)
+				.is_some()
+		)
 	}
 
 	#[test]
@@ -108,7 +116,8 @@ mod test {
 			vec![0, 2, 3, 0, 6, 4].iter(),
 			Field::from_color(&color),
 			4,
-		).is_some())
+		)
+		.is_some())
 	}
 
 	#[test]
@@ -135,7 +144,8 @@ mod test {
 				seq.iter(),
 				Field::from_color(&color),
 				4,
-			).is_none());
+			)
+			.is_none());
 		}
 	}
 

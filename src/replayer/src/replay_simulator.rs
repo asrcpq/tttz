@@ -47,12 +47,11 @@ impl ReplaySimulator {
 		if t < self.replay.data[self.idx].0 {
 			return SeekResult::Ok(ret);
 		}
-		let br =
-			self.board.handle_msg(self.replay.data[self.idx].1.clone());
+		let br = self.board.handle_msg(self.replay.data[self.idx].1.clone());
 		self.rc.count(&br, t);
 		ret = Some(self.board.generate_display(self.id, 0, br)); // what's seq
 		self.idx += 1;
-		return SeekResult::Ok(ret);
+		SeekResult::Ok(ret)
 		// }
 	}
 

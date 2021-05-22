@@ -77,10 +77,7 @@ impl Thinker for MMBot {
 				.collect::<Vec<String>>()
 				.join(",")
 		));
-		let garbage_sum: u32 = display.garbages
-			.iter()
-			.map(|x| x.1)
-			.sum();
+		let garbage_sum: u32 = display.garbages.iter().map(|x| x.1).sum();
 		self.write_msg(&format!("update bot1 inAtt {}\n", garbage_sum));
 		let field_string = convert_field(&display.color);
 		self.write_msg(&format!("update bot1 field {}\n", field_string,));

@@ -1,6 +1,6 @@
-use tttz_mpboard::Game;
-use tttz_ai::{BasicAi, SBAi, MMBot, CCBot};
+use tttz_ai::{BasicAi, CCBot, MMBot, SBAi};
 use tttz_libai::Thinker;
+use tttz_mpboard::Game;
 
 fn simulation() -> bool {
 	let mut game = Game::new(1, 2, vec![].iter());
@@ -15,9 +15,9 @@ fn simulation() -> bool {
 			let ret = game.process_key(1, 0, key_type).0;
 			if ret > 0 {
 				if ret == 1 {
-					break 'sim true
+					break 'sim true;
 				}
-				break 'sim false
+				break 'sim false;
 			}
 		}
 		let keyseq = sbai.main_think(game.generate_display(1, 0));
@@ -25,9 +25,9 @@ fn simulation() -> bool {
 			let ret = game.process_key(2, 0, key_type).0;
 			if ret > 0 {
 				if ret == 1 {
-					break 'sim true
+					break 'sim true;
 				}
-				break 'sim false
+				break 'sim false;
 			}
 		}
 	};

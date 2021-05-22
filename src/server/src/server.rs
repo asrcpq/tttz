@@ -129,7 +129,8 @@ impl Server {
 			}
 		}
 		self.client_manager.pair_apply(id1, id2);
-		let mut viewers: HashSet<IdType> = self.client_manager
+		let mut viewers: HashSet<IdType> = self
+			.client_manager
 			.view_by_id(id1)
 			.unwrap()
 			.viewers
@@ -138,18 +139,10 @@ impl Server {
 			.collect();
 		if id2 != 0 {
 			viewers.extend(
-				self.client_manager
-					.view_by_id(id2)
-					.unwrap()
-					.viewers
-					.iter()
+				self.client_manager.view_by_id(id2).unwrap().viewers.iter(),
 			)
 		}
-		let new_game = Game::new(
-			id1,
-			id2,
-			viewers.iter(),
-		);
+		let new_game = Game::new(id1, id2, viewers.iter());
 		for i in 0..if id2 == 0 { 1 } else { 2 } {
 			self.client_manager.broadcast(
 				new_game.viewers.iter(),
@@ -250,7 +243,8 @@ impl Server {
 				if !self.client_manager.is_idle(client_id) {
 					eprintln!("SERVER: restart: client is not idle");
 				} else {
-					let opponent = self.client_manager.get_attack_target(client_id);
+					let opponent =
+						self.client_manager.get_attack_target(client_id);
 					if opponent == 0 {
 						self.try_apply_match(client_id, 0);
 					} else if self.client_manager.is_idle(opponent) {

@@ -29,7 +29,9 @@ pub fn spawn_ai(
 					Ok(string) => string,
 					Err(_) => "tttz_tttzbot".to_string(),
 				},
-			).output().unwrap();
+			)
+			.output()
+			.unwrap();
 		})),
 		"3tz2" => Ok(std::thread::spawn(move || {
 			let _ = std::process::Command::new(
@@ -37,7 +39,8 @@ pub fn spawn_ai(
 					Ok(string) => string,
 					Err(_) => "tttz_tttzbot".to_string(),
 				},
-			).args(&["mode", "strategy_initiator"])
+			)
+			.args(&["mode", "strategy_initiator"])
 			.output()
 			.unwrap();
 		})),
@@ -47,9 +50,13 @@ pub fn spawn_ai(
 		})),
 		"cc2" => Ok(std::thread::spawn(move || {
 			let mut ccbot = CCBot::from_eval(
-				serde_json::from_str(&std::fs::read_to_string(
-					"thirdparty/cold-clear/optimizer/best.json"
-				).unwrap()).unwrap()
+				serde_json::from_str(
+					&std::fs::read_to_string(
+						"thirdparty/cold-clear/optimizer/best.json",
+					)
+					.unwrap(),
+				)
+				.unwrap(),
 			);
 			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
 		})),

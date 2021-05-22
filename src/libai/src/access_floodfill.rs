@@ -13,7 +13,7 @@ pub fn access_floodfill(color: &Vec<[u8; 10]>, code: CodeType) -> Vec<Piece> {
 	let mut possible = HashSet::new();
 	let mut sound = HashSet::new();
 	let field = Field::from_color(color);
-	for rotation in if code == 3 {0..1} else {0..4} {
+	for rotation in if code == 3 { 0..1 } else { 0..4 } {
 		for &pos in convolve_height(&heights, code, rotation).0.iter() {
 			let p = Piece {
 				pos,

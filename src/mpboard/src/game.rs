@@ -15,7 +15,7 @@ impl Game {
 	pub fn new<'a>(
 		host: IdType,
 		guest: IdType,
-		extra_viewers: impl Iterator<Item = &'a IdType>
+		extra_viewers: impl Iterator<Item = &'a IdType>,
 	) -> Game {
 		let mut viewers = HashSet::new();
 		viewers.insert(host);

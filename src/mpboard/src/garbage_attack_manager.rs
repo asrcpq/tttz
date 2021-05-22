@@ -25,10 +25,7 @@ impl GarbageAttackManager {
 		vec![
 			self.cm as f32 / 10f32,
 			self.tcm as f32 / 10f32,
-			self.garbages
-				.iter()
-				.map(|(_, amt)| amt)
-				.sum::<u32>() as f32,
+			self.garbages.iter().map(|(_, amt)| amt).sum::<u32>() as f32,
 		]
 	}
 
@@ -40,8 +37,10 @@ impl GarbageAttackManager {
 		self.garbages.push_back((width, atk));
 	}
 
-	pub fn pop_garbage(&mut self, retain: usize) -> Vec<(u32, u32)>{
-		if self.garbages.len() <= retain { return Vec::new() }
+	pub fn pop_garbage(&mut self, retain: usize) -> Vec<(u32, u32)> {
+		if self.garbages.len() <= retain {
+			return Vec::new();
+		}
 		let popsize = self.garbages.len() - retain;
 		self.garbages.drain(0..popsize).collect()
 	}
@@ -71,7 +70,8 @@ impl GarbageAttackManager {
 		line_count: u32,
 		code: CodeType,
 		pc: bool,
-	) -> (u32, u32) { // raw atk, net atk
+	) -> (u32, u32) {
+		// raw atk, net atk
 		if line_count == 0 {
 			self.cm = 0;
 			if self.tcm > 0 {
@@ -122,7 +122,8 @@ mod test {
 	#[test]
 	fn test_counter_attack() {
 		let mut gaman: GarbageAttackManager = Default::default();
-		gaman.garbages = VecDeque::from(vec![(1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]);
+		gaman.garbages =
+			VecDeque::from(vec![(1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]);
 		gaman.counter_attack(5);
 		let expect_garbage = vec![(1, 1), (1, 4), (1, 5)];
 		assert!(gaman
