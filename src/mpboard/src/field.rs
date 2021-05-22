@@ -271,13 +271,14 @@ impl Field {
 	) -> i32 {
 		const SAME_LINE: f32 = 0.6;
 		let mut ret = 0i32;
+		let max_height = self.color.len();
 		for (w, count) in garbages.into_iter() {
 			let mut count = count as usize;
 			// assert!(count != 0);
-			if count > 40 {
-				count = 40;
+			if count > max_height {
+				count = max_height;
 			}
-			for y in (count..40).rev() {
+			for y in (count..max_height).rev() {
 				for x in 0..10 {
 					self[y][x] = self[y - count][x];
 				}
@@ -303,7 +304,7 @@ impl Field {
 			}
 			self.height += count as i32;
 			ret += count as i32;
-			if self.height >= 40 {
+			if self.height >= max_height as i32 {
 				ret = -1;
 			}
 		}
