@@ -43,7 +43,7 @@ fn main() {
 		client_display.setpanel(1, 2);
 		client_display.activate();
 
-		let mut elapsed = 0;
+		let mut elapsed: u128 = 0;
 		let sleep_flag = 'main_loop: loop {
 			let mut all_end = true;
 			for rs in rss.iter_mut() {
@@ -62,7 +62,7 @@ fn main() {
 					if constant_flag {
 						stdout.flush().unwrap();
 						std::thread::sleep(std::time::Duration::from_millis(
-							60,
+							30,
 						));
 					}
 				}

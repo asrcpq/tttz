@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 // floodfill without route tracing
 // only consider blocks fully inside 10x20 visible region
 pub fn access_floodfill(color: &Vec<[u8; 10]>, code: CodeType) -> Vec<Piece> {
+	debug_assert!(code <= 6);
 	let heights = Field::get_heights(color);
 	let mut queue: VecDeque<Piece> = VecDeque::new();
 	let mut possible = HashSet::new();
