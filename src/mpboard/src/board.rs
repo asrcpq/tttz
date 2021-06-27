@@ -177,12 +177,12 @@ impl Board {
 			BoardReply::ClearDrop(line_count, atk, raw_atk)
 		} else {
 			// plain drop: attack execution
+			self.spawn_block();
 			let ret = self.flush_garbage(0);
 			// ret=-1 <=> height=40
 			if ret == -1 {
 				return BoardReply::Die;
 			}
-			self.spawn_block();
 			if self.calc_shadow() {
 				return BoardReply::Die;
 			}
