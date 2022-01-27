@@ -1,8 +1,8 @@
 use tttz_libai::Thinker;
 mod basic_ai;
 pub use basic_ai::BasicAi;
-mod ccbot;
-pub use ccbot::CCBot;
+// mod ccbot;
+// pub use ccbot::CCBot;
 mod mmbot;
 pub use mmbot::MMBot;
 mod sbai;
@@ -44,22 +44,22 @@ pub fn spawn_ai(
 			.output()
 			.unwrap();
 		})),
-		"cc" => Ok(std::thread::spawn(move || {
-			let mut ccbot: CCBot = Default::default();
-			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
-		})),
-		"cc2" => Ok(std::thread::spawn(move || {
-			let mut ccbot = CCBot::from_eval(
-				serde_json::from_str(
-					&std::fs::read_to_string(
-						"thirdparty/cold-clear/optimizer/best.json",
-					)
-					.unwrap(),
-				)
-				.unwrap(),
-			);
-			ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
-		})),
+		// "cc" => Ok(std::thread::spawn(move || {
+		// 	let mut ccbot: CCBot = Default::default();
+		// 	ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
+		// })),
+		// "cc2" => Ok(std::thread::spawn(move || {
+		// 	let mut ccbot = CCBot::from_eval(
+		// 		serde_json::from_str(
+		// 			&std::fs::read_to_string(
+		// 				"thirdparty/cold-clear/optimizer/best.json",
+		// 			)
+		// 			.unwrap(),
+		// 		)
+		// 		.unwrap(),
+		// 	);
+		// 	ccbot.main_loop("127.0.0.1:23124", sleep, game_type);
+		// })),
 		"mm" => Ok(std::thread::spawn(move || match MMBot::try_new() {
 			Ok(mut mmbot) => {
 				mmbot.main_loop("127.0.0.1:23124", sleep, game_type)

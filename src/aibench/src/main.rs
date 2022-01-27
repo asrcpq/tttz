@@ -1,4 +1,4 @@
-use tttz_ai::{BasicAi, CCBot, MMBot, SBAi};
+use tttz_ai::{MMBot, SBAi};
 use tttz_libai::Thinker;
 use tttz_mpboard::Game;
 

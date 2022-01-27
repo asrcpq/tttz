@@ -11,7 +11,4 @@ tttz-protocol = { path = "../protocol" }
 tttz-ruleset = { path = "../ruleset" }
 tttz-libai = { path = "../libai" }
 
-cold-clear = { path = "../../thirdparty/cold-clear/bot" }
-libtetris = { path = "../../thirdparty/cold-clear/libtetris" }
-
 serde_json = "*"
