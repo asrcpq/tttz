@@ -1,15 +1,17 @@
 Working:
 
-- conditional compilation(no sound, no bot, etc.)
+- simplify network battle
+
+- ascii only interface
+
 - mmbot build in build.rs/add build script
 
 Planned:
 
 - fix: misamino has several problems related to spawn rule difference
-- better sound effects
-- modify cc to run in a blocking way(for better profiling control)
-- id
-- write more tests
-- read terminfo and support fallback mode: 16color, monochrome, ascii
+
+- tests
+
 - replay seek
+
 - ui, stats during play
