@@ -78,7 +78,7 @@ mod test {
 			board_reply: BoardReply::Ok,
 		};
 		let mut ai: BasicAi = Default::default();
-		let mut ret = ai.main_think(display);
+		let mut ret = ai.main_think(vec![display]);
 		eprintln!("ret {:?}", ret);
 		let key = ret.pop_back().unwrap();
 		assert_eq!(key, KeyType::HardDrop);
