@@ -213,8 +213,8 @@ impl Field {
 		let tmppos = block.getpos();
 		let mut lines_tocheck = HashSet::new();
 		for each_square in tmppos.iter() {
-			let px = each_square.0 as usize;
-			let py = each_square.1 as usize;
+			let px = each_square[0] as usize;
+			let py = each_square[1] as usize;
 			// tmp is higher, update height
 			if py + 1 > self.height as usize {
 				self.height = py as i32 + 1;

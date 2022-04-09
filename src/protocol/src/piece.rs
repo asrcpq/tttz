@@ -40,15 +40,15 @@ impl Piece {
 		BPT[self.code as usize][self.rotation as usize]
 	}
 
-	pub fn getpos(&self) -> [(PosType, PosType); 4] {
-		let mut ret = [(0, 0); 4];
+	pub fn getpos(&self) -> [[PosType; 2]; 4] {
+		let mut ret = [[0; 2]; 4];
 		for piece_id in 0..4 {
 			let tmp = BPT[self.code as usize][self.rotation as usize]
 				[piece_id as usize];
 			let px = self.pos.0 + tmp.0;
 			let py = self.pos.1 + tmp.1;
-			ret[piece_id as usize].0 = px;
-			ret[piece_id as usize].1 = py;
+			ret[piece_id as usize][0] = px;
+			ret[piece_id as usize][1] = py;
 		}
 		ret
 	}
