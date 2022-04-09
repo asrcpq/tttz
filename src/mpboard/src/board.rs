@@ -8,11 +8,11 @@ use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
 use crate::Field;
 
+#[derive(Clone)]
 pub struct Board {
 	pub(in crate) floating_block: Piece,
 	shadow_block: Piece,
 	pub(in crate) rg: RandomGenerator,
-	// pub(in crate) field: Vec<[u8; 10]>,
 	pub(in crate) field: Field,
 	hold: CodeType,
 	gaman: GarbageAttackManager,
