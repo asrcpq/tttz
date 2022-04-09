@@ -1,13 +1,13 @@
-use rand::rngs::ThreadRng;
+use rand::rngs::SmallRng;
+use rand::prelude::*;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
-use rand::Rng;
+
 use tttz_ruleset::{CodeType, PosType};
 
 // TODO: use trait "ReproducibleSequence"?
 #[derive(Clone)]
 pub struct RandomGenerator {
-	rng: ThreadRng, // directly called for garbage generation
+	rng: SmallRng,
 	pub(in crate) bag: Vec<CodeType>,
 	pub(in crate) bag_id: usize,
 	pub(in crate) slots: Vec<PosType>,
@@ -16,10 +16,10 @@ pub struct RandomGenerator {
 	shift_id: usize,
 }
 
-impl Default for RandomGenerator {
-	fn default() -> RandomGenerator {
+impl RandomGenerator {
+	pub fn new(seed: u64) -> RandomGenerator {
 		let mut rg = RandomGenerator {
-			rng: thread_rng(),
+			rng: SmallRng::seed_from_u64(seed),
 			bag: Vec::new(),
 			slots: Vec::new(),
 			shift: Vec::new(),
@@ -31,9 +31,7 @@ impl Default for RandomGenerator {
 		rg.generate_shift();
 		rg
 	}
-}
 
-impl RandomGenerator {
 	fn generate_bag(&mut self) {
 		let mut b = vec![0, 1, 2, 3, 4, 5, 6];
 		b.shuffle(&mut self.rng);

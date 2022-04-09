@@ -1,7 +1,8 @@
+use rand::prelude::*;
+
 use tttz_protocol::{BoardMsg, BoardReply, IdType, KeyType};
 use tttz_protocol::{Display, Piece};
 use tttz_ruleset::*;
-
 use crate::garbage_attack_manager::GarbageAttackManager;
 use crate::random_generator::RandomGenerator;
 use crate::replay::Replay;
@@ -19,12 +20,19 @@ pub struct Board {
 }
 
 impl Default for Board {
-	fn default() -> Board {
+	fn default() -> Self {
+		let seed = rand::thread_rng().gen::<u64>();
+		Board::new(seed)
+	}
+}
+
+impl Board {
+	pub fn new(seed: u64) -> Self {
 		let replay = Default::default();
 		let mut board = Board {
 			floating_block: Piece::new(0), // immediately overwritten
 			shadow_block: Piece::new(0),   // immediately overwritten
-			rg: Default::default(),
+			rg: RandomGenerator::new(seed),
 			field: Default::default(),
 			hold: 7,
 			gaman: Default::default(),
@@ -34,9 +42,7 @@ impl Default for Board {
 		board.calc_shadow();
 		board
 	}
-}
 
-impl Board {
 	fn move1(&mut self, dx: i8) -> bool {
 		self.floating_block.pos.0 += dx;
 		if !self.field.test(&self.floating_block) {

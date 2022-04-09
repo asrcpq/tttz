@@ -5,7 +5,7 @@ authors = ["asrcpq <asrcpq@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-rand = "^0.8.3"
+rand = {version = "0.8.5", features = ["small_rng"]}
 bincode = "*"
 directories = "*"
 
