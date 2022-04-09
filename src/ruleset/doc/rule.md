@@ -4,8 +4,7 @@
 
 * SRS(with 180, asymmetric I kick) kick table
 
-* Garbage in same attack has a 30%(or 40%) probability to shift,
-slot width = cleared lines.
+* Garbage in same attack has a 40% probability to shift,
 
 ## Special Attack Table
 
