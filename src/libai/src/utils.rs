@@ -73,7 +73,7 @@ pub fn generate_keys(gkp: GenerateKeyParam) -> VecDeque<KeyType> {
 	} else if gkp.rotation == 3 {
 		ret.push_back(KeyType::RotateReverse);
 	} else if gkp.rotation == 2 {
-		ret.push_back(KeyType::RotateFlip);
+		ret.push_back(KeyType::RotateHalf);
 	}
 	for _ in 0..times {
 		ret.push_back(keycode);
@@ -119,7 +119,7 @@ pub fn convolve_height(
 }
 
 pub fn get_height_and_hole(
-	color: &Vec<[u8; 10]>,
+	color: &[[u8; 10]],
 ) -> ([PosType; 10], PosType, usize) {
 	// calc height
 	let mut heights: [PosType; 10] = [0; 10];
@@ -150,54 +150,54 @@ pub fn get_height_and_hole(
 	(heights, highest_hole_x, highest_hole)
 }
 
-pub fn count_hover_x(color: &Vec<[u8; 10]>, piece: &Piece) -> i32 {
-	let hover_check: Lazy<[[Vec<(PosType, PosType)>; 4]; 7]> =
-		Lazy::new(|| {
+pub fn count_hover_x(color: &[[u8; 10]], piece: &Piece) -> i32 {
+	type PosVec = Vec<(PosType, PosType)>;
+	let hover_check: Lazy<[[PosVec; 4]; 7]> = Lazy::new(|| {
+		[
 			[
-				[
-					vec![(0, -1), (1, -1), (2, -1), (3, -1)],
-					vec![(0, -1)],
-					vec![(0, -1), (1, -1), (2, -1), (3, -1)],
-					vec![(0, -1)],
-				],
-				[
-					vec![(0, -1), (1, -1), (2, -1)],
-					vec![(0, -1), (1, 1)],
-					vec![(0, 0), (1, 0), (2, -1)],
-					vec![(0, -1), (1, -1)],
-				],
-				[
-					vec![(0, -1), (1, -1), (2, -1)],
-					vec![(0, -1), (1, -1)],
-					vec![(0, -1), (1, 0), (2, 0)],
-					vec![(0, 1), (1, -1)],
-				],
-				[
-					vec![(0, -1), (1, -1)],
-					vec![(0, -1), (1, -1)],
-					vec![(0, -1), (1, -1)],
-					vec![(0, -1), (1, -1)],
-				],
-				[
-					vec![(0, -1), (1, -1), (2, 0)],
-					vec![(0, 0), (1, -1)],
-					vec![(0, -1), (1, -1), (2, 0)],
-					vec![(0, 0), (1, -1)],
-				],
-				[
-					vec![(0, -1), (1, -1), (2, -1)],
-					vec![(0, -1), (1, 0)],
-					vec![(0, 0), (1, -1), (2, -0)],
-					vec![(0, 0), (1, -1)],
-				],
-				[
-					vec![(0, 0), (1, -1), (2, -1)],
-					vec![(0, -1), (1, 0)],
-					vec![(0, 0), (1, -1), (2, -1)],
-					vec![(0, -1), (1, 0)],
-				],
-			]
-		});
+				vec![(0, -1), (1, -1), (2, -1), (3, -1)],
+				vec![(0, -1)],
+				vec![(0, -1), (1, -1), (2, -1), (3, -1)],
+				vec![(0, -1)],
+			],
+			[
+				vec![(0, -1), (1, -1), (2, -1)],
+				vec![(0, -1), (1, 1)],
+				vec![(0, 0), (1, 0), (2, -1)],
+				vec![(0, -1), (1, -1)],
+			],
+			[
+				vec![(0, -1), (1, -1), (2, -1)],
+				vec![(0, -1), (1, -1)],
+				vec![(0, -1), (1, 0), (2, 0)],
+				vec![(0, 1), (1, -1)],
+			],
+			[
+				vec![(0, -1), (1, -1)],
+				vec![(0, -1), (1, -1)],
+				vec![(0, -1), (1, -1)],
+				vec![(0, -1), (1, -1)],
+			],
+			[
+				vec![(0, -1), (1, -1), (2, 0)],
+				vec![(0, 0), (1, -1)],
+				vec![(0, -1), (1, -1), (2, 0)],
+				vec![(0, 0), (1, -1)],
+			],
+			[
+				vec![(0, -1), (1, -1), (2, -1)],
+				vec![(0, -1), (1, 0)],
+				vec![(0, 0), (1, -1), (2, -0)],
+				vec![(0, 0), (1, -1)],
+			],
+			[
+				vec![(0, 0), (1, -1), (2, -1)],
+				vec![(0, -1), (1, 0)],
+				vec![(0, 0), (1, -1), (2, -1)],
+				vec![(0, -1), (1, 0)],
+			],
+		]
+	});
 	let mut hole: i32 = 0;
 	for pos in hover_check[piece.code as usize][piece.rotation as usize].iter()
 	{

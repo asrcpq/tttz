@@ -56,7 +56,7 @@ pub fn segen(path: PathBuf) {
 		cutoff_from_frequency(200.0, 44_100),
 		0.01,
 	);
-	write_sound!("soft_drop", &convolve(&pass, &sample));
+	write_sound!("soft_drop", &convolve(&pass, sample));
 
 	let sample = make_samples(0.05, 44_100, |t| {
 		1.2 * square_wave(10550.)(t)
@@ -101,5 +101,5 @@ pub fn segen(path: PathBuf) {
 		cutoff_from_frequency(3000.0, 44_100),
 		0.01,
 	);
-	write_sound!("plain_drop", &convolve(&pass, &sample));
+	write_sound!("plain_drop", &convolve(&pass, sample));
 }

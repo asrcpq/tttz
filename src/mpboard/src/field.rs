@@ -57,7 +57,7 @@ impl IndexMut<usize> for Field {
 }
 
 impl Field {
-	pub fn get_heights(color: &Vec<[u8; 10]>) -> [PosType; 10] {
+	pub fn get_heights(color: &[[u8; 10]]) -> [PosType; 10] {
 		let mut heights: [PosType; 10] = [0; 10];
 		'outer: for i in 0..10 {
 			let mut j: usize = color.len() - 1;
@@ -75,7 +75,7 @@ impl Field {
 		heights
 	}
 
-	pub fn from_color(color: &Vec<[u8; 10]>) -> Self {
+	pub fn from_color(color: &[[u8; 10]]) -> Self {
 		let heights = Self::get_heights(color);
 		let height = heights.iter().max().unwrap();
 		Field {
@@ -99,18 +99,18 @@ impl Field {
 
 	fn test_twist2(&self, block: &mut Piece) -> bool {
 		block.pos.0 -= 1;
-		if self.test(&block) {
+		if self.test(block) {
 			block.pos.0 += 1;
 			return false;
 		}
 		block.pos.0 += 2;
-		if self.test(&block) {
+		if self.test(block) {
 			block.pos.0 -= 1;
 			return false;
 		}
 		block.pos.0 -= 1;
 		block.pos.1 += 1;
-		if self.test(&block) {
+		if self.test(block) {
 			block.pos.1 -= 1;
 			return false;
 		}
@@ -295,7 +295,7 @@ impl Field {
 				for i in 0..w {
 					self[y][slot as usize + i as usize] = b' ';
 				}
-				if !self.test(&floating_block) {
+				if !self.test(floating_block) {
 					floating_block.pos.1 += 1;
 					if floating_block.pos.1 >= 20 {
 						return -1;

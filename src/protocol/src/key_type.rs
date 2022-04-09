@@ -12,5 +12,5 @@ pub enum KeyType {
 	Hold,
 	Rotate,
 	RotateReverse,
-	RotateFlip,
+	RotateHalf,
 }

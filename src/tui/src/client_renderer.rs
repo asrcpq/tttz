@@ -37,7 +37,7 @@ impl ClientRenderer {
 	}
 
 	pub fn backtrack(&mut self, seq: usize, display: &mut Display) {
-		self.crb.update_from_display(&display);
+		self.crb.update_from_display(display);
 		if let Some(rep) = (seq..self.gamekey_history.len())
 			.map(|id| {
 				// self.show_msg(&format!("redo id {} seq {}", id, seq));

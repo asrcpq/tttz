@@ -106,7 +106,7 @@ impl Server {
 		eprintln!("Game end, {} win", winner);
 		let opponent = self.client_manager.get_attack_target(client_id);
 		let game_id = self.client_in_game.get(&client_id).unwrap();
-		let mut game = self.game_map.remove(&game_id).unwrap();
+		let mut game = self.game_map.remove(game_id).unwrap();
 		game.save_replay();
 		self.client_manager
 			.broadcast(game.viewers.iter(), &ServerMsg::GameOver(winner));
@@ -268,7 +268,7 @@ impl Server {
 			ClientMsg::KeyEvent(seq, key_type) => {
 				if self.client_manager.in_match(client_id) {
 					let game_id = self.client_in_game.get(&client_id).unwrap();
-					let game = self.game_map.get_mut(&game_id).unwrap();
+					let game = self.game_map.get_mut(game_id).unwrap();
 					let ret = game.process_key(client_id, seq, key_type);
 					for display in ret.1.into_iter() {
 						self.client_manager.broadcast(

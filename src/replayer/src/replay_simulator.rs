@@ -48,9 +48,7 @@ impl ReplaySimulator {
 		let br = self.board.handle_msg(self.replay.data[self.idx].1.clone());
 		self.rc.count(&br, t);
 		self.idx += 1;
-		return SeekResult::Ok(Some(
-			self.board.generate_display(self.id, 0, br)
-		))
+		SeekResult::Ok(Some(self.board.generate_display(self.id, 0, br)))
 	}
 
 	pub fn print_rc(&self) {

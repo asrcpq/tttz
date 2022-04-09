@@ -281,8 +281,8 @@ impl ClientDisplay {
 			}
 		}
 		print!("{}", termion::style::Reset);
-		self.disp_info(&display, offsetx, offsety);
-		self.disp_hold_next(6, &display, panel);
+		self.disp_info(display, offsetx, offsety);
+		self.disp_hold_next(6, display, panel);
 		self.disp_atk_by_id(display);
 	}
 

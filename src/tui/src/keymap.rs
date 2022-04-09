@@ -26,7 +26,7 @@ impl TuiKey {
 			b"k" => ServerKey(KeyType::HardDrop),
 			b"x" => ServerKey(KeyType::Rotate),
 			b"z" => ServerKey(KeyType::RotateReverse),
-			b"d" => ServerKey(KeyType::RotateFlip),
+			b"d" => ServerKey(KeyType::RotateHalf),
 			b"[D" => ServerKey(KeyType::Left),
 			b"[C" => ServerKey(KeyType::Right),
 			b"[A" => ServerKey(KeyType::HardDrop),

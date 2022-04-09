@@ -45,9 +45,9 @@ impl Replay {
 		filename: &str,
 		rg: &mut RandomGenerator,
 	) -> Result<bool, Box<dyn std::error::Error>> {
-		self.block_seq = std::mem::replace(&mut rg.bag, Vec::new());
-		self.garbage_slots = std::mem::replace(&mut rg.slots, Vec::new());
-		self.garbage_shift_check = std::mem::replace(&mut rg.shift, Vec::new());
+		self.block_seq = std::mem::take(&mut rg.bag);
+		self.garbage_slots = std::mem::take(&mut rg.slots);
+		self.garbage_shift_check = std::mem::take(&mut rg.shift);
 		if let Some(proj_dirs) = ProjectDirs::from("", "asrcpq", "tttz") {
 			let path = proj_dirs.data_dir().join("replay");
 			std::fs::create_dir_all(&path)?;

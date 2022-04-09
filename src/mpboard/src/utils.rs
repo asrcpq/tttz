@@ -37,6 +37,7 @@ pub fn oracle_garbage(board: &mut Board, shift: &[f32], slot: &[PosType]) {
 }
 
 // for ML: concat boards
+#[allow(clippy::needless_range_loop)]
 pub fn color_manipulation(game: &mut Game, color: [[u8; 20]; 20]) {
 	for i in 0..20 {
 		for j in 0..10 {

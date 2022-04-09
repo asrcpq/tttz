@@ -29,7 +29,7 @@ pub trait Thinker {
 			}
 			_ => unreachable!(),
 		}
-		let (client_socket, id) = ClientSocket::new(&addr);
+		let (client_socket, id) = ClientSocket::new(addr);
 
 		let mut state = 3;
 		let mut last_display: [Option<Display>; 2] = [None, None];

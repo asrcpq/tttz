@@ -60,7 +60,7 @@ impl ClientSession {
 		} else {
 			self.client_display.activate();
 			for display in self.last_display.values() {
-				self.client_display.disp_by_id(&display);
+				self.client_display.disp_by_id(display);
 			}
 		}
 	}
@@ -125,9 +125,9 @@ impl ClientSession {
 	fn show_msg(&self, msg: &str) {
 		// show msg
 		if self.mode == 1 {
-			self.client_display.disp_msg(&msg);
+			self.client_display.disp_msg(msg);
 		} else {
-			self.textmode_print(&msg);
+			self.textmode_print(msg);
 		}
 	}
 

@@ -234,7 +234,7 @@ impl SearchTree {
 	fn drop_recurse(&mut self, root: u64) {
 		let node = self.nodes.remove(&root).unwrap();
 		// eprintln!("drop {}", root);
-		for (_piece, &child_id) in &node.children {
+		for &child_id in node.children.values() {
 			self.drop_recurse(child_id);
 		}
 	}
@@ -261,7 +261,7 @@ impl SearchTree {
 
 		// preserve best_id, delete other leaves
 		let root = self.nodes.remove(&self.root).unwrap();
-		for (_piece, &child_id) in &root.children {
+		for &child_id in root.children.values() {
 			if child_id != best_id {
 				self.drop_recurse(child_id);
 			}
@@ -326,7 +326,6 @@ impl SearchTree {
 		match self.nodes.get(&id) {
 			None => {
 				eprint!("?{}?", id);
-				return;
 			}
 			Some(node) => {
 				eprint!("{}", id);
@@ -334,7 +333,7 @@ impl SearchTree {
 					return;
 				}
 				eprint!("(");
-				for (_piece, &child_id) in &node.children {
+				for &child_id in node.children.values() {
 					self.debug_print_nodes_recurse(child_id);
 					eprint!(" ");
 				}

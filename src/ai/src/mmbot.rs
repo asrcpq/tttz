@@ -26,7 +26,7 @@ fn map_key(key: char) -> KeyType {
 		'x' => KeyType::Rotate,
 		'k' => KeyType::HardDrop,
 		's' => KeyType::Hold,
-		'd' => KeyType::RotateFlip,
+		'd' => KeyType::RotateHalf,
 		_ => unimplemented!("Unimplemented key {}", key),
 	}
 }

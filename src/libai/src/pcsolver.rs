@@ -5,8 +5,8 @@ use tttz_protocol::Piece;
 use tttz_ruleset::CodeType;
 
 pub fn hold_seqgen(
-	current: (CodeType, CodeType),
-	preview: &Vec<CodeType>,
+	mut current: (CodeType, CodeType),
+	preview: &[CodeType],
 ) -> impl Iterator<Item = Vec<CodeType>> {
 	let output_len = preview.len() + 1;
 	let t = 2u128.pow(output_len as u32);
@@ -14,7 +14,6 @@ pub fn hold_seqgen(
 	for x in 0..t {
 		let mut xx = x;
 		let mut result = Vec::new();
-		let mut current = current.clone();
 		for i in 0..output_len {
 			let hold = xx % 2;
 			if hold == 1 {
@@ -34,12 +33,11 @@ pub fn hold_seqgen(
 
 // TODO: support hold
 pub fn pc_solver_recurse<'a>(
-	seq: impl Iterator<Item = &'a CodeType> + Clone,
+	mut seq: impl Iterator<Item = &'a CodeType> + Clone,
 	field: Field,
 	remain_lc: i32,
 ) -> Option<Vec<Piece>> {
-	let mut next = seq.clone();
-	let code = match next.next() {
+	let code = match seq.next() {
 		Some(&code) => code,
 		None => {
 			if field.height == 0 {
@@ -58,7 +56,7 @@ pub fn pc_solver_recurse<'a>(
 		if field.height > new_remain_lc {
 			continue;
 		}
-		match pc_solver_recurse(next.clone(), field, new_remain_lc) {
+		match pc_solver_recurse(seq.clone(), field, new_remain_lc) {
 			None => {}
 			Some(mut vec) => {
 				vec.push(piece);
@@ -72,7 +70,7 @@ pub fn pc_solver_recurse<'a>(
 
 pub fn pc_solver_blank(seq: Vec<CodeType>) -> Option<Vec<Piece>> {
 	// at most 7 lines, for I spin
-	let new_field = Field::from_color(&vec![[b' '; 10]; 7]);
+	let new_field = Field::from_color(&[[b' '; 10]; 7]);
 	pc_solver_recurse(seq.iter(), new_field, 4)
 }
 

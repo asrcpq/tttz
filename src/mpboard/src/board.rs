@@ -78,7 +78,7 @@ impl Board {
 				KeyType::SonicDrop => return self.press_down(),
 				KeyType::RotateReverse => return self.rotate(-1),
 				KeyType::Rotate => return self.rotate(1),
-				KeyType::RotateFlip => return self.rotate(2),
+				KeyType::RotateHalf => return self.rotate(2),
 				KeyType::Nothing => {}
 				KeyType::Hold => {
 					self.hold();
