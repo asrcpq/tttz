@@ -1,6 +1,6 @@
 # TTTZ
 
-[demo](https://github.com/asrcpq/asrcpq.github.io/blob/master/resources/2107/tttz_demo.mp4)
+[demo](https://github.com/asrcpq/demo/tree/master/tttz)
 
 ## Require
 
